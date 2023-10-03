@@ -14,6 +14,36 @@ from models.param import Parameter, BoolParam, IntParam, FloatParam
 from common.dispatch import DispatchTable
 
 
+class ParameterEnableWidget(QWidget):
+    def __init__(self, topic, effect_name, param):
+        super().__init__()
+        
+        layout = QHBoxLayout()
+
+        checkbox = QCheckBox(param.name, self)
+        checkbox.setChecked(param.value)
+        
+        def state_change(state):
+            checked = False
+            if state == 2: # 2 means checked
+                checked = True            
+                 
+            data = { 'value': checked }
+            param.value = checked 
+            DispatchTable.publish(topic, checkbox, data)
+        
+        checkbox.stateChanged.connect(state_change)
+
+        pname = QLabel(effect_name, self)
+        pname.setMinimumWidth(100) 
+        layout.addWidget(pname)
+
+        layout.addWidget(checkbox)
+                     
+        self.setLayout(layout)
+
+
+
 class ParameterWidget(QWidget):
     
     def _setup_bool_param(self, layout, topic, param):
@@ -29,6 +59,7 @@ class ParameterWidget(QWidget):
                 checked = True            
                  
             data = { 'value': checked } 
+            param.value = checked
             DispatchTable.publish(topic, checkbox, data)
         
         checkbox.stateChanged.connect(state_change)
@@ -38,7 +69,7 @@ class ParameterWidget(QWidget):
         reset.clicked.connect(lambda *args: \
             checkbox.setChecked(param.defval)) 
 
-        layout.addWidget(reset)        
+        layout.addWidget(reset)                
         layout.addWidget(checkbox)
         
     def _setup_int_param(self, layout, topic, param):
@@ -64,12 +95,17 @@ class ParameterWidget(QWidget):
             value_editor.setText(str(value))
             value_editor.blockSignals(False)   
             
+            param.value = value
             DispatchTable.publish(topic, slider, {'value':value})
             
         def on_editor_change(*args):
             text = value_editor.toPlainText()
             if len(text) > 0:
-                value = int(text)
+                try:
+                    value = int(text)
+                except:
+                    print("Unable to convert %s to integer" % text)
+                    return
                 if param.minval <= value <= param.maxval:
                     slider.setValue(value)
                 
@@ -119,33 +155,40 @@ class ParameterWidget(QWidget):
             value_editor.setText(str(value))
             value_editor.blockSignals(False)   
             
+            param.value = value
             DispatchTable.publish(topic, slider, {'value':value})
             
         def on_editor_change(*args):
             text = value_editor.toPlainText()
             if len(text) > 0:
-                value = float(text)
+                try:
+                    value = float(text)
+                except:
+                    print("Unable to convert %s to float" % text)
+                    return
+                         
                 if param.minval <= value <= param.maxval:
                     slider.setValue(to_slider_val(value))
                 
         slider.valueChanged.connect(on_slider_change)
         value_editor.textChanged.connect(on_editor_change)        
 
+        # add widgets to layout
         reset = QPushButton("reset", self)
         reset.setFixedWidth(50)
         reset.clicked.connect(lambda *args: \
             slider.setValue(to_slider_val(param.defval)) ) 
 
-        # add widgets to layout        
         layout.addWidget(reset)
         layout.addWidget(slider)
         layout.addWidget(value_editor)
         
     
-    def setup(self, topic, param):
+    def setup(self, topic, param, **opts):
         assert( isinstance(param,Parameter) ) 
         
         layout = QHBoxLayout()
+        self.opts = opts
                 
         if isinstance(param, BoolParam):
             self._setup_bool_param(layout, topic, param)

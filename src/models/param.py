@@ -15,7 +15,26 @@ class Parameter:
         self.value =  kwargs.get('value',defval)
         self.name = name
         
-        self.manditory = kwargs.get('manditory')
+        self.required = kwargs.get('required',False)
+        self.version = 1
+        
+        
+    def isRequired(self):
+        return self.required    
+        
+    def changed(self):
+        return self.value != self.defval    
+        
+    def asFFmpegParam(self):
+        if self.dtype == type(True):
+            if self.value:
+                return "1"
+            return "0"
+        return str(self.value)
+                    
+        
+    def setValue(self, data):
+        self.value = data    
         
         
 class BoolParam(Parameter):

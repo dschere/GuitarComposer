@@ -1,5 +1,13 @@
 
 TOPIC_EFFECTS_RACK_DIALOG = "/mainwin/effectsrack/dialog"
+TOPIC_EFFECTS_RACK_LIVE_START =  "/mainwin/effectsrack/live-start"
+TOPIC_EFFECTS_RACK_LIVE_STOP =  "/mainwin/effectsrack/live-stop"
+
+
+def EffectsParamTopic(effectName,paramName):
+    p = "effect/%s/%s" % (effectName,paramName)
+    r = TOPIC_EFFECTS_RACK_DIALOG+p
+                 
 
 
 class _DispatchTable(object):
@@ -9,6 +17,7 @@ class _DispatchTable(object):
     def subscribe(self, topic, callback):
         handlers = self.__event_table.get(topic, [])
         handlers.append(callback)
+        print("adding handler for %s" % topic)
         self.__event_table[topic] = handlers
         
     def publish(self, topic, obj, data):
@@ -18,6 +27,8 @@ class _DispatchTable(object):
         data: any extra data needed 
         """
         handlers = self.__event_table.get(topic, [])
+        if len(handlers) == 0:
+            print("No handlers for %s" % topic)
         for handler in handlers:
             handler( topic, obj, data )
             

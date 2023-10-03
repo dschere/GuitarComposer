@@ -19,7 +19,7 @@ from PyQt6.QtCore import Qt
 
 
 from common.dispatch import DispatchTable, TOPIC_EFFECTS_RACK_DIALOG
-
+from ui.controller import Controller
 
 
 class MainWindow(QMainWindow):
@@ -89,6 +89,9 @@ class MainWindow(QMainWindow):
 
 def mainloop():
     app = QApplication([])
+    
+    # backend event handers for ui
+    controller = Controller()
 
     main_win = MainWindow()
     main_win.show()
