@@ -28,7 +28,8 @@ class _DispatchTable(object):
         """
         handlers = self.__event_table.get(topic, [])
         if len(handlers) == 0:
-            print("No handlers for %s" % topic)
+            if topic:
+                print("No handlers for %s" % topic)
         for handler in handlers:
             handler( topic, obj, data )
             

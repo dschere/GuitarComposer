@@ -7,8 +7,8 @@ from models.param import Parameter, BoolParam, IntParam, FloatParam
 EffectsSchema = {
    "group-order": ["volume","compressor","echo","reverb","chorus","flanger","distortion"],
    "ffmpeg": {
-       "volume": "volume=%f", 
-       "compressor": "ladspa=file=guitarix_compressor:guitarix_compressor",
+       "volume": "volume=%f",
+       "compressor":"ladspa=file=dyson_compress_1403:dysonCompress", 
        "distortion": "ladspa=file=guitarix_distortion:guitarix-distortion",
        "reverb1": "ladspa=file=tap_reverb:tap_reverb",
        "reverb2": "ladspa=file=guitarix_freeverb:guitarix_freeverb",
@@ -46,12 +46,10 @@ EffectsSchema = {
             FloatParam(name="vibrato",defval=1.0,minval=0.01,maxval=1.0)
         ],
         "compressor": [
-            FloatParam(name="knee",defval=10.0,minval=0.0,maxval=20.0,required=True),
-            FloatParam(name="ratio",defval=10.0,minval=0.0,maxval=20.0,required=True),
-            IntParam  (name="threshold",defval=-30,minval=-96,maxval=10,required=True),
-            FloatParam(name="attack",defval=0.0,minval=0.0,maxval=1.0),
-            FloatParam(name="release",defval=2.5,minval=0,maxval=10.0),
-            IntParam  (name="gain",defval=0,minval=-96,maxval=96)
+            IntParam(name="Peak limit",defval=0,minval=-30,maxval=0),
+            FloatParam(name="release",defval=0.25,minval=0.0,maxval=1.0),
+            FloatParam (name="fcompressionratio",defval=0.5,minval=0,maxval=1.0),
+            FloatParam(name="compressionratio",defval=0.5,minval=0.0,maxval=1.0)
         ],
         "reverb1": [
             IntParam  (name="decay",defval=2500,minval=0,maxval=10000),

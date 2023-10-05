@@ -3,8 +3,6 @@ Given a model.EffectPresets instance configure ffmpeg to play and
 possibly record an audio file. This service maintains an instance
 of an ffmpeg process. 
 """
-
-
 import subprocess
 import shlex
 import logging
@@ -68,7 +66,7 @@ class LiveAudioPlayer:
        -af "%(af)s" -ac 2 """
     
     record_template = """ffmpeg -analyzeduration 1 
-       -fflags nobuffer -y -re 
+       -fflags nobuffer -y -re -v error
        -f alsa -i %(capture)s -ac 2  
         -filter_complex "asplit[wet_in][dry_in];[wet_in]%(af)s,asplit[wet][wet2];[dry_in]volume=1[dry]"
           -map "[wet]" 
@@ -123,12 +121,10 @@ class LiveAudioPlayer:
         self.args = shlex.split(cmd)
         
     def start(self):
-        print(str(self.args))    
-        #self.proc = subprocess.Popen(self.args) 
+        logging.info(str(self.args))    
+        self.proc = subprocess.Popen(self.args) 
         
     def stop(self):
-        print("stopping ffmpeg") 
-        """
         self.proc.terminate()
         try:
             self.proc.communicate(timeout=2)
@@ -136,6 +132,6 @@ class LiveAudioPlayer:
             self.proc.kill()
             self.proc.communicate()
         logging.info("shut down capture")    
-        """ 
+         
 
 
