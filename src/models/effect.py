@@ -5,7 +5,7 @@ from models.param import Parameter, BoolParam, IntParam, FloatParam
 
 
 EffectsSchema = {
-   "group-order": ["volume","compressor","echo","reverb","chorus","flanger","distortion"],
+   "group-order": ["volume","compressor","echo","reverb","chorus","flanger","distortion","misc"],
    "ffmpeg": {
        "volume": "volume=%f",
        "compressor":"ladspa=file=dyson_compress_1403:dysonCompress", 
@@ -15,7 +15,10 @@ EffectsSchema = {
        "echo": "ladspa=file=tap_echo:tap_stereo_echo",
        "chorusflanger": "ladspa=file=tap_chorusflanger:tap_chorusflanger",
        "multivoicechorus": "ladspa=file=multivoice_chorus_1201:multivoiceChorus",
-       "flanger": "ladspa=file=dj_flanger_1438:djFlanger"
+       "flanger": "ladspa=file=dj_flanger_1438:djFlanger",
+       "octave":"ladspa=file=divider_1186:divider",
+       "doubler":"ladspa=file=tap_doubler:tap_doubler",
+       "tremolo":"ladspa=file=tap_tremolo:tap_tremolo",
     },
     "groups": {
         "volume": ["volume"],
@@ -24,9 +27,17 @@ EffectsSchema = {
         "reverb": ["reverb1","reverb2"],
         "echo": ["echo"],
         "chorus": ["chorusflanger","multivoicechorus"],
-        "flanger": ["flanger"]
+        "flanger": ["flanger"],
+        "misc": ["octave",'doubler',"tremolo"]
     },
    "effects": {
+        "tremolo": [
+            FloatParam(name="frequency",defval=1.0,minval=0,maxval=20.0),
+            FloatParam(name="depth",defval=50.0,minval=0,maxval=100.0),
+            FloatParam(name="gain",defval=0.0,minval=-70.0,maxval=20.0)
+        ] ,
+        "octave": [
+        ],
         "volume": [
             FloatParam(name="gain",defval=1.0,minval=0,maxval=20.0)
         ],   
@@ -44,6 +55,16 @@ EffectsSchema = {
             BoolParam (name="lowhighcut",defval=True),
             FloatParam(name="trigger",defval=1.0,minval=0,maxval=1.0),
             FloatParam(name="vibrato",defval=1.0,minval=0.01,maxval=1.0)
+        ],
+        "doubler": [
+            FloatParam(name="time", defval=0.5, minval=0, maxval=1.0),
+            FloatParam(name="pitch", defval=0.5, minval=0, maxval=1.0),
+            IntParam  (name="drylevel", defval=0, minval=-90, maxval=20),
+            BoolParam (name="dryleftposition",defval=False), 
+            BoolParam (name="dryrightposition",defval=True), 
+            IntParam  (name="wetlevel", defval=0, minval=-90, maxval=20),
+            BoolParam (name="wetLeftposition",defval=False), 
+            BoolParam (name="wetRightposition",defval=True),             
         ],
         "compressor": [
             IntParam(name="Peak limit",defval=0,minval=-30,maxval=0),
@@ -129,8 +150,14 @@ class EffectPresets:
          
         for (effect_name,plist) in EffectsSchema['effects'].items():
             self.settings[effect_name] = Effect(effect_name, plist)
+
                 
     def getEnabledParam(self, effect_name):
+        # schema change since the time preset was made.
+        if effect_name not in self.settings:
+            plist = EffectsSchema['effects'][effect_name]
+            self.settings[effect_name] = Effect(effect_name, plist)
+
         return self.settings[effect_name].enabled_p        
         
     def getParamList(self, effect_name):

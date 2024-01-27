@@ -1,7 +1,23 @@
+import logging
 
 TOPIC_EFFECTS_RACK_DIALOG = "/mainwin/effectsrack/dialog"
 TOPIC_EFFECTS_RACK_LIVE_START =  "/mainwin/effectsrack/live-start"
 TOPIC_EFFECTS_RACK_LIVE_STOP =  "/mainwin/effectsrack/live-stop"
+TOPIC_TABEDITOR_KEY_EVENT = "/tabeditor/key-event"
+
+
+class TabEditKeyEvent:
+    def __init__(self):
+        self.fretnum = None
+        self.dynamic = None
+        self.right = None
+        self.left = None
+        self.up = None
+        self.down = None
+        self.tab = None  
+        self.rest = None
+        self.duration = None
+        self.triplet = None
 
 
 def EffectsParamTopic(effectName,paramName):
@@ -17,7 +33,7 @@ class _DispatchTable(object):
     def subscribe(self, topic, callback):
         handlers = self.__event_table.get(topic, [])
         handlers.append(callback)
-        print("adding handler for %s" % topic)
+        logging.info("adding handler for %s" % topic)
         self.__event_table[topic] = handlers
         
     def publish(self, topic, obj, data):
@@ -29,7 +45,7 @@ class _DispatchTable(object):
         handlers = self.__event_table.get(topic, [])
         if len(handlers) == 0:
             if topic:
-                print("No handlers for %s" % topic)
+                logging.warning("No handlers for %s" % topic)
         for handler in handlers:
             handler( topic, obj, data )
             
