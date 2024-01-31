@@ -50,8 +50,8 @@ int App_setup(struct App* app)
     int err = FLUID_OK;
     int i;
 
-    // read configuration file
-
+    memset(app, 0, sizeof(struct App));  
+    app->duration_multiplier = 1.0;
     app->settings = NULL;
     app->synth = NULL;
     app->adriver = NULL;
@@ -96,7 +96,7 @@ int App_setup(struct App* app)
             fprintf(stderr,"Unable to assign instrument %d to channel %d\n", i, i);
             goto cleanup;
         }
-        fluid_synth_pitch_wheel_sens(app->synth,i,2);
+        fluid_synth_pitch_wheel_sens(app->synth,i,PITCHWHEEL_SENSITIVITY_IN_SEMITONES);
         
         //TODO add harmoics to the sound font
     }

@@ -12,6 +12,10 @@ static int proc_command_line(struct App* app, int argc, char* argv[]);
 int main(int argc, char* argv[]) {
     struct App app;
     int err;
+   
+    // initialize app structure.
+    memset(&app, 0, sizeof(app));  
+    app.duration_multiplier = 1.0;
 
     if ((err = proc_command_line(&app, argc, argv)) != 0) {
         return err;

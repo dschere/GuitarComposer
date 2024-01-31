@@ -5,11 +5,13 @@
 
 #include "cmd.h"
 #include "cmd_note.h"
+#include "cmd_chord.h"
 
 #define DEFAULT_DYNAMIC 80
 
 
 static int DefaultDynamic = DEFAULT_DYNAMIC; 
+
 
 
 static int handle_bpm(struct Cmd* cmd, struct App* app) {
@@ -23,6 +25,42 @@ static int handle_bpm(struct Cmd* cmd, struct App* app) {
     return err;
 }
 
+static int handle_legato(struct Cmd* cmd, struct App* app) {
+    int err = 0;
+    if (cmd->num_params == 1) {
+        app->legato = atoi(cmd->params[0]);
+    } else {
+        fprintf(stderr,"Expected legato 0|1\n");
+        err = -1;
+    } 
+    return err;
+}
+
+static void update_duration_multiplier(struct App* app) {
+    float m = 1.0;
+
+    if (app->dotted) {
+        m *= 1.5;
+    }
+    if (app->triplet) {
+        m *= 0.66;
+    }
+
+    app->duration_multiplier = m;
+}
+
+static int toggle_dotted(struct Cmd* cmd, struct App* app) {
+    app->dotted = (app->dotted) ? 0: 1;
+    update_duration_multiplier(app);
+    return 0;
+}
+
+static int toggle_triplet(struct Cmd* cmd, struct App* app) {
+    app->triplet = (app->triplet) ? 0: 1;
+    update_duration_multiplier(app);
+    return 0;
+}
+
 
 struct {
     char* command;
@@ -31,8 +69,20 @@ struct {
     NOTE_CMD,
     handle_cmd_note
 },{
+    "dotted",
+    toggle_dotted
+},{
+    "triplet",
+    toggle_triplet
+},{
     "bpm",
     handle_bpm
+},{
+    "legato",
+    handle_legato
+},{
+    CHORD_CMD,
+    handle_cmd_chord
 },{
     NULL,
     NULL
@@ -122,6 +172,11 @@ int Cmd_dispatch(struct Cmd* cmd, struct App* app)
     int err = 0;
     int i;
 
+    // inherit settings from app these can be overriden by command options
+    // for a specific note/chord ..
+    cmd->legato = app->legato;
+    cmd->staccato = app->staccato;
+
     for(i = 0; DispatchTable[i].command != NULL; i++) {
         if (strcmp(DispatchTable[i].command, cmd->command) == 0) {
             err = DispatchTable[i].handler(cmd, app);
@@ -133,5 +188,6 @@ int Cmd_dispatch(struct Cmd* cmd, struct App* app)
 
     return err;
 }
+
 
 

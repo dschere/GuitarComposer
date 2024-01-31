@@ -37,5 +37,4 @@ int Cmd_from_stdin(struct Cmd* cmd);
 int Cmd_dispatch(struct Cmd* cmd, struct App* app);
 
 
-
 #endif

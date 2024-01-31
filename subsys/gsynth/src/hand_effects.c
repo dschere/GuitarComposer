@@ -5,7 +5,7 @@
 #include "hand_effects.h"
 
 
-static int get_number(char* ptr, int *offset) {
+static int get_int(char* ptr, int *offset) {
     int n = -1;
 
     *offset = 0;
@@ -23,13 +23,30 @@ static int get_number(char* ptr, int *offset) {
 }
 
 
+static float get_float(const char *ptr, int *offset) {
+    float f = 0;
+    int i;
+
+
+    for(i = 0; isdigit(ptr[i]) || ptr[i] == '.'; i++)
+      ;
+
+    if (i > 0) {
+        sscanf(ptr,"%f",&f);
+    }
+    *offset = i;
+    
+    return f;
+}
+
+
 int parse_hand_effects(struct HandEffect* he, char* ptr) {
     
     int val;
-    int i = 0;
+    int i;
     int offset;
 
-    while(*ptr) {
+    for(i = 0; i < MAX_HAND_EFFECTS && (*ptr); i++) {
         switch(*ptr) {
             case '-':
                 he->ev_list[i].ev_type = EV_HAMMERON;                
@@ -50,31 +67,28 @@ int parse_hand_effects(struct HandEffect* he, char* ptr) {
                 fprintf(stderr,"Unknown hand effect %c\n", *ptr);
                 return -1;
         }
-
-        if (he->ev_list[i].ev_type == EV_VIBRATO) {
-            
-        } else {
-            ptr++;
-            val = get_number(ptr, &offset);
-            if (val == -1) {
-                fprintf(stderr,"Expected fret number got '%s'\n", ptr);
-                return -1;
-            }
-            if (he->ev_list[i].ev_type == EV_BEND || he->ev_list[i].ev_type == EV_PREBEND_RELEASE) {
-                if (val > 8) {
-                    fprintf(stderr,"Illegal bend value must be 1-8 with 8 being 2 semitones\n");
+        ptr++;
+        switch(he->ev_list[i].ev_type) {
+            case EV_HAMMERON:
+            case EV_SLIDE:
+                he->ev_list[i].val = get_int(ptr, &offset);
+                if (offset == 0) {
+                    fprintf(stderr,"...%s  Hammeron and slides expect an integer value afterwords\n",ptr);
                     return -1;
                 }
-            }
-
-            he->ev_list[i].val = val;
-            ptr += offset;
+                break;
+            default:
+                he->ev_list[i].fval = get_float(ptr, &offset);
+                if (offset == 0) {
+                    fprintf(stderr,"...%s Floating point value expected\n", ptr);
+                    return -1;
+                }
+                break;
         }
-        i++;
+        ptr += offset;
     }
 
     he->num_ev = i;
-
     return 0;
 }
 

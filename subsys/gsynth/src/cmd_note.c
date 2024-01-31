@@ -4,7 +4,7 @@
 #include "ff_evt.h"
 
 // return duration of note in beats
-static float duration(char ch) {
+float duration(char ch) {
     switch(ch){
         case 'W':
             return 4.0;
@@ -59,6 +59,7 @@ int parse_note_specifier(char *token, struct Note* nptr, struct App* app){
          fprintf(stderr,"Invalid note specifier %s\n", token);
          return -1;
     }
+    nptr->duration *= app->duration_multiplier;
     i++;
 
     // parse string number 

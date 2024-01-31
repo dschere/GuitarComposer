@@ -7,6 +7,7 @@
 #define NUM_GSTRINGS 6
 #define GSTR_NOT_PLAYING -1 
 #define DEFAULT_BPM 120
+#define PITCHWHEEL_SENSITIVITY_IN_SEMITONES 12
 
 
 struct App {
@@ -31,6 +32,10 @@ struct App {
     int legato;
     int staccato;
 
+    // for dotted notes 1.5 for triplet notes 0.66
+    float duration_multiplier; 
+    int triplet;
+    int dotted;
 
 };
 

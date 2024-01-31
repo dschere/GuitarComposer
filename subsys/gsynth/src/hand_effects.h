@@ -18,6 +18,7 @@ enum {
 
 struct HandEffectEvt {
     int val;
+    float fval;
     int ev_type;
 };
 

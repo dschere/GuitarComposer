@@ -13,6 +13,7 @@ enum
    FF_EVT_PITCHWHEEL
 };
 
+//#define DEBUG 0
 
 
 
@@ -69,12 +70,26 @@ static int future_fluid_evt(int evt_code, struct App* app, ...)
 
 
 int future_noteon(struct App* app, int chan, int key, int vel, int when) {
+#ifdef DEBUG
+printf("fluid_event_noteon(ev, %d, %d, %d) in %d ms\n", 
+    chan, key, vel, when);
+#endif
+
     return future_fluid_evt(FF_EVT_NOTEON, app, chan, key, vel, when);
 }
 int future_noteoff(struct App* app, int chan, int key, int when) {
+#ifdef DEBUG
+printf("fluid_event_noteoff(ev, %d, %d) in %d ms\n", 
+    chan, key, when);
+#endif
+
     return future_fluid_evt(FF_EVT_NOTEOFF, app, chan, key, when);
 }
 int future_bend(struct App* app, int chan, int val, int when) {
+#ifdef DEBUG
+printf("fluid_event_pitch_bend(ev, %d, %d) in %d ms\n", 
+    chan, val, when);
+#endif
     return future_fluid_evt(FF_EVT_PITCHWHEEL, app, chan, val, when);
 }
 

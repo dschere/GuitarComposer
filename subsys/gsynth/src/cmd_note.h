@@ -15,4 +15,6 @@ int handle_cmd_note(struct Cmd* cmd, struct App* app);
 
 int parse_note_specifier(char *token, struct Note* nptr, struct App* app);
 
+float duration(char ch);
+
 #endif
