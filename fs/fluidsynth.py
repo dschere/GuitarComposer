@@ -28,6 +28,7 @@ class fluid_synth_dispatcher:
         self.s.sendall(msg.encode('utf-8'))        
                 
     def proc_msg(self, msg):
+        #print(msg)
         f = self.dispatch.get(msg['method'])
         if f:
             f( *msg['args'] )
@@ -65,7 +66,6 @@ class FluidSynthClient(Thread):
         self.s.connect((addr, port))
     
     def service_one_event(self, t=None):
-        print(f"t = {t}")
         msg = self.q.get(timeout=t)
         self.dispatcher.proc_msg(msg)
     
