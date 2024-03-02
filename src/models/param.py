@@ -14,6 +14,7 @@ class Parameter:
         self.defval = defval
         self.value =  kwargs.get('value',defval)
         self.name = name
+        self.label = kwargs.get('label', name)
         
         self.required = kwargs.get('required',False)
         self.version = 1

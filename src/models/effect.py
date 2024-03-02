@@ -32,9 +32,9 @@ EffectsSchema = {
     },
    "effects": {
         "tremolo": [
-            FloatParam(name="frequency",defval=1.0,minval=0,maxval=20.0),
-            FloatParam(name="depth",defval=50.0,minval=0,maxval=100.0),
-            FloatParam(name="gain",defval=0.0,minval=-70.0,maxval=20.0)
+            FloatParam(name="frequency",defval=1.0,minval=0,maxval=20.0, label="Frequency [Hz]"),
+            FloatParam(name="depth",defval=50.0,minval=0,maxval=100.0,label="Depth [%]"),
+            FloatParam(name="gain",defval=0.0,minval=-70.0,maxval=20.0,label="Gain [dB]")
         ] ,
         "octave": [
         ],
@@ -57,20 +57,20 @@ EffectsSchema = {
             FloatParam(name="vibrato",defval=1.0,minval=0.01,maxval=1.0)
         ],
         "doubler": [
-            FloatParam(name="time", defval=0.5, minval=0, maxval=1.0),
-            FloatParam(name="pitch", defval=0.5, minval=0, maxval=1.0),
-            IntParam  (name="drylevel", defval=0, minval=-90, maxval=20),
-            BoolParam (name="dryleftposition",defval=False), 
-            BoolParam (name="dryrightposition",defval=True), 
-            IntParam  (name="wetlevel", defval=0, minval=-90, maxval=20),
-            BoolParam (name="wetLeftposition",defval=False), 
-            BoolParam (name="wetRightposition",defval=True),             
+            FloatParam(name="time", defval=0.5, minval=0, maxval=1.0, label="Time Tracking"),
+            FloatParam(name="pitch", defval=0.5, minval=0, maxval=1.0, label="Pitch Tracking"),
+            IntParam  (name="drylevel", defval=0, minval=-90, maxval=20, label="Dry Level [dB]"),
+            BoolParam (name="dryleftposition",defval=False, label="Dry Left Position"), 
+            BoolParam (name="dryrightposition",defval=True, label="Dry Right Position"), 
+            IntParam  (name="wetlevel", defval=0, minval=-90, maxval=20, label="Wet Level [dB]"),
+            BoolParam (name="wetLeftposition",defval=False, label="Wet Left Position"), 
+            BoolParam (name="wetRightposition",defval=True, label="Wet Right Position"),             
         ],
-        "compressor": [
-            IntParam(name="Peak limit",defval=0,minval=-30,maxval=0),
-            FloatParam(name="release",defval=0.25,minval=0.0,maxval=1.0),
-            FloatParam (name="fcompressionratio",defval=0.5,minval=0,maxval=1.0),
-            FloatParam(name="compressionratio",defval=0.5,minval=0.0,maxval=1.0)
+        "compressor": [        
+            IntParam(name="Peak limit",defval=0,minval=-30,maxval=0,label="Peak limit (dB)"),
+            FloatParam(name="release",defval=0.25,minval=0.0,maxval=1.0,label="Release time (s)"),
+            FloatParam (name="fcompressionratio",defval=0.5,minval=0,maxval=1.0,label="Fast compression ratio"),
+            FloatParam(name="compressionratio",defval=0.5,minval=0.0,maxval=1.0,label="Compression ratio")
         ],
         "reverb1": [
             IntParam  (name="decay",defval=2500,minval=0,maxval=10000),
@@ -88,38 +88,38 @@ EffectsSchema = {
             FloatParam(name="drywet",defval=0.25,minval=0,maxval=1.0)
         ],
         "echo": [
-            IntParam  (name="L_Delay",defval=100,minval=0,maxval=2000),
-            IntParam  (name="L_Feedback",defval=0,minval=0,maxval=100),
-            IntParam  (name="R_Haas_Delay",defval=100,minval=0,maxval=2000),
-            IntParam  (name="R_Haas_Feedback",defval=0,minval=0,maxval=100),
-            IntParam  (name="L_echo_level",defval=0,minval=-70,maxval=10),
-            IntParam  (name="R_echo_level",defval=0,minval=-70,maxval=10),
-            IntParam  (name="drylevel",defval=0,minval=-70,maxval=10),
-            BoolParam (name="crossmode",defval=True),
-            BoolParam (name="haaseffect",defval=False),
-            BoolParam (name="swapoutputs",defval=False)
+            IntParam  (name="L_Delay",defval=100,minval=0,maxval=2000,label="L Delay [ms]"),
+            IntParam  (name="L_Feedback",defval=0,minval=0,maxval=100,label="L Feedback [%]"),
+            IntParam  (name="R_Haas_Delay",defval=100,minval=0,maxval=2000,label="R/Haas Delay [ms]"),
+            IntParam  (name="R_Haas_Feedback",defval=0,minval=0,maxval=100,label="R/Haas Feedback [%]"),
+            IntParam  (name="L_echo_level",defval=0,minval=-70,maxval=10,label="L Echo Level [dB]"),
+            IntParam  (name="R_echo_level",defval=0,minval=-70,maxval=10,label="R Echo Level [dB]"),
+            IntParam  (name="drylevel",defval=0,minval=-70,maxval=10,label="Dry Level [dB]"),
+            BoolParam (name="crossmode",defval=True,label="Cross Mode"),
+            BoolParam (name="haaseffect",defval=False,label="Haas Effect"),
+            BoolParam (name="swapoutputs",defval=False,label="Swap Outputs")
         ],
-        "chorusflanger":[
-            FloatParam(name="freq",defval=1.25,minval=0.0,maxval=5.0),
-            IntParam  (name="phaseshift",defval=90,minval=0,maxval=180),
-            IntParam  (name="depth",defval=75,minval=0,maxval=100),
-            IntParam  (name="delay",defval=25,minval=0,maxval=100),
-            IntParam  (name="contour",defval=100,minval=20,maxval=20000),
-            IntParam  (name="drylevel",defval=0,minval=-90,maxval=20),
-            IntParam  (name="wetlevel",defval=0,minval=-90,maxval=20)
+        "chorusflanger":[        
+            FloatParam(name="freq",defval=1.25,minval=0.0,maxval=5.0,label="Frequency [Hz]"),
+            IntParam  (name="phaseshift",defval=90,minval=0,maxval=180,label="L/R Phase Shift [deg]"),
+            IntParam  (name="depth",defval=75,minval=0,maxval=100,label="Depth [%]"),
+            IntParam  (name="delay",defval=25,minval=0,maxval=100,label="Delay [ms]"),
+            IntParam  (name="contour",defval=100,minval=20,maxval=20000,label="Contour [Hz]"),
+            IntParam  (name="drylevel",defval=0,minval=-90,maxval=20,label="Dry Level [dB]"),
+            IntParam  (name="wetlevel",defval=0,minval=-90,maxval=20,label="Wet Level [dB]")
         ],
         "multivoicechorus":[
-            IntParam  (name="numvoices",defval=1,minval=1,maxval=8),
-            IntParam  (name="delay_ms",defval=10,minval=10,maxval=40),
-            FloatParam(name="voice_separation",defval=0.5,minval=0,maxval=2.0),
-            FloatParam(name="detune",defval=1.0,minval=0,maxval=5.0),
-            IntParam  (name="lfo-freq",defval=9,minval=2,maxval=90),
-            IntParam  (name="attenuation",defval=0,minval=-20,maxval=0)
+            IntParam  (name="numvoices",defval=1,minval=1,maxval=8,label="Number of voices"),
+            IntParam  (name="delay_ms",defval=10,minval=10,maxval=40,label="Delay base (ms)"),
+            FloatParam(name="voice_separation",defval=0.5,minval=0,maxval=2.0,label="Voice separation (ms)"),
+            FloatParam(name="detune",defval=1.0,minval=0,maxval=5.0,label="Detune (%)"),
+            IntParam  (name="lfo-freq",defval=9,minval=2,maxval=90,label="LFO frequency (Hz)"),
+            IntParam  (name="attenuation",defval=0,minval=-20,maxval=0,label="Output attenuation (dB)")
         ],
         "flanger": [
-            FloatParam(name="period",defval=1.0,minval=0.1,maxval=32,required=True),
-            FloatParam(name="depth",defval=4.0,minval=1.0,maxval=5.0),
-            IntParam  (name="feedback",defval=0,minval=-100,maxval=100)
+            FloatParam(name="period",defval=1.0,minval=0.1,maxval=32,required=True,label="LFO period (s)"),
+            FloatParam(name="depth",defval=4.0,minval=1.0,maxval=5.0,label="LFO depth (ms)" ),
+            IntParam  (name="feedback",defval=0,minval=-100,maxval=100,label="Feedback (%)")
         ]
     }
 }
@@ -188,7 +188,7 @@ class EffectPresets:
             data = open( PRESET_DIR+preset_name, "rb" ).read()
             self.settings = pickle.loads(data)
             self.preset_name = preset_name
-    
+            
     def remove(self, preset_name):
         path = PRESET_DIR+preset_name
         if os.access(path,os.F_OK):
