@@ -3,7 +3,7 @@ A glyph is a musical symbol such as a staff a not a rest etc.
 
 Glyphs are combined to create measures on a staff.
 """
-from PyQt6.QtWidgets import QLabel, QApplication, QMainWindow
+from PyQt6.QtWidgets import QLabel, QApplication, QMainWindow, QGridLayout, QWidget
 from PyQt6 import QtGui
 from PyQt6.QtCore import Qt
 
@@ -53,7 +53,7 @@ DEFAULT_SYM_FONT_SIZE = 32
 
 STAFF_ABOVE_LINES = 7  # needed lines above staff
 STAFF_BELOW_LINES = 7  # needed lines below staff
-STAFF_LINE_SPACING = 20
+STAFF_LINE_SPACING = 16
 STAFF_NUMBER_OF_LINES = 5  # number of permenant lines
 
 STAFF_HEIGHT = (STAFF_ABOVE_LINES + STAFF_BELOW_LINES + STAFF_NUMBER_OF_LINES)\
@@ -72,14 +72,14 @@ MidiCode2Name = {}
 def populate_lookup_table():
     global YPositionMidiTable
     n = ['e','f','f#','g','g#','a','a#','b','c','c#','d','d#']
-    y_max = (STAFF_ABOVE_LINES + STAFF_BELOW_LINES + STAFF_NUMBER_OF_LINES) \
+    y_max = (1 + STAFF_ABOVE_LINES + STAFF_BELOW_LINES + STAFF_NUMBER_OF_LINES) \
         * STAFF_LINE_SPACING
     i = 0
     y = y_max
     for midi in range(E2_MIDI_CODE,E6_MIDI_CODE+1):
         note_name = n[i]
         i = (i+1) % len(n)
-        YPositionMidiTable[midi] = y - STAFF_LINE_SPACING + 5
+        YPositionMidiTable[midi] = y - STAFF_LINE_SPACING
         if len(note_name) == 1:
             y -= int(STAFF_LINE_SPACING/2)
 
@@ -164,16 +164,9 @@ class Canvas(QLabel):
         self.canvas_paint_event(painter)
         painter.end()
 
-    def draw_symbol(self, painter, sym, **opts):
-        def_size = SymFontSize.get(sym, DEFAULT_SYM_FONT_SIZE)
-        size = opts.get('size', def_size)
-        # font with good Unicode support
-        font = QtGui.QFont("DejaVu Sans", size)
-        painter.setFont(font)
+    def draw_out_of_bounds_line(self, painter, opts):
         x = opts.get('x', 0)
         y = opts.get('y', 0)
-        painter.drawText(x, y, sym)
-
         # draw lines above/below staff as needed
         top_line = STAFF_ABOVE_LINES * STAFF_LINE_SPACING
         bottom_line = top_line + (STAFF_NUMBER_OF_LINES-1) * STAFF_LINE_SPACING 
@@ -181,7 +174,6 @@ class Canvas(QLabel):
         if y < top_line:
             line_y = top_line - STAFF_LINE_SPACING
             while y < line_y:
-                print(f"{y} {line_y}")
                 painter.drawLine(x-3, line_y, x+25, line_y )
                 line_y -= STAFF_LINE_SPACING
             painter.drawLine(x-3, line_y, x+25, line_y )
@@ -191,6 +183,19 @@ class Canvas(QLabel):
             while y > line_y:
                 painter.drawLine(x-3, line_y, x+25, line_y )
                 line_y += STAFF_LINE_SPACING
+
+
+    def draw_symbol(self, painter, sym, **opts):
+        def_size = SymFontSize.get(sym, DEFAULT_SYM_FONT_SIZE)
+        size = opts.get('size', def_size)
+        # font with good Unicode support
+        font = QtGui.QFont("DejaVu Sans", size)
+        painter.setFont(font)
+        x = opts.get('x', 0)
+        y = opts.get('y', 0)
+        painter.drawText(x, y, sym)
+        if opts.get('draw_lines',True):
+            self.draw_out_of_bounds_line(painter, opts)
 
 
     def draw_staff_background(self, painter):
@@ -205,21 +210,47 @@ class Canvas(QLabel):
             #print(f"0 {y} {self.width} {y}")
             painter.drawLine(0, y, self.width, y)
 
+class StaffGlyph(Canvas):
+    def __init__(self):
+        super().__init__(STAFF_SYM_WIDTH, STAFF_HEIGHT)
+    def canvas_paint_event(self, painter):
+        self.draw_staff_background(painter)
+        self.draw_sign(painter, WHOLE_NOTE, 0, midicode_from_name("A3")) 
+        
 
 class StaffHeaderGlyph(Canvas):
-    def __init__(self, staff_symbol, staff_key):
+    def __init__(self, symbol, key, timesig, bpm):
         super().__init__(STAFF_HEADER_WIDTH, STAFF_HEIGHT)
-        self.staff_symbol = staff_symbol
-        self.staff_key = staff_key
+        self.staff_symbol = symbol
+        self.staff_key = key
+        self.staff_timesig = timesig
+        self.staff_bpm = bpm
 
     # use draw_ ... commands
     def canvas_paint_event(self, painter):
+        # draw background lines
         self.draw_staff_background(painter)
+
+        # draw beats per minute
+        y = (STAFF_LINE_SPACING * STAFF_ABOVE_LINES) - STAFF_LINE_SPACING
+        bpm = self.staff_bpm
+        self.draw_symbol(painter, f"{QUATER_NOTE} = {bpm}", 
+            size=12, draw_lines=False, x=0, y=y)
+
+        # draw staff
         cleff_y_pos = STAFF_LINE_SPACING * \
             STAFF_ABOVE_LINES+SymFontSize[self.staff_symbol]
         self.draw_symbol(painter, self.staff_symbol, y=cleff_y_pos)
 
-        x = 60
+        # draw time signature
+        ts = self.staff_timesig.split('/')
+        num_y = (STAFF_ABOVE_LINES * STAFF_LINE_SPACING) + 24
+        den_y = num_y + (STAFF_LINE_SPACING * 2) + 8
+        self.draw_symbol(painter, ts[0], x=60, y=num_y) 
+        self.draw_symbol(painter, ts[1], x=60, y=den_y) 
+
+        # draw accents based on key
+        x = 100
         key_codes = KeyMidiCodeTable.get(self.staff_key,[])
 
         sign = SHARP_SIGN
@@ -229,9 +260,9 @@ class StaffHeaderGlyph(Canvas):
             self.draw_sign(painter, sign, x, midi_code)
             x += 10
 
-        self.draw_sign(painter, WHOLE_NOTE, x, midicode_from_name("A3")) 
         
         
+
 
 
 def unittest():
@@ -246,8 +277,20 @@ def unittest():
     # c.draw_staff_background()
     # c.show()
 
-    shg = StaffHeaderGlyph(TREBLE_CLEFF,"F")
-    shg.show()
+
+    layout = QGridLayout()
+    layout.setHorizontalSpacing(0)
+
+    layout.addWidget(StaffHeaderGlyph(TREBLE_CLEFF,"C#","4/4",120), 0, 0)
+    layout.addWidget(StaffGlyph(), 0, 1)
+
+    widget = QWidget()
+    widget.setLayout(layout)
+    widget.show()
+
+
+    #shg = StaffHeaderGlyph(TREBLE_CLEFF,"F")
+    #shg.show()
 
     sys.exit(app.exec())
 
