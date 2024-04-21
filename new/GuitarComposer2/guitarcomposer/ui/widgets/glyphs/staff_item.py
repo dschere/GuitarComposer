@@ -1,3 +1,11 @@
+"""
+Todo log:
+
+use config for text font
+experiement with different line_spacing.
+
+ 
+"""
 from PyQt6 import QtGui
 from PyQt6.QtCore import Qt
 
@@ -134,6 +142,32 @@ class _chord_renderer:
     first. 
     """
 
+    def draw_floating_lines(self, painter, conf, note_y):
+        line_spacing = conf.line_spacing
+        num_lines = conf.num_lines
+        y_start   = conf.y_start
+        accent_spacing = conf.accent_spacing
+        width     = conf.width
+        y_end     = y_start + ((num_lines-1) * line_spacing)
+
+        painter.setPen(QtGui.QPen(Qt.GlobalColor.black, 1))
+        
+        y = y_start
+        # if the highest note is above the highest line on the
+        # staff draw flowing lines 
+        while note_y < (y - line_spacing):
+            y -= line_spacing
+            x1 = accent_spacing
+            x2 = width - accent_spacing
+            painter.drawLine(x1,y,x2,y)
+        
+        y = y_end
+        while note_y > (y + line_spacing):
+            y += line_spacing
+            x1 = accent_spacing
+            x2 = width - accent_spacing
+            painter.drawLine(x1,y,x2,y)
+                    
     def draw(self, painter, conf, midi_codes, accent, dtype):
         assert len(midi_codes) > 0
         
@@ -151,6 +185,17 @@ class _chord_renderer:
             note_renderer.draw_notehead(\
                 painter, conf, midi_code, accent, dtype)    
 
+        # draw lines above/below staff if the note falls outside.
+        high_y = note_renderer.get_y_coord(\
+            midi_codes[0], conf, accent)
+        self.draw_floating_lines(painter, conf, high_y)
+        if len(midi_codes) > 1:
+            low_y = note_renderer.get_y_coord(\
+                midi_codes[-1], conf, accent)
+            # draw lines above/below staff if the note falls outside.
+            self.draw_floating_lines(painter, conf, low_y)
+
+        # draw the verticle stem line connecting the notes 
         if len(midi_codes) > 1 and dtype not in (DT.WHOLE,DT.HALF): 
             # configure a 2 pixel wide verticle line
             painter.setPen(QtGui.QPen(Qt.GlobalColor.black, 2))
@@ -160,17 +205,15 @@ class _chord_renderer:
             line_spacing = conf.line_spacing
             accent_spacing = conf.accent_spacing
             
-            low_y = note_renderer.get_y_coord(\
-                midi_codes[-1], conf, accent)
-            high_y = note_renderer.get_y_coord(\
-                midi_codes[0], conf, accent)
-
             # x = the right side of the note head.
             stem_x = accent_spacing + int(line_spacing/2) + 1
             notehead_offset = int(line_spacing/7)
             painter.drawLine(\
                 stem_x, low_y - notehead_offset, \
                 stem_x, high_y - notehead_offset)
+                
+            
+            
 
 
 class staff_item(glyph):

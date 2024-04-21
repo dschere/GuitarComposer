@@ -27,7 +27,7 @@ class MyWindow(QMainWindow):
 
         dtype = HALF
         accent = SHARP_SIGN
-        midi_codes = [87]
+        midi_codes = [101]
         grid_layout.addWidget(\
             staff_item(midi_codes, dtype, accent), 0, 0)
 
