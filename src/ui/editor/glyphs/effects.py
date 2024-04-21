@@ -8,8 +8,16 @@ from PyQt6.QtCore import QSize
 
 from .canvas import *
 
-
 module_path = os.path.dirname(__file__)
+
+# insert path to the src directory of the project 
+proj_root = module_path+"/../../../"
+if proj_root not in sys.path:
+    sys.path.append(proj_root)
+
+from models.effect import EffectPresets
+from ui.dialogs.effectsrack import EffectsSelectionTree
+
 GearIconEnabledPath  = module_path + os.sep + "data" + os.sep + "Gear-icon-enabled.png"
 GearIconDisabledPath = module_path + os.sep + "data" + os.sep + "Gear-icon-disabled.png"
 
@@ -49,7 +57,7 @@ class EffectsGlyph(QPushButton):
 
     def settings_dialog(self):
         """
-        Bring up dialog. 
+        Bring up the effects dialog. 
         if user sets enabled button in dialog then the icon will change
         and state data will be setup. If the icon is disabled then state 
         will be set to disabled. 
