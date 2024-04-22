@@ -7,8 +7,12 @@ class _glyph:
 class _staff_item:
     max_lines_above = 6
     max_lines_below = 6
-    line_spacing = 30
+    line_spacing = 15
     accent_spacing = 13
+    text_font_size = 45
+    accent_font_size = 20
+    chord_stem_x = 29
+    text_font = "DejaVu Sans"
     num_lines = 6
     width = 50
     font = "DejaVu Sans" # needed for music symbols 

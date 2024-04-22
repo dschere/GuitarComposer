@@ -1,11 +1,3 @@
-"""
-Todo log:
-
-use config for text font
-experiement with different line_spacing.
-
- 
-"""
 from PyQt6 import QtGui
 from PyQt6.QtCore import Qt
 
@@ -97,14 +89,18 @@ class _note_renderer:
         if accent_table[midi_code % 12]:
 
             size = conf.line_spacing
-            font = QtGui.QFont("DejaVu Sans", int(size ))
+            accent_font_size = conf.accent_font_size
+            text_font_size = conf.text_font_size
+            text_font = conf.text_font
+
+            font = QtGui.QFont(text_font, accent_font_size)
             painter.setFont(font)
 
             # draw a sharp or flat sign next to the note head
             painter.drawText(0, y+3, accent)
 
             size = conf.line_spacing
-            font = QtGui.QFont("DejaVu Sans", int(size * 1.5))
+            font = QtGui.QFont(text_font, text_font_size)
             painter.setFont(font)
 
         text = self.get_tail_note_text(dtype)
@@ -155,14 +151,14 @@ class _chord_renderer:
         y = y_start
         # if the highest note is above the highest line on the
         # staff draw flowing lines 
-        while note_y < (y - line_spacing):
+        while note_y < (y - (line_spacing/2)):
             y -= line_spacing
             x1 = accent_spacing
             x2 = width - accent_spacing
             painter.drawLine(x1,y,x2,y)
         
         y = y_end
-        while note_y > (y + line_spacing):
+        while note_y > (y + (line_spacing/2)):
             y += line_spacing
             x1 = accent_spacing
             x2 = width - accent_spacing
@@ -198,16 +194,16 @@ class _chord_renderer:
         # draw the verticle stem line connecting the notes 
         if len(midi_codes) > 1 and dtype not in (DT.WHOLE,DT.HALF): 
             # configure a 2 pixel wide verticle line
-            painter.setPen(QtGui.QPen(Qt.GlobalColor.black, 2))
+            painter.setPen(QtGui.QPen(Qt.GlobalColor.black, 1))
             
             # draw a line connecting the notes is dtype is not
             # a whole or half note.
             line_spacing = conf.line_spacing
             accent_spacing = conf.accent_spacing
-            
-            # x = the right side of the note head.
-            stem_x = accent_spacing + int(line_spacing/2) + 1
-            notehead_offset = int(line_spacing/7)
+            text_font_size = conf.text_font_size
+            stem_x = conf.chord_stem_x
+
+            notehead_offset = int(text_font_size/7)
             painter.drawLine(\
                 stem_x, low_y - notehead_offset, \
                 stem_x, high_y - notehead_offset)
@@ -230,7 +226,9 @@ class staff_item(glyph):
         # set font to one that supports unicode for music symbols
         # set the size to match the line spacing on the staff.
         size = self.config.line_spacing
-        font = QtGui.QFont("DejaVu Sans", int(size * 1.5))
+        text_font_size = self.config.text_font_size
+        text_font = self.config.text_font
+        font = QtGui.QFont(text_font, text_font_size)
         painter.setFont(font)
 
         # draw staff lines using staff_item config
