@@ -29,19 +29,19 @@ class MyWindow(QMainWindow):
         accent = SHARP_SIGN
         midi_codes = [101]
         grid_layout.addWidget(\
-            staff_item(midi_codes, dtype, accent), 0, 0)
+            staff_item(midi_codes, dtype, accent, TREBLE_CLEFF), 0, 0)
 
         dtype = HALF
         accent = SHARP_SIGN
         midi_codes = [78, 71, 55]
         grid_layout.addWidget(\
-            staff_item(midi_codes, dtype, accent), 0, 1)
+            staff_item(midi_codes, dtype, accent, TREBLE_CLEFF), 0, 1)
 
         dtype = SIXTEENTH
         accent = FLAT_SIGN
         midi_codes = [78, 71, 63]
         grid_layout.addWidget(\
-            staff_item(midi_codes, dtype, accent), 0, 2)
+            staff_item(midi_codes, dtype, accent, TREBLE_CLEFF), 0, 2)
 
         # adding a widget at end suddenly makes the setHorizontalSpacing
         # work ;(

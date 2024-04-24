@@ -47,6 +47,10 @@ sharp_step_table, flat_step_table = generate_step_tables()
 
 
 class _note_renderer:
+    
+    def __init__(self, cleff):
+        self.cleff = cleff
+    
     def get_note_head_text(self, dtype):
         return {
             DT.WHOLE: VOID_NOTEHEAD,
@@ -70,17 +74,24 @@ class _note_renderer:
         line_spacing = conf.line_spacing
         y_start = conf.y_start - 10
         inc = line_spacing/2
+        
+        # adjust y_start based on cleff
+        y_start -= {
+            TREBLE_CLEFF: 0,
+            DRUM_CLEFF: 0,
+            BASS_CLEFF: line_spacing * 6,
+            TENOR_CLEFF: line_spacing * 4
+        }[self.cleff]
 
         if accent == SHARP_SIGN:
             return int(y_start + (sharp_step_table[midi_code] * inc))
         else:
             return int(y_start + (flat_step_table[midi_code] * inc))
 
-            
-    def draw_note(self, painter, conf, midi_code, accent, dtype):    
+    def draw_note(self, painter, conf, midi_code, accent, dtype):
         # Note: accent is used because we need to know if we are
-        # rendering sharps or flats since the same note can be in 
-        # different staff positions depending on which it is.    
+        # rendering sharps or flats since the same note can be in
+        # different staff positions depending on which it is.
         line_spacing = conf.line_spacing
         accent_spacing = conf.accent_spacing
 
@@ -105,18 +116,18 @@ class _note_renderer:
 
         text = self.get_tail_note_text(dtype)
         painter.drawText(accent_spacing, y, text)
-        
-    def draw_notehead(self, painter, conf, midi_code, accent, dtype):    
+
+    def draw_notehead(self, painter, conf, midi_code, accent, dtype):
         # Note: accent is used because we need to know if we are
-        # rendering sharps or flats since the same note can be in 
-        # different staff positions depending on which it is.    
+        # rendering sharps or flats since the same note can be in
+        # different staff positions depending on which it is.
         line_spacing = conf.line_spacing
         accent_spacing = conf.accent_spacing
 
         y = self.get_y_coord(midi_code, conf, accent)
         text = self.get_note_head_text(dtype)
         painter.drawText(accent_spacing, y, text)
-        
+
 
 class _chord_renderer:
     """
@@ -137,65 +148,67 @@ class _chord_renderer:
     head of the first note. Then a stem line is drawn from last to 
     first. 
     """
+    def __init__(self, cleff):
+        self.cleff = cleff
 
     def draw_floating_lines(self, painter, conf, note_y):
         line_spacing = conf.line_spacing
         num_lines = conf.num_lines
-        y_start   = conf.y_start
+        y_start = conf.y_start
         accent_spacing = conf.accent_spacing
-        width     = conf.width
-        y_end     = y_start + ((num_lines-1) * line_spacing)
+        width = conf.width
+        y_end = y_start + ((num_lines-1) * line_spacing)
 
         painter.setPen(QtGui.QPen(Qt.GlobalColor.black, 1))
-        
+
         y = y_start
         # if the highest note is above the highest line on the
-        # staff draw flowing lines 
+        # staff draw flowing lines
         while note_y < (y - (line_spacing/2)):
             y -= line_spacing
             x1 = accent_spacing
             x2 = width - accent_spacing
-            painter.drawLine(x1,y,x2,y)
-        
+            painter.drawLine(x1, y, x2, y)
+
         y = y_end
         while note_y > (y + (line_spacing/2)):
             y += line_spacing
             x1 = accent_spacing
             x2 = width - accent_spacing
-            painter.drawLine(x1,y,x2,y)
-                    
+            painter.drawLine(x1, y, x2, y)
+
     def draw(self, painter, conf, midi_codes, accent, dtype):
         assert len(midi_codes) > 0
-        
+
         # arrange midi codes highest to lowest
         if len(midi_codes) > 1:
             midi_codes.sort()
             midi_codes.reverse()
-        
-        note_renderer = _note_renderer()
+
+        note_renderer = _note_renderer(self.cleff)
         midi_code = midi_codes[0]
-        note_renderer.draw_note(\
-            painter, conf, midi_code, accent, dtype )
-        
+        note_renderer.draw_note(
+            painter, conf, midi_code, accent, dtype)
+
         for midi_code in midi_codes[1:]:
-            note_renderer.draw_notehead(\
-                painter, conf, midi_code, accent, dtype)    
+            note_renderer.draw_notehead(
+                painter, conf, midi_code, accent, dtype)
 
         # draw lines above/below staff if the note falls outside.
-        high_y = note_renderer.get_y_coord(\
+        high_y = note_renderer.get_y_coord(
             midi_codes[0], conf, accent)
         self.draw_floating_lines(painter, conf, high_y)
         if len(midi_codes) > 1:
-            low_y = note_renderer.get_y_coord(\
+            low_y = note_renderer.get_y_coord(
                 midi_codes[-1], conf, accent)
             # draw lines above/below staff if the note falls outside.
             self.draw_floating_lines(painter, conf, low_y)
 
-        # draw the verticle stem line connecting the notes 
-        if len(midi_codes) > 1 and dtype not in (DT.WHOLE,DT.HALF): 
+        # draw the verticle stem line connecting the notes
+        if len(midi_codes) > 1 and dtype not in (DT.WHOLE, DT.HALF):
             # configure a 2 pixel wide verticle line
             painter.setPen(QtGui.QPen(Qt.GlobalColor.black, 1))
-            
+
             # draw a line connecting the notes is dtype is not
             # a whole or half note.
             line_spacing = conf.line_spacing
@@ -204,23 +217,21 @@ class _chord_renderer:
             stem_x = conf.chord_stem_x
 
             notehead_offset = int(text_font_size/7)
-            painter.drawLine(\
-                stem_x, low_y - notehead_offset, \
+            painter.drawLine(
+                stem_x, low_y - notehead_offset,
                 stem_x, high_y - notehead_offset)
-                
-            
-            
 
 
 class staff_item(glyph):
-    def __init__(self, midi_codes, dtype, accent):
+    def __init__(self, midi_codes, dtype, accent, staff):
         # grab config for this class
         self.config = getTheme().staff_item
         super().__init__(self.config.width, self.config.height)
 
         self.midi_codes = midi_codes
         self.dtype = dtype
-        self.accent = accent 
+        self.accent = accent
+        self.staff = staff
 
     def canvas_paint_event(self, painter):
         # set font to one that supports unicode for music symbols
@@ -235,7 +246,6 @@ class staff_item(glyph):
         self.parallel_lines(painter, self.config)
 
         # draw a chord or a note is len(midi_codes) == 1
-        cr = _chord_renderer()
-        cr.draw(painter, \
-            self.config, self.midi_codes, self.accent, self.dtype) 
-
+        cr = _chord_renderer(self.staff)
+        cr.draw(painter,
+                self.config, self.midi_codes, self.accent, self.dtype)

@@ -15,10 +15,10 @@ BARLINE2 = "𝄁 "
 END_REPEAT = "𝄂 "
 START_REPEAT = "𝄃 "
 
-
 TREBLE_CLEFF = "𝄞 "
 DRUM_CLEFF = "𝄥 "
 BASS_CLEFF = "𝄢 "
+TENOR_CLEFF= "𝄡 "
 
 WHOLE_REST = "𝄻 "
 HALF_REST = "𝄼 "
