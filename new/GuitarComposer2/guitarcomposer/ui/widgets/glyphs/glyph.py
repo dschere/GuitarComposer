@@ -27,7 +27,8 @@ from PyQt6 import QtGui
 from PyQt6.QtCore import Qt
 
 
-from guitarcomposer.ui.theme import getTheme
+from guitarcomposer.ui.config import config
+
 
 
 class glyph(QLabel):
@@ -46,7 +47,7 @@ class glyph(QLabel):
         self._width = width
         self._height = height
         canvas = QtGui.QPixmap(width, height)
-        bg_color = getTheme().glyph.bg_color
+        bg_color = config().glyph.bg_color
 
         canvas.fill(bg_color)
         self.setPixmap(canvas)
