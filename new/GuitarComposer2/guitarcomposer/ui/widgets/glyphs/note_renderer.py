@@ -62,7 +62,7 @@ class note_renderer:
         #global sharp_step_table, flat_step_table
 
         line_spacing = conf.line_spacing
-        y_start = conf.y_start - 10
+        y_start = conf.y_start - 7 
         inc = line_spacing/2
 
         # adjust y_start based on cleff
@@ -80,6 +80,7 @@ class note_renderer:
 
     def draw_note_accent(self, painter, conf, midi_code, accent, x):
         y = self.get_y_coord(midi_code, conf, accent)
+
         # do we need to render a # or b infront of the note?
         if accent_table[midi_code % 12]:
 
@@ -123,6 +124,7 @@ class note_renderer:
 
         text = self.get_tail_note_text(dtype)
         painter.drawText(accent_spacing, y, text)
+
 
     def draw_notehead(self, painter, conf, midi_code, accent, dtype):
         # Note: accent is used because we need to know if we are

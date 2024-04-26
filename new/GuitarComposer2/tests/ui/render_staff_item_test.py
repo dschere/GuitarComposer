@@ -6,6 +6,7 @@ from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QGridLayout, QPu
 
 from guitarcomposer.ui.widgets.glyphs.staff_item import staff_item
 from guitarcomposer.ui.widgets.glyphs.staff_header import staff_header
+from guitarcomposer.ui.widgets.glyphs.staff_measure_divider import staff_measure_divider
 from guitarcomposer.ui.widgets.glyphs.constants import *
 
 from guitarcomposer.common.durationtypes import *
@@ -29,29 +30,33 @@ class MyWindow(QMainWindow):
 
         grid_layout.addWidget(\
             staff_header(TREBLE_CLEFF, 120, (4,4), \
-               [(SHARP_SIGN,90)] ), 0, 0) 
+               [(SHARP_SIGN,90),(SHARP_SIGN,85)] ), 0, 0) 
 
-        dtype = HALF
+        grid_layout.addWidget(staff_measure_divider(BARLINE2), 0, 1)
+
+
+        dtype = QUARTER
         accent = SHARP_SIGN
         midi_codes = [101]
         grid_layout.addWidget(\
-            staff_item(midi_codes, dtype, accent, TREBLE_CLEFF), 0, 1)
+            staff_item(midi_codes, dtype, accent, TREBLE_CLEFF), 0, 2)
 
         dtype = HALF
         accent = SHARP_SIGN
         midi_codes = [78, 71, 55]
         grid_layout.addWidget(\
-            staff_item(midi_codes, dtype, accent, TREBLE_CLEFF), 0, 2)
+            staff_item(midi_codes, dtype, accent, TREBLE_CLEFF), 0, 3)
 
         dtype = SIXTEENTH
         accent = FLAT_SIGN
         midi_codes = [78, 71, 63]
         grid_layout.addWidget(\
-            staff_item(midi_codes, dtype, accent, TREBLE_CLEFF), 0, 3)
+            staff_item(midi_codes, dtype, accent, TREBLE_CLEFF), 0, 4)
+
 
         # adding a widget at end suddenly makes the setHorizontalSpacing
         # work ;(
-        grid_layout.addWidget(QLabel(""), 0, 4)         
+        grid_layout.addWidget(QLabel(""), 0, 5)         
 
 
 def main():
