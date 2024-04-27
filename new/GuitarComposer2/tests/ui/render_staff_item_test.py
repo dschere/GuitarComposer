@@ -8,6 +8,7 @@ from guitarcomposer.ui.widgets.glyphs.staff_item import staff_item
 from guitarcomposer.ui.widgets.glyphs.staff_header import staff_header
 from guitarcomposer.ui.widgets.glyphs.staff_measure_divider import staff_measure_divider
 from guitarcomposer.ui.widgets.glyphs.tableture_measure_divider import tableture_measure_divider
+from guitarcomposer.ui.widgets.glyphs.tableture_item import tableture_item
 from guitarcomposer.ui.widgets.glyphs.constants import *
 
 from guitarcomposer.common.durationtypes import *
@@ -42,6 +43,8 @@ class MyWindow(QMainWindow):
         midi_codes = [101]
         grid_layout.addWidget(\
             staff_item(midi_codes, dtype, accent, TREBLE_CLEFF), 0, 2)
+        grid_layout.addWidget(\
+            tableture_item([(14,0)], 5), 1, 2)
 
         dtype = HALF
         accent = SHARP_SIGN

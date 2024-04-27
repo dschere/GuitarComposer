@@ -7,22 +7,26 @@
 from PyQt6.QtCore import Qt
 from singleton_decorator import singleton
 
+TRACK_ITEM_WIDTH = 50
+TRACK_MEASURE_DIVIDOR_WIDTH = 10
+
 class _glyph:
     bg_color = Qt.GlobalColor.white
     
 class _tablature_item:
     num_lines = 6
     line_spacing = 16
-    text_font_size = 8
-    width = 50
-    height = 26 + (num_lines * line_spacing)
-    y_start = 26
+    text_font_size = 12
     text_font = "DejaVu Sans"
+    width = TRACK_ITEM_WIDTH
+    box_width = 25
+    height = 26 + ((num_lines+1) * line_spacing)
+    y_start = 26
 
 class _tablature_measure_divider(_tablature_item):
     def __init__(self):
         super().__init__()
-        self.width = 10
+        self.width = TRACK_MEASURE_DIVIDOR_WIDTH
         
 class _staff_item:
     max_lines_above = 6
@@ -57,7 +61,7 @@ class _staff_header(_staff_item):
 class _staff_measure_divider(_staff_item):
     def __init__(self):
         super().__init__()
-        self.width = 10
+        self.width = TRACK_MEASURE_DIVIDOR_WIDTH
          
 
 @singleton
