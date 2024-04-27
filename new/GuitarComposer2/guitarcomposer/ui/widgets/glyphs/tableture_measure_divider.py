@@ -2,7 +2,8 @@ from .measure_divider import measure_divider
 
 from guitarcomposer.ui.config import config
 
-class staff_measure_divider(measure_divider):
+class tableture_measure_divider(measure_divider):
     def __init__(self, linetype):
-        super().__init__(config().staff_item, linetype)   
+        super().__init__(config().tablature_measure_dividor, linetype)   
+
 

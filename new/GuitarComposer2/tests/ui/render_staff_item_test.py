@@ -7,6 +7,7 @@ from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QGridLayout, QPu
 from guitarcomposer.ui.widgets.glyphs.staff_item import staff_item
 from guitarcomposer.ui.widgets.glyphs.staff_header import staff_header
 from guitarcomposer.ui.widgets.glyphs.staff_measure_divider import staff_measure_divider
+from guitarcomposer.ui.widgets.glyphs.tableture_measure_divider import tableture_measure_divider
 from guitarcomposer.ui.widgets.glyphs.constants import *
 
 from guitarcomposer.common.durationtypes import *
@@ -33,6 +34,7 @@ class MyWindow(QMainWindow):
                [(SHARP_SIGN,90),(SHARP_SIGN,85)] ), 0, 0) 
 
         grid_layout.addWidget(staff_measure_divider(BARLINE2), 0, 1)
+        grid_layout.addWidget(tableture_measure_divider(BARLINE2), 1, 1)
 
 
         dtype = QUARTER

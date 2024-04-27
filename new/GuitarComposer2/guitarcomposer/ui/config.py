@@ -10,6 +10,20 @@ from singleton_decorator import singleton
 class _glyph:
     bg_color = Qt.GlobalColor.white
     
+class _tablature_item:
+    num_lines = 6
+    line_spacing = 16
+    text_font_size = 8
+    width = 50
+    height = 26 + (num_lines * line_spacing)
+    y_start = 26
+    text_font = "DejaVu Sans"
+
+class _tablature_measure_divider(_tablature_item):
+    def __init__(self):
+        super().__init__()
+        self.width = 10
+        
 class _staff_item:
     max_lines_above = 6
     max_lines_below = 6
@@ -51,6 +65,8 @@ class config:
     glyph = _glyph()
     staff_item = _staff_item()
     staff_header = _staff_header()
-    staff_measure_divider = _staff_measure_divider()    
+    staff_measure_divider = _staff_measure_divider()  
+    tablature_item = _tablature_item()
+    tablature_measure_dividor = _tablature_measure_divider()  
     
         
