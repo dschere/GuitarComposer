@@ -9,7 +9,7 @@ from guitarcomposer.common import durationtypes as DT
 from guitarcomposer.ui.config import config
 
 
-class tableture_item(glyph):
+class tablature_item(glyph):
     """
     
     gstring 1 (highest) 

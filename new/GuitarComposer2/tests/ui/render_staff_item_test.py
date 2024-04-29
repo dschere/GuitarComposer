@@ -7,11 +7,17 @@ from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QGridLayout, QPu
 from guitarcomposer.ui.widgets.glyphs.staff_item import staff_item
 from guitarcomposer.ui.widgets.glyphs.staff_header import staff_header
 from guitarcomposer.ui.widgets.glyphs.staff_measure_divider import staff_measure_divider
-from guitarcomposer.ui.widgets.glyphs.tableture_measure_divider import tableture_measure_divider
-from guitarcomposer.ui.widgets.glyphs.tableture_item import tableture_item
+from guitarcomposer.ui.widgets.glyphs.tablature_measure_divider import tablature_measure_divider
+from guitarcomposer.ui.widgets.glyphs.tablature_item import tablature_item
+from guitarcomposer.ui.widgets.glyphs.tablature_header import tablature_header
+from guitarcomposer.ui.widgets.glyphs.effect_item import effect_item
+
 from guitarcomposer.ui.widgets.glyphs.constants import *
 
 from guitarcomposer.common.durationtypes import *
+
+
+standard_tuning = ["E5","B4","G4","D4","A3","E3"]
 
 class MyWindow(QMainWindow):
     def __init__(self):
@@ -33,9 +39,10 @@ class MyWindow(QMainWindow):
         grid_layout.addWidget(\
             staff_header(TREBLE_CLEFF, 120, (4,4), \
                [(SHARP_SIGN,90),(SHARP_SIGN,85)] ), 0, 0) 
+        grid_layout.addWidget(tablature_header(standard_tuning), 1, 0)
 
         grid_layout.addWidget(staff_measure_divider(BARLINE2), 0, 1)
-        grid_layout.addWidget(tableture_measure_divider(BARLINE2), 1, 1)
+        grid_layout.addWidget(tablature_measure_divider(BARLINE2), 1, 1)
 
 
         dtype = QUARTER
@@ -44,7 +51,10 @@ class MyWindow(QMainWindow):
         grid_layout.addWidget(\
             staff_item(midi_codes, dtype, accent, TREBLE_CLEFF), 0, 2)
         grid_layout.addWidget(\
-            tableture_item([(14,0)], 5), 1, 2)
+            tablature_item([(14,0)], 5), 1, 2)
+        grid_layout.addWidget(\
+            effect_item(), 2, 2)
+            
 
         dtype = HALF
         accent = SHARP_SIGN

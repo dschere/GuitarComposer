@@ -58,11 +58,25 @@ class _staff_header(_staff_item):
         self.keyid_notes_x_inc = 15
         self.width = 300
         
+class _tableture_header(_tablature_item):
+    def __init__(self):
+        super().__init__()
+        self.width = 300
+        self.combo_width = 50
+        self.combo_height = 16
+    
+        
 class _staff_measure_divider(_staff_item):
     def __init__(self):
         super().__init__()
         self.width = TRACK_MEASURE_DIVIDOR_WIDTH
          
+class _effect_item:
+    def __init__(self):
+        self.width = 50
+        self.height = 64       
+        self.rect_height = 16
+        self.rect_width = 16
 
 @singleton
 class config:
@@ -72,5 +86,5 @@ class config:
     staff_measure_divider = _staff_measure_divider()  
     tablature_item = _tablature_item()
     tablature_measure_dividor = _tablature_measure_divider()  
-    
-        
+    tableture_header = _tableture_header()
+    effect_item = _effect_item()    
