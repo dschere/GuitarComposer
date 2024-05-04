@@ -37,8 +37,26 @@ class tablature_item(glyph):
         
         for (fret, idx) in tabNotes:
             self.gstring_table[idx] = fret
-            
-        
+       
+        self._control = None 
+              
+    def set_controller(self, control):
+        self._control = control
+        self.setFocus() 
+
+    def remove_controller(self):
+        self._control = None
+        self.clearFocus() 
+                    
+    def keyPressEvent(self, event):
+        if self._control:
+            self._control.keyPressEvent(event)
+  
+    def mousePressEvent(self, event):    
+        if self._control:
+            self._control.mousePressEvent(event)
+    
+                    
     def canvas_paint_event(self, painter):
         # draw tab lines for each string
         self.parallel_lines(painter, self.config)

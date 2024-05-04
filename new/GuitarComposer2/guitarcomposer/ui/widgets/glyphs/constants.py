@@ -1,12 +1,24 @@
-NOTE_HEAD = "𝅘 "
+
+
 WHOLE_NOTE = "𝅝 "
 HALF_NOTE = "𝅗𝅥 "
 QUATER_NOTE = "𝅘𝅥 "
-EIGHT_NOTE = "𝅘𝅥𝅮 "
+EIGTH_NOTE = "𝅘𝅥𝅮 "
 SIXTEENTH_NOTE = "𝅘𝅥𝅯 "
 THRITYSEC_NOTE = "𝅘𝅥𝅰 "
 SIXTYFORTH_NOTE = "𝅘𝅥𝅱 "
 FLAT_SIGN = "♭ "
+
+WHOLE_REST = "𝄻 "
+HALF_REST = "𝄼 "
+QUATER_REST = "𝄽 "
+EIGHTH_REST = "𝄾 "
+SIXTEENTH_REST = "𝄿 "
+THRITYSEC_REST = "𝅀 "
+SIXTYFORTH_REST = "𝅁 "
+
+
+NOTE_HEAD = "𝅘 "
 NATURAL_SIGN = "♮ "
 SHARP_SIGN = "♯ "
 
@@ -20,13 +32,6 @@ DRUM_CLEFF = "𝄥 "
 BASS_CLEFF = "𝄢 "
 TENOR_CLEFF= "𝄡 "
 
-WHOLE_REST = "𝄻 "
-HALF_REST = "𝄼 "
-QUATER_REST = "𝄽 "
-EIGHTH_REST = "𝄾 "
-SIXTEENTH_REST = "𝄿 "
-THRITYSEC_REST = "𝅀 "
-SIXTYFORTH_REST = "𝅁 "
 
 GHOST_NOTEHEAD = "𝅃 "
 

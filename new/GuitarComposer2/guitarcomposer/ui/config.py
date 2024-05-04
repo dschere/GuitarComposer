@@ -78,6 +78,21 @@ class _effect_item:
         self.rect_height = 16
         self.rect_width = 16
 
+class _score_editor:
+    def __init__(self):
+        self.width = 1280 
+        self.height = 1024
+        
+class _note_picker:
+    def __init__(self):
+        self.max_buttons_per_column = 8
+        self.size = 32
+        self.hover_size = 48
+        self.hover_font_size_change = True
+        self.title = None
+        
+        
+
 @singleton
 class config:
     glyph = _glyph()
@@ -88,3 +103,6 @@ class config:
     tablature_measure_dividor = _tablature_measure_divider()  
     tableture_header = _tableture_header()
     effect_item = _effect_item()    
+    
+    note_picker = _note_picker()
+

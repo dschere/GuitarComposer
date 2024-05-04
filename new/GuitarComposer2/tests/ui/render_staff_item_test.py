@@ -20,6 +20,8 @@ from guitarcomposer.common.durationtypes import *
 standard_tuning = ["E5","B4","G4","D4","A3","E3"]
 
 class MyWindow(QMainWindow):
+
+     
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Grid Layout Example")
