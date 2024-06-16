@@ -87,12 +87,16 @@ class _note_picker:
     def __init__(self):
         self.max_buttons_per_column = 8
         self.size = 32
-        self.hover_size = 48
+        self.hover_size = 36
         self.hover_font_size_change = True
         self.title = None
         
+class _main_win:
+    x = 100
+    y = 100
+    width = 1280
+    height = 1024     
         
-
 @singleton
 class config:
     glyph = _glyph()
@@ -103,6 +107,6 @@ class config:
     tablature_measure_dividor = _tablature_measure_divider()  
     tableture_header = _tableture_header()
     effect_item = _effect_item()    
-    
     note_picker = _note_picker()
+    main_win = _main_win()
 

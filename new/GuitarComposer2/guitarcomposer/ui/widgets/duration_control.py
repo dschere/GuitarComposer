@@ -36,3 +36,4 @@ class duration_control(note_picker):
             title="NOTE/REST DURATION"
         )
 
+

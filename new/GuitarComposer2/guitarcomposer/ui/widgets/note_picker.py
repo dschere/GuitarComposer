@@ -1,7 +1,7 @@
 import sys
-from PyQt6.QtWidgets import QApplication, QWidget, QHBoxLayout, QPushButton, QButtonGroup, QGridLayout
+from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QButtonGroup, QGridLayout, QLabel
 from PyQt6.QtGui import QPainter, QColor, QFontMetrics
-
+from PyQt6.QtCore import Qt
 
 from guitarcomposer.ui.config import config
 import copy
@@ -55,9 +55,9 @@ class note_picker(QWidget):
         painter.setFont(font)
 
         text_rect = painter.boundingRect(rect, 0, self.config.title)
-        text_x = int(rect.x() + (rect.width() - text_rect.width()) / 2)
-        text_y = int(rect.y() + 16)  # Adjust vertical position
-        painter.drawText(text_x, text_y, self.config.title)
+        #text_x = int(rect.x() + (rect.width() - text_rect.width()) / 2)
+        #text_y = int(rect.y() + 16)  # Adjust vertical position
+        #painter.drawText(text_x, text_y, self.config.title)
         
     def set_css(self, button):
         if self.config.hover_font_size_change:
@@ -72,16 +72,25 @@ class note_picker(QWidget):
         
 
     def setupUI(self):
+        outer_layout = QVBoxLayout()
+        if self.config.title:
+            title = QLabel(self.config.title)
+            title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            outer_layout.addWidget(title)
+            outer_layout.setSpacing(0)
+        
         layout = QGridLayout()
         layout.setSpacing(0)
         layout.setHorizontalSpacing(-1)  # Set horizontal spacing to zero
         layout.setVerticalSpacing(-1) 
         
-
         button_group = QButtonGroup(self)
         button_group.setExclusive(self.exclusive)  # Set exclusive selection
 
-        self.setLayout(layout)
+        outer_layout.addLayout(layout)
+
+        self.setLayout(outer_layout)
+
 
         for (i,info) in enumerate(self.button_info):
             
@@ -101,7 +110,7 @@ class note_picker(QWidget):
             button.leaveEvent = lambda event, btn=button: self.onButtonLeave(btn)
 
             column = i % self.config.max_buttons_per_column
-            row = int(i / self.config.max_buttons_per_column) 
+            row = int(i / self.config.max_buttons_per_column) + 1
             layout.addWidget(button, row, column)
             
 
@@ -110,6 +119,14 @@ class note_picker(QWidget):
             False: self.onButtonClicked_non_exclusive
         }[self.exclusive])  # Connect buttonClicked signal
         self.button_group = button_group
+
+        # compute the maximum width
+        max_width = \
+            (self.config.size * (self.config.max_buttons_per_column-1)) + \
+            self.config.hover_size + 10
+        self.setMaximumWidth(max_width)     
+            
+
         
     def select(self, text):
         for btn in self.button_group.buttons():
