@@ -1,0 +1,41 @@
+The editor models are presentations of a score on the screen. The
+models are used to generate a song model which is the actual representation
+of a peice of music. 
+
+The editor module is concerned with where things are on the screen 
+and how to render them. There is a linear coordinate system based
+on beats being a left<-->right dimension. The beat unit determines
+which measure a note/rest is in and at what position. Repeats are
+markers and do not influence the beat value.
+
+repeats and measures are used strictly during playing of a score.
+the beat value is the number of beats from the first note.
+
+
+concepts:
+
+moment - the total beats from the start of the song
+measure - using the timesig events this is computed value to
+          trigger a end of measure visual on the screen.
+          notes can span measures.
+ 
+ rest - a note without a key and only duration indicating an idle 
+        instrument state.
+        
+ 
+ 
+ example of a moments event queue
+ 
+     + ----> key, timesig, tempo
+     + ----> note 
+     + ----> rest
+     + ----> start repeat 
+     + ----> notes/rest
+     + ----> end repeat
+     + ----> new timesig
+     + ----> note/rest ...
+     
+as moments are enqueued or inserted at various positions in the array.             
+
+
+        

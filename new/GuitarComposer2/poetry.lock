@@ -169,7 +169,17 @@ files = [
     {file = "six-1.16.0.tar.gz", hash = "sha256:1e61c37477a1626458e36f7b1d82aa5c9b094fa4802892072e49de9c60c4c926"},
 ]
 
+[[package]]
+name = "subpub"
+version = "1.0.0"
+description = "Minimalistic, thread-safe, publish-subscribe API for Python"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "subpub-1.0.0.tar.gz", hash = "sha256:51cbb088e3d800b9684651e39da87e7586adb2a38aed9d61dc81182de01fedde"},
+]
+
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "8a1c1194588d9d78c801e0db683e26dacbfe40b6cb53145a630819051cfbad7c"
+content-hash = "475bed2651e7792d89f726bdf0add657ce1a1bcd25cf3255214dee2ae312ba33"

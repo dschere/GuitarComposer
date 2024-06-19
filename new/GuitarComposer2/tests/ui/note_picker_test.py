@@ -17,7 +17,7 @@ class MyWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("note picker mockup")
-        self.setGeometry(100, 100, 600, 200)
+        #self.setGeometry(100, 100, 600, 200)
 
         central_widget = QWidget()  # Central widget to hold the layout
         self.setCentralWidget(central_widget)
