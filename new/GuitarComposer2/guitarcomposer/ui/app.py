@@ -14,6 +14,8 @@ from guitarcomposer.ui.localization import _
 from guitarcomposer.ui.widgets.main_left_pane import main_left_pane
 
 
+from guitarcomposer.ui.editor.view.score import score
+
 class MainWindow(QMainWindow):
     
     
@@ -49,7 +51,7 @@ class MainWindow(QMainWindow):
 
         # Create the scrolling canvas
         self.editor_tabs = main_left_pane()
-        self.editor_tabs.add_new_tab("<song name>", QLabel("score editor goes here"))
+        self.editor_tabs.add_new_tab("<song name>", score())
         splitter.addWidget(self.editor_tabs)
         
         # Add the tree widget and scrolling canvas to the horizontal layout

@@ -15,13 +15,15 @@ from guitarcomposer.ui.widgets.glyphs.constants import *
 
 from guitarcomposer.ui.widgets.glyphs.constants import QUATER_REST
 from guitarcomposer.common import dynamic as dyn
-from guitarcomposer.ui.editor.controllers.note_duration_controller import note_duration_controller
 
+from guitarcomposer.common.event_subsys import EventSubSys, DYNAMIC_SELECTED, NOTE_SELECTED
 
 
 class note_duration_controls(QWidget):
-    def __init__(self, controller: note_duration_controller):
+    def __init__(self):
         super().__init__()
+        self.setMaximumHeight(150)
+        self.setMaximumWidth(475)
         
         grid_layout = QGridLayout()
         grid_layout.setSpacing(0)
@@ -30,25 +32,19 @@ class note_duration_controls(QWidget):
         self.setLayout(grid_layout)
 
 
-        dc = dynamic_control(controller.dynamic_selected)
+        dc = dynamic_control(self.on_dynamic_selected)
         grid_layout.addWidget(dc, 0, 0)
         dc.select(dyn.MF)
 
-        dur_ctl = duration_control(controller.note_selected)
+        dur_ctl = duration_control(self.on_note_selected)
         grid_layout.addWidget(dur_ctl, 0, 1)  
         dur_ctl.select(QUATER_REST)
         
-
-if __name__ == '__main__':
-    from PyQt6.QtWidgets import QApplication, QMainWindow
-    import sys
-    
-     
-     
-    app = QApplication(sys.argv)
-    c = note_duration_controller()
-    window = note_duration_controls(c)
-    window.show()
-    sys.exit(app.exec())
-
-
+    def on_dynamic_selected(self, dyn_text, dyn_value):
+        EventSubSys.publish(DYNAMIC_SELECTED, (dyn_text,dyn_value))
+        
+    def on_note_selected(self, selected):
+        EventSubSys.publish(NOTE_SELECTED, selected)
+        
+           
+        

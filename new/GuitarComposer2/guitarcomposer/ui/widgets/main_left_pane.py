@@ -12,6 +12,7 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt
 
+from guitarcomposer.common.event_subsys import EventSubSys, SONG_TAB_SELECTED
 
 class song_tab_widget(QTabWidget):
     def __init__(self):
@@ -21,6 +22,7 @@ class song_tab_widget(QTabWidget):
 
         self.tabCloseRequested.connect(self.close_tab)
         self.tabBarDoubleClicked.connect(self.edit_tab_title)
+        self.currentChanged.connect(self.on_tab_selected)
 
     def close_tab(self, index):
         if self.count() > 1:
@@ -32,6 +34,10 @@ class song_tab_widget(QTabWidget):
         if ok and new_title:
             self.setTabText(index, new_title)
 
+    def on_tab_selected(self, index):
+        current_title = self.tabText(index)
+        EventSubSys.publish(SONG_TAB_SELECTED, (current_title,index))
+        
 
 class main_left_pane(QWidget):
     def __init__(self):

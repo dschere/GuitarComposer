@@ -62,24 +62,37 @@ class event_subsys:
         atexit.register( self.cleanup )
 
     def subscribe(self, topic, callback):
+        """ Launch a deadicated worker thread to handle topics.
+            The topic can be a string or regular expression. 
+        """
         q = self.sp.subscribe(topic)
         worker = Worker(q, callback, self.workers)
         self.workers.add(worker)
         self.threadpool.start(worker)
+        return worker
         
+    def unsubscribe(self, worker):
+        "retire worker"
+        worker.q.put(Msg(None, None))
+        worker.finished.wait()
+        self.workers.remove(worker)
         
     def publish(self, topic, data):
+        "publish data to a topic"
         return self.sp.publish(topic, data)    
             
     def cleanup(self):
+        "retire all workers"
         self.threadpool.clear()
         while len(self.workers) > 0:
             worker = self.workers.pop()
             worker.q.put(Msg(None, None))
             worker.finished.wait()
+        self.workers = set()
         
+# ---- topics --------------------------------        
         
-# top menu
+# main menu bar topics.
 MAIN_MENU_NEW = "main_menu/File/New"
 MAIN_MENU_OPEN = "main_menu/File/Open"
 MAIN_MENU_EXIT = "main_menu/File/Exit"
@@ -87,9 +100,20 @@ MAIN_MENU_UNDO = "main_menu/Edit/Undo"
 MAIN_MENU_REDO = "main_menu/Edit/Redo"
 MAIN_MENU_COPY = "main_menu/Edit/Copy"
 MAIN_MENU_PASTE = "main_menu/Edit/Paste"
+
+# song tab selected
+SONG_TAB_SELECTED = "songtabselect"
+
+# keyboard events
+KEY_PRESS = "keypress"
+KEY_RELEASE = "keyrelease" 
+
+# note dynamic select
+DYNAMIC_SELECTED = "dynamic_selected"
+NOTE_SELECTED = "note_selected"
+
     
-    
-# unit test
+# unit test code
 if __name__ == '__main__':
     import sys, time
     from PyQt6.QtWidgets import QApplication, QMainWindow
@@ -99,16 +123,26 @@ if __name__ == '__main__':
     def handler(match, data, finished):
         print((match.string,data))
         #finished.set()
-        
+
+    w = EventSubSys.subscribe("bar2", lambda match,data,finished: finished.set())        
+    EventSubSys.subscribe("bar", lambda match,data,finished: finished.set())        
     EventSubSys.subscribe("foo", handler)
     time.sleep(1)
     EventSubSys.publish("foo", "this is a test")
+    EventSubSys.publish("bar", "another test")
     time.sleep(1)
+    assert len(EventSubSys.workers) ==  2
+    EventSubSys.unsubscribe(w)
+    assert len(EventSubSys.workers) ==  1
+    
+    EventSubSys.cleanup()
+    assert len(EventSubSys.workers) ==  0
+    
     window = QMainWindow()
     window.show()
     sys.exit(app.exec())
       
 
-
+# One and only global instance.
 EventSubSys = event_subsys()
 
