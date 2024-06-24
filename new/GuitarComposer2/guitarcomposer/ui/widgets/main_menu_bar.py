@@ -29,7 +29,7 @@ def main_menu_bar(mainwin: QMainWindow):
         def __init__(self, evt_name):
             self.evt_name = evt_name
         def __call__(self):
-            EventSubSys.publish(self.evt_name) 
+            EventSubSys.publish(self.evt_name, self.evt_name) 
     
     # file menu and sub menus
     for (mname, menu, subitem_names) in data:

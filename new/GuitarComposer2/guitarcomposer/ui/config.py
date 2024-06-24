@@ -10,6 +10,7 @@ from singleton_decorator import singleton
 TRACK_ITEM_WIDTH = 50
 TRACK_MEASURE_DIVIDOR_WIDTH = 10
 
+
 class _glyph:
     bg_color = Qt.GlobalColor.white
     
@@ -95,7 +96,8 @@ class _main_win:
     x = 100
     y = 100
     width = 1280
-    height = 1024     
+    height = 1024
+         
         
 @singleton
 class config:

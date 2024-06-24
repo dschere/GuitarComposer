@@ -21,6 +21,7 @@ SIXTYFORTH_REST = "𝅁 "
 NOTE_HEAD = "𝅘 "
 NATURAL_SIGN = "♮ "
 SHARP_SIGN = "♯ "
+FLAT_SIGN = u"\u266D"
 
 BARLINE1 = "𝄀 "
 BARLINE2 = "𝄁 "

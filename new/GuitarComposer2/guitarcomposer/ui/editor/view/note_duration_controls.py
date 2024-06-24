@@ -23,7 +23,7 @@ class note_duration_controls(QWidget):
     def __init__(self):
         super().__init__()
         self.setMaximumHeight(150)
-        self.setMaximumWidth(475)
+        self.setMaximumWidth(500)
         
         grid_layout = QGridLayout()
         grid_layout.setSpacing(0)

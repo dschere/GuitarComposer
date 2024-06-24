@@ -4,7 +4,7 @@ such as A#4 -> A# forth octave -> midi code and visa versa.
 """
 from singleton_decorator import singleton
 
-
+from guitarcomposer.ui.widgets.glyphs.constants import SHARP_SIGN, FLAT_SIGN
 
 @singleton
 class _midi_codes:
@@ -61,6 +61,33 @@ class _midi_codes:
                 
     def generic_names(self):
         return self.all_names
+        
+    def get_staff_accents(self, key_name):
+        a_map = {
+            '#': SHARP_SIGN,
+            'b': FLAT_SIGN
+        }
+        steps = [2,2,1,2,2,2,1] # major scale 
+        self.key_name = key_name
+        key_notes = []
+        
+        accent = '#'
+        if key_name in ("F","Bb","Eb","Ab"):
+            accent = "b"
+
+        name = key_name + "5"        
+        midi = self.midi_code( name )
+        
+        for step in steps:
+            print((name,midi))
+            if accent in name:
+                key_notes.append( (a_map[accent], midi) )
+            midi += step
+            if midi > 92:
+                midi -= 12
+            name = self.name(midi, accent)    
+
+        return key_notes
         
          
 midi_codes = _midi_codes()

@@ -13,11 +13,18 @@ from guitarcomposer.ui.localization import _
 
 from guitarcomposer.ui.widgets.main_left_pane import main_left_pane
 
-
 from guitarcomposer.ui.editor.view.score import score
+
+from guitarcomposer.ui.controller import controller
 
 class MainWindow(QMainWindow):
     
+
+    def add_song(self, song_name):
+        s = score()
+        self.editor_tabs.add_new_tab(song_name, s)
+        return s
+
     
     def __init__(self):
         super().__init__()
@@ -29,7 +36,6 @@ class MainWindow(QMainWindow):
         # Set up the main window
         self.setWindowTitle(_("Guitar Composer"))
         self.setGeometry(conf.main_win.x, conf.main_win.y, conf.main_win.width, conf.main_win.height)
-
 
         # Create the central widget and set the layout
         central_widget = QWidget()
@@ -51,7 +57,6 @@ class MainWindow(QMainWindow):
 
         # Create the scrolling canvas
         self.editor_tabs = main_left_pane()
-        self.editor_tabs.add_new_tab("<song name>", score())
         splitter.addWidget(self.editor_tabs)
         
         # Add the tree widget and scrolling canvas to the horizontal layout
@@ -62,6 +67,7 @@ class MainWindow(QMainWindow):
         left_size = int(total_width * 0.17)
         right_size = total_width - left_size
         splitter.setSizes([left_size, right_size])
+        
         
 
     def populate_tree(self):
@@ -84,7 +90,12 @@ class MainWindow(QMainWindow):
         
         
 if __name__ == "__main__":
+    main_controller = controller()
+    
     app = QApplication(sys.argv)
     window = MainWindow()
     window.showMaximized()
+    
+    main_controller.on_before_main_loop(window)
+    
     sys.exit(app.exec())
