@@ -38,7 +38,7 @@ class _staff_item:
     accent_font_size = 20
     chord_stem_x = 29
     text_font = "DejaVu Sans"
-    num_lines = 6
+    num_lines = 5
     width = 50
     font = "DejaVu Sans" # needed for music symbols 
     # computed ....

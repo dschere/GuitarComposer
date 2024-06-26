@@ -40,12 +40,19 @@ class editor_view(QWidget):
             tab_row = staff_row + 1
             eff_row = tab_row + 1
             
-            header = staff_header(t_model.cleff, \
+            s_header = staff_header(t_model.cleff, \
                 s_model.bpm, t_model.timesig, \
                     midi_codes.get_staff_accents(s_model.key) )
+                  
+            t_header = tablature_header( t_model.tuning )      
                     
             self.grid_layout.addWidget(\
-                header , staff_row, 0) 
+                s_header , staff_row, 0) 
+                
+            self.grid_layout.addWidget(\
+                t_header , tab_row, 0) 
+                
+            self.grid_layout.addWidget(effect_item(), eff_row, 0) 
                     
         
     def keyPressEvent(self, event: QKeyEvent):
