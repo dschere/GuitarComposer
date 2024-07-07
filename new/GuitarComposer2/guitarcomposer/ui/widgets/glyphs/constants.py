@@ -17,6 +17,7 @@ SIXTEENTH_REST = "𝄿 "
 THRITYSEC_REST = "𝅀 "
 SIXTYFORTH_REST = "𝅁 "
 
+DOT = u"\u00B7"
 
 NOTE_HEAD = "𝅘 "
 NATURAL_SIGN = "♮ "

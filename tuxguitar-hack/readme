@@ -1,0 +1,16 @@
+
+Rework the musicxml to export data so that our backend can play the song 
+rather than tuxguitar. This allows me to avoid having to write a music editor.
+
+Eventually I would like to but at least this allows me to create the back end
+and have it functional.
+
+Procedure:
+
+1. Write score using tuxguiatr
+2. export song as a musicxml file
+3. run my app to play the musicxml file.
+
+
+
+

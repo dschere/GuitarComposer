@@ -25,16 +25,20 @@ from guitarcomposer.common.midi_codes import midi_codes
 class editor_view(QWidget):    
     def __init__(self):
         super().__init__()
-        
+                
         self.grid_layout = QGridLayout()
         self.grid_layout.setSpacing(0)
         self.grid_layout.setHorizontalSpacing(0)  # Set horizontal spacing to zero
         self.grid_layout.setVerticalSpacing(0) 
         self.setLayout(self.grid_layout)
         
+                
+        
     def render_score(self, s_model):
         """ setup a previously created score in the editor.  
         """
+        
+        # draw track headers
         for (tnum,(track_name, t_model)) in enumerate(s_model.tracks.items()):
             staff_row = tnum * 3
             tab_row = staff_row + 1
@@ -46,14 +50,27 @@ class editor_view(QWidget):
                   
             t_header = tablature_header( t_model.tuning )      
                     
+            # draw the track headers
             self.grid_layout.addWidget(\
                 s_header , staff_row, 0) 
-                
             self.grid_layout.addWidget(\
                 t_header , tab_row, 0) 
-                
             self.grid_layout.addWidget(effect_item(), eff_row, 0) 
                     
+            # draw first measure dividor 
+            self.grid_layout.addWidget(\
+                staff_measure_divider(BARLINE2) , staff_row, 1) 
+            self.grid_layout.addWidget(\
+                tablature_measure_divider(BARLINE2), tab_row, 1)
+            
+            # go through each track event 
+            self.grid_layout.addWidget(\
+                staff_item(), staff_row, 2) 
+            self.grid_layout.addWidget(\
+                tablature_item(), tab_row, 2 )
+        
+        
+        
         
     def keyPressEvent(self, event: QKeyEvent):
         key = event.key()

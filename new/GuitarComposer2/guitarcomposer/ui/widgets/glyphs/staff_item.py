@@ -58,8 +58,15 @@ class chord_renderer:
             x2 = width - accent_spacing
             painter.drawLine(x1, y, x2, y)
 
+    def draw_rest(self, dtype):
+        nr = note_renderer(self.cleff)
+        nr.draw_rest(dtype)
+        
+        
     def draw(self, painter, conf, midi_codes, accent, dtype):
-        assert len(midi_codes) > 0
+        if len(midi_codes) == 0:
+            self.draw_rest(dtype)
+            return
 
         # arrange midi codes highest to lowest
         if len(midi_codes) > 1:

@@ -38,8 +38,11 @@ class note_renderer:
         flat_step_table[midi] = flat_offset - n_f
     
 
-    def __init__(self, cleff):
+    def __init__(self, cleff, dot_count=0, subbeat=None):
         self.cleff = cleff
+        self.dot_count = dot_count 
+        self.subbeat = None
+
 
     def get_note_head_text(self, dtype):
         return {
@@ -56,7 +59,19 @@ class note_renderer:
             DT.SIXTEENTH: SIXTEENTH_NOTE,
             DT.THIRTYSECOND: THRITYSEC_NOTE,
             DT.SIXTYFORTH: SIXTYFORTH_NOTE
-        }[dtype]
+        }[dtype] + (DOT * self.dot_count) 
+
+    def get_rest_text(self, dtype):
+        return {
+            DT.WHOLE: WHOLE_REST,
+            DT.HALF: HALF_REST,
+            DT.QUARTER: QUATER_REST,
+            DT.EIGHT: EIGHT_REST,
+            DT.SIXTEENTH: SIXTEENTH_REST,
+            DT.THIRTYSECOND: THRITYSEC_REST,
+            DT.SIXTYFORTH: SIXTYFORTH_REST
+        }[dtype] + (DOT * self.dot_count)
+        
 
     def get_y_coord(self, midi_code, conf, accent):
         #global sharp_step_table, flat_step_table
@@ -95,6 +110,15 @@ class note_renderer:
             # draw a sharp or flat sign next to the note head
             painter.drawText(x, y+10, accent)
 
+    def draw_rest(self, painter, conf, dtype):
+        y = self.get_y_coord(91, conf, SHARP_SIGN)
+        x = conf.accent_spacing
+        text = self.get_rest_text(dtype)
+        size = conf.line_spacing
+        font = QtGui.QFont(text_font, text_font_size)
+        painter.setFont(font)
+        painter.drawText(x,y,text)
+        
 
     def draw_note(self, painter, conf, midi_code, accent, dtype):
         # Note: accent is used because we need to know if we are
@@ -122,7 +146,7 @@ class note_renderer:
             font = QtGui.QFont(text_font, text_font_size)
             painter.setFont(font)
 
-        text = self.get_tail_note_text(dtype)
+        text = self.get_tail_note_text(dtype, dot_count)
         painter.drawText(accent_spacing, y, text)
 
 
