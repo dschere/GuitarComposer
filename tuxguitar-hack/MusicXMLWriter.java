@@ -267,6 +267,9 @@ public class MusicXMLWriter {
 			Node stringNode = this.addNode(staffDetailsNode, "staff-tuning");
 			this.addAttribute(stringNode, "line", Integer.toString( (track.stringCount() - string.getNumber()) + 1 ) );
 			this.addAttribute(stringNode, "string", Integer.toString( string.getNumber() ));
+            this.addAttribute(stringNode, "midiCode", Integer.toString(string.getValue()));
+			
+
 			this.writeNote(stringNode, "tuning-", string.getValue(), keySignature);
 		}
 	}
