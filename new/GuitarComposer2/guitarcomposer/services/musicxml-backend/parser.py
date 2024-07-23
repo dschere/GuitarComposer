@@ -5,6 +5,8 @@ from guitarcomposer.model.instrument import instrument
 from guitarcomposer.model.track import track as track_model
 import  guitarcomposer.model.track_events as tevt
 
+from guitarcomposer.services.player.track_player import player
+
 
 
 def getBpm(m):
@@ -151,8 +153,8 @@ class MusicXmlParser:
         result = []
         repeat_stack = []
     
-        for (i,m) in enumerate(measures):
-            
+
+        for (i,m) in enumerate(measures):            
             barline_node = m.find('barline')
             if barline_node:
                 repeat_nodes = barline_node.findall('repeat')
@@ -192,8 +194,13 @@ class MusicXmlParser:
         elapsed = 0.0
         bpm = getBpm(mnodes[0])
         divisions = float(mnodes[0].find('attributes').find('divisions').text)
-        
-        for c in mnodes[0]:
+
+        clist = []
+        for i in range(0,len(mnodes)):
+            for c in mnodes[i]:
+                clist.append(c)
+
+        for c in clist:
             marker_dup = set() 
             if c.tag == 'tablature':
                 for e in c:
@@ -214,6 +221,8 @@ class MusicXmlParser:
                         te.time_pos = elapsed
                         elapsed += te.duration
                         te_list.append(te) 
+
+
 
         return te_list 
 
@@ -251,7 +260,12 @@ if __name__ == '__main__':
     filename = sys.argv[1]
 
     tracks = MusicXmlParser().parse(filename)
+    p = player()
+    p.play(tracks)
+
+    """
     for (tid,track) in tracks.items():
-        print((tid,vars(track.ins)))
+        print("There are %d track events" % len(track.events))
         for te in track.events:
-            print((te.time_pos,type(te),vars(te)))
+            print((te.time_pos,type(te)))
+    """

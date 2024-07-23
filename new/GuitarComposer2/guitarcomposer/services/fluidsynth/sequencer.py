@@ -18,7 +18,7 @@ class track_sequence:
     def __init__(self, s):
         self.s = s
 
-        self.legatto = False
+        self.lagato = False
         self.staccato = False
     
     def _add_note(self, te, fs_interface):
@@ -43,6 +43,7 @@ class track_sequence:
                 _note_weighting = 0.7
                 _muted = 0.0
 
+        # schedule note on
         se_noteon = sequence_entry(
             fs_interface.noteon, 
             te.fret, te.g_string, te.dynamic,
@@ -50,6 +51,7 @@ class track_sequence:
         )
         self.s.enter(te.time_pos, 1, se_noteon)
         
+        # schedule pitch bends
         # te.bend = {} # decimal percentage of n.duration -> pitch bend in steps  
         if te.bend:
             for dur_perentage, value in te.bend.items():
@@ -60,13 +62,54 @@ class track_sequence:
                     te.g_string, value
                 ))
 
+        # schedule a noteoff 
         se_noteof = sequence_entry(fs_interface.noteoff, te.fret, te.g_string)
         if self.stacatto:
             self.s.enter(te.time_pos + (te.duration/2), 1, se_noteof)
-        elif self.legatto:    
-            pass
+        elif self.lagato:    
+            pass # do not schedule a noteoff
         else:
             self.s.enter(te.time_pos + te.duration, 1, se_noteof)
+
+    def _add_chord(self, te, fs_interface):
+        """
+        Play a chord. 
+        """
+        if te.stroke_duration:
+            n_indexes = list(range(0,len(te.notes)))
+            if te.stroke == "up":
+                n_indexes.reverse()
+            first_note = True
+
+            for i in n_indexes:
+                note = te.notes[i]
+                t = te.time_pos + ((float(i)/len(n_indexes)) * te.stroke_duration)
+                d = note.dynamic
+                if first_note and d < 117:
+                    first_note = False
+                    d += 10
+                se_noteon = sequence_entry(
+                    fs_interface.noteon, note.fret, note.g_string, note.dynamic)
+                self.s.enter(t, 1, se_noteon)
+        else:
+            for note in te.notes:
+                se_noteon = sequence_entry(
+                    fs_interface.noteon, note.fret, note.g_string, note.dynamic)
+                self.s.enter(te.time_pos, 1, se_noteon)
+
+        if te.stroke_duration > te.duration:
+            t = te.time_pos + te.stroke_duration
+        else:    
+            t = te.time_pos + te.duration 
+        if self.stacatto:
+            t = te.time_pos + (te.duration/2)
+        elif self.lagato:
+            t = -1
+        if t != -1:
+            for note in te.notes:
+                se_noteoff = sequence_entry(
+                    fs_interface.noteoff, note.fret, note.g_string)
+                self.s.enter(t, 1, se_noteoff)
 
 
     def add(self, te, fs_interface):
@@ -76,14 +119,12 @@ class track_sequence:
         """
         name = te.__class__.__name__
         if name == 'command':
-            self.legatto = te.legatto
+            self.lagato = te.lagato
             self.stacatto = te.stacatto
         elif name == 'note':
-            self._add_note(self, te, fs_interface)
+            self._add_note(te, fs_interface)
         elif name == 'chord':
-            # create a noteoff for any active string
-            # play based on stroke and duration
-            pass
+            self._add_chord(te, fs_interface)
         
 
 class sequencer:
@@ -95,5 +136,5 @@ class sequencer:
 
     def process(self, track, fs_interface):
         ts = track_sequence(self.sched)
-        for te in track.event:
+        for te in track.events:
             ts.add(te, fs_interface)

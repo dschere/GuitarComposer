@@ -1,9 +1,8 @@
 from guitarcomposer.services.fluidsynth.api import fs_api_interface, api
 
-import singleton_decorator
+from singleton_decorator import singleton
 
-
-@singleton_decorator
+@singleton
 class fs_default_api:
     """ multi instrument soundfont  
     """

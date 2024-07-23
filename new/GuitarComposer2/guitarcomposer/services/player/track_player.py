@@ -20,7 +20,7 @@ from guitarcomposer.services.fluidsynth.sequencer import sequencer
 
 
 class player:
-    def __init__(self, track_models):
+    def __init__(self):
         self.fluidsynth_workers = {}
         # sparce matrix <time> -> list of events
         self.sequencer = sequencer()
