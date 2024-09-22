@@ -8,10 +8,11 @@
 #include "gcsynth.h"
 
 static PyObject *GcsynthException = NULL;
+static struct gcsynth GcSynth;
 
 // decoding routines
 static void gcsynth_start_args_init(
-    struct gcsynth_start_args* args, 
+    struct gcsynth_start_cfg* args, 
     PyObject* input_dict,
     char* errmsg
 );
@@ -30,7 +31,7 @@ void gcsynth_raise_exception(char* errmsg) {
 static PyObject* py_gcsynth_start(PyObject* self, PyObject* args) {
     PyObject* input_dict;
     char errmsg[ERRMSG_SIZE];
-    struct gcsynth_start_args cfg = { .num_sfpaths = 0 };
+    struct gcsynth_start_cfg cfg = { .num_sfpaths = 0 };
     int i;
 
     // Parse the Python dictionary from the argument
@@ -65,7 +66,7 @@ static PyObject* py_gcsynth_start(PyObject* self, PyObject* args) {
 
 
 static void gcsynth_start_args_init(
-    struct gcsynth_start_args* args, 
+    struct gcsynth_start_cfg* cfg, 
     PyObject* input_dict,
     char* errmsg
 )
@@ -73,17 +74,16 @@ static void gcsynth_start_args_init(
     int i;
 
     // are we running in test mode?
-    args->test = (PyDict_GetItemString(input_dict, "test") != NULL); 
-
+    cfg->test = (PyDict_GetItemString(input_dict, "test") != NULL); 
 
     PyObject* py_list = PyDict_GetItemString(input_dict, "sfpaths");
     if ((py_list != NULL) && PyList_Check(py_list)) {
 
         // Get the size of the list
-        args->num_sfpaths = (int) PyList_Size(py_list);
+        cfg->num_sfpaths = (int) PyList_Size(py_list);
 
         // Iterate over the list
-        for (i = 0; (i < args->num_sfpaths) && (i < MAX_SOUNDFONTS); i++) {
+        for (i = 0; (i < cfg->num_sfpaths) && (i < MAX_SOUNDFONTS); i++) {
             // Get the item at index `i` (as a PyObject*)
             PyObject* pyItem = PyList_GetItem(py_list, i);
 
@@ -92,7 +92,7 @@ static void gcsynth_start_args_init(
                 // Convert the Python string to a C string (UTF-8 encoded)
                 const char *spath = PyUnicode_AsUTF8(pyItem);
                 if (spath != NULL) {
-                    args->sfpaths[i] = strdup(spath);
+                    cfg->sfpaths[i] = strdup(spath);
                 } else {
                     sprintf(errmsg,"start() command sfpaths[%d] PyUnicode_AsUTF8 failed", i);    
                 }

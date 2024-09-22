@@ -1,16 +1,33 @@
 from setuptools import setup, Extension
 import os
+import subprocess
 
 current_module_path = os.sep.join(os.path.abspath(__file__).split(os.sep)[:-1])
 BASE_DIR=current_module_path+"/../../.."
 
+PACKAGES = "glib-2.0"
+
+_include_dirs = ['.',f'{BASE_DIR}/include']
+_libraries    = ['fluidsynth']
+_library_dirs = [f'{BASE_DIR}/lib64']
+
+glib_include = subprocess.getoutput(f"pkg-config --cflags-only-I {PACKAGES}").split()
+glib_libs = subprocess.getoutput(f"pkg-config --libs {PACKAGES}").split()
+
+# pkg-config libs/inculdes
+_include_dirs += [path[2:] for path in glib_include]  # Removing '-I' prefix
+_libraries    += [lib[2:] for lib in glib_libs if lib.startswith('-l')]  # Removing '-l' prefix
+_library_dirs += [lib[2:] for lib in glib_libs if lib.startswith('-L')]  # Removing '-L' prefix
+
+
+
 # Define the extension module with the extra include and library directories
 gcsynth_module = Extension(
     'gcsynth',
-    sources=['gcsynth.c','voice_data_router.c'],
-    include_dirs=['.',f'{BASE_DIR}/include'],  # Include path
-    library_dirs=[f'{BASE_DIR}/lib64'],     # Library path
-    libraries=['fluidsynth'],                                   # Link against fluidsynth
+    sources=['gcsynth.c','voice_data_router.c','gcsynth_start.c','gcsynth_stop.c'],
+    include_dirs=_include_dirs,  # Include path
+    library_dirs=_library_dirs,  # Library path
+    libraries   =_libraries,     # Link against packages
 )
 
 # Setup the module

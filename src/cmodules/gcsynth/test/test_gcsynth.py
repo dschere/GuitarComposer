@@ -20,6 +20,7 @@ class TestGcSynth(unittest.TestCase):
         success = False
         try:
             gcsynth.start(fake_data)
+            
         except gcsynth.GcsynthException:
             print("success error caught")   
             success = True
