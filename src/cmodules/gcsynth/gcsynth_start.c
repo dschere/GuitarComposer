@@ -3,11 +3,13 @@
 
 #include "gcsynth.h"
 
-void gcsynth_start(struct gcsynth* gcSynth, struct gcsynth_start_cfg* cfg)
+void gcsynth_start(struct gcsynth* gcSynth)
 {
 #define RAISE(errmsg) { gcsynth_raise_exception(errmsg); gcsynth_stop(gcSynth); return; }   
     int i;
     char errmsg[4096];
+    int r;
+    struct gcsynth_cfg* cfg = &gcSynth->cfg;
 
     // check for existance of soundfont files 
     for(i = 0; i < cfg->num_sfpaths; i++) {
@@ -23,7 +25,15 @@ void gcsynth_start(struct gcsynth* gcSynth, struct gcsynth_start_cfg* cfg)
 
     if ((gcSynth->settings = new_fluid_settings()) != NULL) {
         // use alsa for output
-        fluid_settings_setstr(gcSynth->settings, "audio.driver", "alsa");
+        r = fluid_settings_setstr(gcSynth->settings, "audio.driver", "alsa");
+        if (r != FLUID_OK) RAISE("fluid_settings_setstr: Unable to set audio.driver");
+
+        r = fluid_settings_setint(gcSynth->settings,"synth.midi-channels", cfg->num_midi_channels);
+        if (r != FLUID_OK) {
+            sprintf(errmsg,"fluid_settings_setnum: Unable to set synth.midi-channels to %d", cfg->num_midi_channels);
+            RAISE(errmsg);
+        }
+        
         if ((gcSynth->synth = new_fluid_synth(gcSynth->settings)) != NULL) {
             // load sound fonts into synthesizer
             for(i = 0; i < cfg->num_sfpaths; i++) {

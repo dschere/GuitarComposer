@@ -12,7 +12,7 @@ static struct gcsynth GcSynth;
 
 // decoding routines
 static void gcsynth_start_args_init(
-    struct gcsynth_start_cfg* args, 
+    struct gcsynth_cfg* args, 
     PyObject* input_dict,
     char* errmsg
 );
@@ -27,12 +27,20 @@ void gcsynth_raise_exception(char* errmsg) {
     }
 }
 
+
+static PyObject* py_gcsynth_stop(PyObject* self, PyObject* args) {
+    gcsynth_stop(&GcSynth);
+    Py_RETURN_NONE;
+}
+
 // Function to handle Python dictionary input
 static PyObject* py_gcsynth_start(PyObject* self, PyObject* args) {
     PyObject* input_dict;
     char errmsg[ERRMSG_SIZE];
-    struct gcsynth_start_cfg cfg = { .num_sfpaths = 0 };
     int i;
+
+    GcSynth.cfg.num_sfpaths = 0;
+    GcSynth.cfg.num_midi_channels = NUM_CHANNELS; 
 
     // Parse the Python dictionary from the argument
     if (!PyArg_ParseTuple(args, "O!", &PyDict_Type, &input_dict)) {
@@ -40,33 +48,48 @@ static PyObject* py_gcsynth_start(PyObject* self, PyObject* args) {
     }
 
     errmsg[0] = '\0';
-    gcsynth_start_args_init(&cfg, input_dict, errmsg);
+    gcsynth_start_args_init(&GcSynth.cfg, input_dict, errmsg);
     if (errmsg[0]) {
         gcsynth_raise_exception(errmsg);
         return NULL;
     }
 
-    // call gcsynth_start(&cfg)
-    
 
-    if (cfg.test) {
-        printf("num_sfpaths = %d\n",cfg.num_sfpaths);
-        for(i = 0; i < cfg.num_sfpaths; i++) {
-            printf("   cfg.sfpaths[%d] = %s\n",i, cfg.sfpaths[i]);
+    if (GcSynth.cfg.test) {
+        printf("num_sfpaths = %d\n",GcSynth.cfg.num_sfpaths);
+        for(i = 0; i < GcSynth.cfg.num_sfpaths; i++) {
+            printf("   cfg.sfpaths[%d] = %s\n",i, GcSynth.cfg.sfpaths[i]);
         }
+    } else {
+        // not a test 
+        gcsynth_start(&GcSynth);
     }
 
     // cleanup
-    for(i = 0; i < cfg.num_sfpaths; i++) {
-        free(cfg.sfpaths[i]);
+    for(i = 0; i < GcSynth.cfg.num_sfpaths; i++) {
+        free(GcSynth.cfg.sfpaths[i]);
     }
 
     Py_RETURN_NONE; // Return None to Python
 }
 
 
+
+
+
+static long PyDict_GetItemLong(PyObject* dict, char* key, int defval)
+{
+    PyObject* item = PyDict_GetItemString(dict,key);
+    long result = defval;
+    if (item && PyLong_Check(item)) {
+        result = PyLong_AsLong(item);
+    }
+    return result;
+}
+
+
 static void gcsynth_start_args_init(
-    struct gcsynth_start_cfg* cfg, 
+    struct gcsynth_cfg* cfg, 
     PyObject* input_dict,
     char* errmsg
 )
@@ -75,6 +98,7 @@ static void gcsynth_start_args_init(
 
     // are we running in test mode?
     cfg->test = (PyDict_GetItemString(input_dict, "test") != NULL); 
+    cfg->num_midi_channels = (int) PyDict_GetItemLong(input_dict,"num_channels",NUM_CHANNELS);
 
     PyObject* py_list = PyDict_GetItemString(input_dict, "sfpaths");
     if ((py_list != NULL) && PyList_Check(py_list)) {
@@ -119,6 +143,7 @@ static void gcsynth_start_args_init(
 
 // Define the methods of the module
 static PyMethodDef GCSynthMethods[] = {
+    {"stop", py_gcsynth_stop, METH_NOARGS, "Stop synth."},
     {"start", py_gcsynth_start, METH_VARARGS, "Start the gcsynth."},
     {NULL, NULL, 0, NULL}
 };

@@ -16,4 +16,7 @@ void gcsynth_stop(struct gcsynth* gcSynth)
     {
         delete_fluid_settings(gcSynth->settings);
     }
+    gcSynth->adriver = NULL;
+    gcSynth->synth = NULL;
+    gcSynth->settings = NULL;
 }

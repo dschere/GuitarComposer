@@ -10,13 +10,24 @@
 #define MAX_SOUNDFONTS 255
 #define ERRMSG_SIZE 4096
 
-struct gcsynth_start_cfg {
+#define NUM_CHANNELS 32
+#define MAX_CHANNELS 64
+
+
+
+struct gcsynth_cfg {
     int test; // running in test only mode?
     int num_sfpaths;
     char* sfpaths[MAX_SOUNDFONTS]; // NULL sentinel value terminates list  
+    int num_midi_channels;
 };
 
-
+struct gsynth_channel {
+    int enabled;
+    GQueue* msgq; // update filter settings.
+    // filter chain  
+    GList* filter_chain;
+};
 
 struct gcsynth {
     fluid_synth_t*        synth;
@@ -24,15 +35,12 @@ struct gcsynth {
     fluid_audio_driver_t* adriver;
 
 
-    // interthread communication between python and fluidsynth 
-    GQueue* msgq; // needed to make audio effects filter changes 
-                  // while channels are being used for inflight
-                  // parameter changes.   
-
+    struct gcsynth_cfg cfg;
+    struct gsynth_channel afilter[MAX_CHANNELS]; 
     //PerChannelFxFuncType callback;
 };
 
-void gcsynth_start(struct gcsynth* gcSynth, struct gcsynth_start_cfg* cfg);
+void gcsynth_start(struct gcsynth* gcSynth);
 void gcsynth_stop(struct gcsynth* gcSynth);
 
 

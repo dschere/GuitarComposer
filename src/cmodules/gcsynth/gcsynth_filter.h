@@ -1,0 +1,73 @@
+#ifndef __GCSYNTH_FILTER_H
+#define __GCSYNTH_FILTER_H
+
+#include "gcsynth.h"
+
+#ifndef FLUID_BUFSIZE
+#define FLUID_BUFSIZE 64
+#endif
+
+#define MAX_LADSPA_CONTROLS 32
+
+//make this adjustable? although I've never seen the need
+#define SAMPLE_RATE 44100
+
+struct gcsynth_filter_control {
+    int isOutput;
+    const char* name;
+    LADSPA_Data value;
+    const LADSPA_PortRangeHint *port_range;
+};
+
+enum {
+    PORTMAP_LEFT,
+    PORTMAP_RIGHT,
+
+    NUM_IO_PORTMAPS
+};
+
+struct gcsynth_filter {
+    int enabled;
+
+    const LADSPA_Descriptor* desc;
+    LADSPA_Descriptor_Function descriptor_fn;
+    LADSPA_Handle* plugin_instance;
+
+    void* dl_handle;
+    unsigned long int frame_count;
+
+    int in_buf_count;
+    int out_buf_count;
+    LADSPA_Data in_data_buffer[NUM_IO_PORTMAPS][FLUID_BUFSIZE];
+    LADSPA_Data out_data_buffer[NUM_IO_PORTMAPS][FLUID_BUFSIZE];
+
+    int num_controls;
+    struct gcsynth_filter_control controls[MAX_LADSPA_CONTROLS];
+};
+
+
+
+// loads a filter using ladspa, perhaps in the future this will
+// be extended, on error NULL is returned and GcsynthException is raised.
+struct gcsynth_filter* gcsynth_filter_new_ladspa(const char* pathname, char* label);
+
+// free all resources, the memory itself is freed so 'gc_filter' is
+// no longer usable after this call. 
+void gcsynth_filter_destroy(struct gcsynth_filter* gc_filter);
+
+// sets the value of a control
+int gcsynth_filter_setbyname(struct gcsynth_filter* gc_filter, char* name, LADSPA_Data value);
+int gcsynth_filter_setbyindex(struct gcsynth_filter* gc_filter, int, LADSPA_Data value);
+
+// sends FLUID_BUFSIZE size to the filter and copies FLUID_BUFSIZE out from the
+// filter 
+int gcsynth_filter_run(struct gcsynth_filter* gc_filter, LADSPA_Data* in, LADSPA_Data* out);
+
+
+void gcsynth_enable(struct gcsynth_filter* gc_filter);
+void gcsynth_disable(struct gcsynth_filter* gc_filter);
+int  gcsynth_isEnabled(struct gcsynth_filter* gc_filter);
+
+
+
+#endif

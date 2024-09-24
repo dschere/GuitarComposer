@@ -20,11 +20,18 @@ _libraries    += [lib[2:] for lib in glib_libs if lib.startswith('-l')]  # Remov
 _library_dirs += [lib[2:] for lib in glib_libs if lib.startswith('-L')]  # Removing '-L' prefix
 
 
+CSOURCES = [
+    'gcsynth.c',
+    'voice_data_router.c',
+    'gcsynth_start.c',
+    'gcsynth_stop.c',
+    'gcsynth_filter.c'
+]
 
 # Define the extension module with the extra include and library directories
 gcsynth_module = Extension(
     'gcsynth',
-    sources=['gcsynth.c','voice_data_router.c','gcsynth_start.c','gcsynth_stop.c'],
+    sources=CSOURCES,
     include_dirs=_include_dirs,  # Include path
     library_dirs=_library_dirs,  # Library path
     libraries   =_libraries,     # Link against packages
