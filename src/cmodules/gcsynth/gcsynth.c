@@ -6,9 +6,13 @@
  */
 
 #include "gcsynth.h"
+#include "gcsynth_filter.h"
+#include "gcsynth_channel.h"
 
 static PyObject *GcsynthException = NULL;
 static struct gcsynth GcSynth;
+
+
 
 // decoding routines
 static void gcsynth_start_args_init(
@@ -26,6 +30,146 @@ void gcsynth_raise_exception(char* errmsg) {
         PyErr_SetString(GcsynthException, errmsg);
     }
 }
+
+
+static PyObject* py_filter_test(PyObject* self, PyObject* args) {
+    const char* filepath;
+    const char* plugin_name;
+    struct gcsynth_filter* filter = NULL;
+    int i;
+    int changed = 0;
+    int test_passed;
+
+    // Parse the Python tuple, expecting two strings and a dictionary
+    if (!PyArg_ParseTuple(args, "ss", &filepath, &plugin_name)) {
+        return NULL;  // Return NULL to indicate an error if the parsing failed
+    }
+
+    // load plugin
+    filter = gcsynth_filter_new_ladspa(filepath, (char*)plugin_name);
+    if (filter == NULL) {
+        return NULL;
+    }
+
+    // send a square wave in and verify that the wave out has changed. 
+    //TODO implement a better clever audio analysis probably run the
+    // the tests that the author who created the ladspa filter did.
+    if (filter->in_buf_count == 0) {
+        gcsynth_raise_exception("test requires a filter with an input!");
+        return NULL;
+    } 
+
+    for(i = 0; i < FLUID_BUFSIZE; i++) {
+        if ((i/8) % 2) {
+            filter->in_data_buffer[0][i] = 100.0;
+            filter->out_data_buffer[0][i] = 0.0;
+        } else {
+            filter->in_data_buffer[0][i] = 0;
+        }
+    }
+
+    // run filter
+    filter->desc->run(filter->plugin_instance, SAMPLE_RATE);
+
+    for(i = 0; (i < FLUID_BUFSIZE) && (changed == 0); i++) {
+        if ((i/8) % 2) {
+            float d = filter->out_data_buffer[0][i];
+            if ((d != 0.0) && (d != 100.0)) {
+                changed = 1;
+            }
+        } 
+    }    
+
+    // unload plugin
+    gcsynth_filter_destroy(filter);
+
+    test_passed = changed;    
+    return PyBool_FromLong(test_passed);
+}
+
+static PyObject* py_query_filter(PyObject* self, PyObject* args) {
+    const char* filepath;
+    const char* plugin_name;
+    PyObject* control_info_list = NULL;
+    struct gcsynth_filter* filter = NULL;
+    int i;
+
+    // Parse the Python tuple, expecting two strings and a dictionary
+    if (!PyArg_ParseTuple(args, "ss", &filepath, &plugin_name)) {
+        return NULL;  // Return NULL to indicate an error if the parsing failed
+    }
+
+    // load plugin
+    filter = gcsynth_filter_new_ladspa(filepath,(char*) plugin_name);
+    if (filter == NULL) {
+        return NULL;
+    }
+
+    // gather information for controls
+    control_info_list = PyList_New(filter->num_controls); 
+    for(i = 0; i < filter->num_controls; i++) {
+        struct gcsynth_filter_control* c = &filter->controls[i];
+        PyObject* item = PyDict_New();
+
+        PyDict_SetItemString(item,"c_index",PyLong_FromLong(i));
+
+        PyDict_SetItemString(item,
+            "has_default", PyBool_FromLong(c->has_default));
+        PyDict_SetItemString(item, 
+            "default_value",PyFloat_FromDouble((double) c->default_value));
+            
+        PyDict_SetItemString(item, 
+            "upper_bound", PyFloat_FromDouble((double)c->upper));
+        PyDict_SetItemString(item, 
+            "lower_bound", PyFloat_FromDouble((double)c->lower));
+
+        PyDict_SetItemString(item,
+            "name", PyUnicode_FromString(c->name));
+        PyDict_SetItemString(item,
+            "is_bounded_above", PyBool_FromLong(c->is_bounded_above));    
+        PyDict_SetItemString(item,
+            "is_bounded_below", PyBool_FromLong(c->is_bounded_below));
+        PyDict_SetItemString(item,
+            "is_integer", PyBool_FromLong(c->is_integer));
+        PyDict_SetItemString(item,
+            "is_logarithmic", PyBool_FromLong(c->is_logarithmic));
+        PyDict_SetItemString(item,
+            "is_toggled", PyBool_FromLong(c->is_toggled));
+      
+        PyList_SetItem(control_info_list, i, item); 
+    }
+
+    // unload plugin
+    gcsynth_filter_destroy(filter);
+
+    //return data
+    return control_info_list;
+}
+
+static PyObject* py_load_ladspa_filter(PyObject* self, PyObject* args) {
+    int channel;
+    const char* filepath;
+    const char* plugin_name;
+    PyObject* controls_dict;
+
+    // Parse the Python tuple, expecting two strings and a dictionary
+    if (!PyArg_ParseTuple(args, "iss|O!", &channel, &filepath, &plugin_name,
+        &PyDict_Type, &controls_dict)) {
+        return NULL;  // Return NULL to indicate an error if the parsing failed
+    }
+
+    if (channel < 0 || channel >= MAX_CHANNELS) {
+        gcsynth_raise_exception("channel must be between 0-64");
+        return NULL;
+    }
+
+    // setup controls values if present, these will initialize plugin
+     
+
+
+    Py_RETURN_NONE;
+}
+
 
 
 static PyObject* py_gcsynth_stop(PyObject* self, PyObject* args) {
@@ -145,6 +289,9 @@ static void gcsynth_start_args_init(
 static PyMethodDef GCSynthMethods[] = {
     {"stop", py_gcsynth_stop, METH_NOARGS, "Stop synth."},
     {"start", py_gcsynth_start, METH_VARARGS, "Start the gcsynth."},
+    {"add_filter",py_load_ladspa_filter, METH_VARARGS,"create a filter for a channel"},
+    {"query_filter",py_query_filter, METH_VARARGS,"py_query_filter(path,plugin_name)->[{info}]"},
+    {"test_filter",py_filter_test,METH_VARARGS,"test_filter(path,plugin_name)-> pass/fail test"},
     {NULL, NULL, 0, NULL}
 };
 

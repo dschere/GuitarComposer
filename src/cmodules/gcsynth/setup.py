@@ -22,10 +22,10 @@ _library_dirs += [lib[2:] for lib in glib_libs if lib.startswith('-L')]  # Remov
 
 CSOURCES = [
     'gcsynth.c',
-    'voice_data_router.c',
     'gcsynth_start.c',
     'gcsynth_stop.c',
-    'gcsynth_filter.c'
+    'gcsynth_filter.c',
+    'gcsynth_channel.c'
 ]
 
 # Define the extension module with the extra include and library directories
@@ -35,6 +35,8 @@ gcsynth_module = Extension(
     include_dirs=_include_dirs,  # Include path
     library_dirs=_library_dirs,  # Library path
     libraries   =_libraries,     # Link against packages
+    extra_compile_args=['-g2'],  # Add the -g2 flag for debug symbols
+    extra_link_args=['-g2']      # Ensure the linker also gets the debug symbols
 )
 
 # Setup the module

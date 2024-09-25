@@ -1,11 +1,11 @@
 #ifndef __GCSYNTH_H
 #define __GCSYNTH_H
 
-#include <glib.h>
-
 // I am using my modified fluidsynth
 #include "../../../include/fluidsynth.h"
 #include "ladspa.h"
+
+#include "gcsynth_channel.h"
 
 #define MAX_SOUNDFONTS 255
 #define ERRMSG_SIZE 4096
@@ -22,12 +22,7 @@ struct gcsynth_cfg {
     int num_midi_channels;
 };
 
-struct gsynth_channel {
-    int enabled;
-    GQueue* msgq; // update filter settings.
-    // filter chain  
-    GList* filter_chain;
-};
+
 
 struct gcsynth {
     fluid_synth_t*        synth;
@@ -36,7 +31,6 @@ struct gcsynth {
 
 
     struct gcsynth_cfg cfg;
-    struct gsynth_channel afilter[MAX_CHANNELS]; 
     //PerChannelFxFuncType callback;
 };
 
@@ -46,8 +40,6 @@ void gcsynth_stop(struct gcsynth* gcSynth);
 
 void gcsynth_raise_exception(char* text);
 
-
-void voice_data_router(void *userdata, int chan, double* buf, int len);
 
 
 /**

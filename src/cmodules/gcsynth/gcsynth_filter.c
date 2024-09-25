@@ -93,11 +93,24 @@ static void setup_ctl_value(struct gcsynth_filter* gc_filter,
 
     control->name = gc_filter->desc->PortNames[ctl];
     control->isOutput = 0;
+    control->has_default = 1;
     
+    control->lower = lower;
+    control->upper = upper;
+
+    control->is_bounded_above = LADSPA_IS_HINT_BOUNDED_ABOVE(h->HintDescriptor);
+    control->is_bounded_below = LADSPA_IS_HINT_BOUNDED_BELOW(h->HintDescriptor);
+    control->is_toggled = LADSPA_IS_HINT_TOGGLED(h->HintDescriptor);
+    control->is_logarithmic = LADSPA_IS_HINT_LOGARITHMIC(h->HintDescriptor);
+    control->is_integer = LADSPA_IS_HINT_INTEGER(h->HintDescriptor);
+
     if (LADSPA_IS_PORT_OUTPUT(pd)) {
         control->value = 0;
         control->isOutput = 1;
-    // otherwise it an input control port    
+        control->has_default = 0;
+    // otherwise it an input control port  
+    } else if (LADSPA_IS_HINT_HAS_DEFAULT(h->HintDescriptor)) {
+        control->has_default = 0;      
     } else if (LADSPA_IS_HINT_DEFAULT_MINIMUM(h->HintDescriptor)) {
         control->value = lower;
     } else if (LADSPA_IS_HINT_DEFAULT_MAXIMUM(h->HintDescriptor)) {
@@ -126,6 +139,11 @@ static void setup_ctl_value(struct gcsynth_filter* gc_filter,
         else
             control->value = lower * 0.25 + upper * 0.75;
     }
+
+    if (control->has_default) {
+        control->default_value = control->value;
+    }
+
 }
 
 static int ladspa_setup(struct gcsynth_filter* gc_filter, const char* path, char* label)

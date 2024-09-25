@@ -14,9 +14,20 @@
 
 struct gcsynth_filter_control {
     int isOutput;
+    int has_default;
+    LADSPA_Data default_value;
+
     const char* name;
-    LADSPA_Data value;
-    const LADSPA_PortRangeHint *port_range;
+    LADSPA_Data value; // memory shared with plugin
+
+    // characteristics of the value
+    int is_bounded_below;
+    int is_bounded_above;
+    int is_toggled;
+    int is_integer;
+    int is_logarithmic;
+
+    LADSPA_Data lower, upper;
 };
 
 enum {
