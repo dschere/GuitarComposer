@@ -19,15 +19,17 @@ struct gcsynth_filter* gcsynth_filter_new_ladspa(const char* pathname, char* lab
 
     if (gc_filter != NULL) {
         if (ladspa_setup(gc_filter,pathname, label) == -1) {
-            // exception already set, now clear memory/resources
+            // exception already set, now clear memory/resources which 
+            // may have been allocated.
             gcsynth_filter_destroy(gc_filter);
-            return NULL;
-        }
+            gc_filter = NULL;
+        } else {
+            gc_filter->frame_count = 0;
+        } 
     } else {
         gcsynth_raise_exception("gcsynth_filter_new_ladspa: calloc failed.");
     }
 
-    gc_filter->frame_count = 0;
     return gc_filter;    
 }
 
@@ -53,23 +55,106 @@ int gcsynth_filter_setbyindex(struct gcsynth_filter* gc_filter, int, LADSPA_Data
 
 // sends FLUID_BUFSIZE size to the filter and copies FLUID_BUFSIZE out from the
 // filter 
-int gcsynth_filter_run(struct gcsynth_filter* gc_filter, LADSPA_Data* in, LADSPA_Data* out)
+int gcsynth_filter_run(struct gcsynth_filter* gc_filter, LADSPA_Data* fc_buffer, int len)
 {
+    unsigned long int i;
+    int pd;
+    int in_buf_idx = 0;
+    int out_buf_idx = 0;
+    int ctl_buf_idx = 0;
+
+    if (gc_filter->enabled) {
+        
+        /*
+            Ladspa filters can be either stereo or mono. The voice_data_router gets called
+            once for left and once for right so in the case of stereo we   
+        */
+
+        // there are filters that just output (like wave generators)
+        // so in that case in_buf_count is 0 
+        if (gc_filter->in_buf_count > 0) {
+            // idx = gc_filter->frame_count % gc_filter->in_buf_count
+            // idx will be 0,1,0,1 ... for stereo
+            //     will be 0,0,0, ... for mono  
+            memcpy(                           //  either modulo 1 or 2
+                gc_filter->in_data_buffer[gc_filter->frame_count % gc_filter->in_buf_count],
+                fc_buffer,
+                len
+            );
+        }
+
+        // connect ports, which is required for each call to run() according to the docs
+        for(i = 0; i < gc_filter->desc->PortCount; i++) {
+            pd = gc_filter->desc->PortDescriptors[i];
+            if (LADSPA_IS_PORT_AUDIO(pd) && 
+                LADSPA_IS_PORT_INPUT(pd) &&
+                in_buf_idx < gc_filter->in_buf_count) 
+            {
+                gc_filter->desc->connect_port(
+                    gc_filter->plugin_instance,
+                    i,
+                    gc_filter->in_data_buffer[in_buf_idx++]
+                );    
+            }    
+            else if (
+                LADSPA_IS_PORT_AUDIO(pd) && 
+                LADSPA_IS_PORT_OUTPUT(pd) && 
+                out_buf_idx < gc_filter->out_buf_count)
+            {
+                gc_filter->desc->connect_port(
+                    gc_filter->plugin_instance,
+                    i,
+                    gc_filter->out_data_buffer[out_buf_idx++]
+                );
+            }
+            else if (LADSPA_IS_PORT_CONTROL(pd) && 
+                     ctl_buf_idx < gc_filter->num_controls) 
+            {
+                gc_filter->desc->connect_port(
+                    gc_filter->plugin_instance,
+                    i,
+                    gc_filter->out_data_buffer[ctl_buf_idx++]
+                );
+            }
+        } // end connect
+
+        // run the filter and populate the output buffer
+        gc_filter->desc->run(gc_filter->plugin_instance, len);
+
+        // output to fc_buffer from filter output
+        if (gc_filter->out_buf_count > 0) {
+            memcpy(
+                fc_buffer,
+                gc_filter->out_data_buffer[gc_filter->frame_count % gc_filter->out_buf_count],
+                len
+            );
+        }
+    }
+    
+    gc_filter->frame_count++;
+
     return 0;
 }
 
 
-void gcsynth_enable(struct gcsynth_filter* gc_filter)
+void gcsynth_filter_enable(struct gcsynth_filter* gc_filter)
 {
-    gc_filter->enabled = 1;
+    if ((gc_filter->enabled == 0) && gc_filter->desc->activate) {
+        gc_filter->desc->activate(gc_filter->plugin_instance);
+        gc_filter->enabled = 1;
+    }
 }
 
-void gcsynth_disable(struct gcsynth_filter* gc_filter)
+void gcsynth_filter_disable(struct gcsynth_filter* gc_filter)
 {
-    gc_filter->enabled = 0;
+    if ((gc_filter->enabled == 1) && gc_filter->desc->deactivate)
+    {
+        gc_filter->desc->deactivate(gc_filter->plugin_instance);
+        gc_filter->enabled = 0;
+    }
 }
 
-int  gcsynth_isEnabled(struct gcsynth_filter* gc_filter)
+int  gcsynth_filter_isEnabled(struct gcsynth_filter* gc_filter)
 {
     return gc_filter->enabled;
 }
@@ -78,8 +163,17 @@ int  gcsynth_isEnabled(struct gcsynth_filter* gc_filter)
 static void ladspa_deallocate(struct gcsynth_filter* gc_filter)
 {
     if (gc_filter->dl_handle) {
+        if (gc_filter->plugin_instance && gc_filter->desc) {
+            gcsynth_filter_disable(gc_filter);
+
+            if(gc_filter->desc->cleanup != NULL)
+            {
+                gc_filter->desc->cleanup(gc_filter->plugin_instance);
+            }
+        }
+
         dlclose(gc_filter->dl_handle);
-        gc_filter->dl_handle = NULL;
+        memset(gc_filter, 0, sizeof(struct gcsynth_filter));
     }
 }
 
@@ -152,7 +246,7 @@ static int ladspa_setup(struct gcsynth_filter* gc_filter, const char* path, char
     long unsigned int i;
     int found = 0;
 
-    gc_filter->dl_handle = NULL;
+    memset(gc_filter, 0, sizeof(struct gcsynth_filter));
 
     // open the library with a local namespace so multipel opens of
     // the same library will use different internal variables.
@@ -184,7 +278,7 @@ static int ladspa_setup(struct gcsynth_filter* gc_filter, const char* path, char
 
     // instanciate plugin, then associate buffers.
     gc_filter->plugin_instance = gc_filter->desc->instantiate(gc_filter->desc, SAMPLE_RATE);
-    if (!gc_filter->plugin_instance) {
+    if (gc_filter->plugin_instance == NULL) {
         gcsynth_raise_exception("gc_filter->desc->instantiate() failed!");
         ladspa_deallocate(gc_filter);
         return -1;
@@ -243,7 +337,8 @@ static int ladspa_setup(struct gcsynth_filter* gc_filter, const char* path, char
         }
     }
 
-    // the ports are setup and the plugin instanciated.
+    // enable filter by default
+    gcsynth_filter_enable(gc_filter);
 
     return 0;
 }

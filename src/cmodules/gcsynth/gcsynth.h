@@ -13,7 +13,15 @@
 #define NUM_CHANNELS 32
 #define MAX_CHANNELS 64
 
+enum {
+    NOWARNING,
 
+    FILTER_CONTROL_NO_FOUND,
+    FILTER_CONTROL_VALUE_ABOVE_BOUNDS,
+    FILTER_CONTROL_VALUE_BELOW_BOUNDS,
+    
+    NUM_WARNINGS
+};
 
 struct gcsynth_cfg {
     int test; // running in test only mode?

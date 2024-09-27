@@ -25,8 +25,19 @@ CSOURCES = [
     'gcsynth_start.c',
     'gcsynth_stop.c',
     'gcsynth_filter.c',
-    'gcsynth_channel.c'
+    'gcsynth_channel.c',
+    'gcsynth_event.c'
 ]
+
+"""
+ra_comp = [
+    #os.popen("pkgconf -cflags alsa").read()[:-1]
+]
+
+extra_libs = [
+    os.popen("pkgconf -libs alsa").read()[:-1]
+]
+"""
 
 # Define the extension module with the extra include and library directories
 gcsynth_module = Extension(
@@ -36,7 +47,7 @@ gcsynth_module = Extension(
     library_dirs=_library_dirs,  # Library path
     libraries   =_libraries,     # Link against packages
     extra_compile_args=['-g2'],  # Add the -g2 flag for debug symbols
-    extra_link_args=['-g2']      # Ensure the linker also gets the debug symbols
+    extra_link_args=['-g2', '-lasound']      # Ensure the linker also gets the debug symbols
 )
 
 # Setup the module

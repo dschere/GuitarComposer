@@ -28,6 +28,7 @@ void gcsynth_start(struct gcsynth* gcSynth)
         r = fluid_settings_setstr(gcSynth->settings, "audio.driver", "alsa");
         if (r != FLUID_OK) RAISE("fluid_settings_setstr: Unable to set audio.driver");
 
+        
         r = fluid_settings_setint(gcSynth->settings,"synth.midi-channels", cfg->num_midi_channels);
         if (r != FLUID_OK) {
             sprintf(errmsg,"fluid_settings_setnum: Unable to set synth.midi-channels to %d", cfg->num_midi_channels);
@@ -44,10 +45,19 @@ void gcsynth_start(struct gcsynth* gcSynth)
                     RAISE(errmsg)
                 } 
             } 
+
+            // create audio driver
+            gcSynth->adriver = new_fluid_audio_driver(
+                gcSynth->settings, gcSynth->synth);
+
             // install the channel data router 
             fluid_synth_set_user_per_channel_fx_func(
                 gcSynth->synth, voice_data_router, gcSynth);
+
+            fluid_synth_set_gain(gcSynth->synth, 1.0);
+
             // ready to rock and roll    
+            printf("fluidsynth started!\n");
         } else {
             RAISE("new_fluid_synth failed!")
         }

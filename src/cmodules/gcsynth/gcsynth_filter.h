@@ -38,22 +38,23 @@ enum {
 };
 
 struct gcsynth_filter {
+    void* dl_handle;
+
     int enabled;
 
     const LADSPA_Descriptor* desc;
     LADSPA_Descriptor_Function descriptor_fn;
     LADSPA_Handle* plugin_instance;
 
-    void* dl_handle;
     unsigned long int frame_count;
+
+    int num_controls;
+    struct gcsynth_filter_control controls[MAX_LADSPA_CONTROLS];
 
     int in_buf_count;
     int out_buf_count;
     LADSPA_Data in_data_buffer[NUM_IO_PORTMAPS][FLUID_BUFSIZE];
     LADSPA_Data out_data_buffer[NUM_IO_PORTMAPS][FLUID_BUFSIZE];
-
-    int num_controls;
-    struct gcsynth_filter_control controls[MAX_LADSPA_CONTROLS];
 };
 
 
@@ -72,12 +73,13 @@ int gcsynth_filter_setbyindex(struct gcsynth_filter* gc_filter, int, LADSPA_Data
 
 // sends FLUID_BUFSIZE size to the filter and copies FLUID_BUFSIZE out from the
 // filter 
-int gcsynth_filter_run(struct gcsynth_filter* gc_filter, LADSPA_Data* in, LADSPA_Data* out);
+int gcsynth_filter_run(struct gcsynth_filter* gc_filter, LADSPA_Data* io_buf, int len);
 
 
-void gcsynth_enable(struct gcsynth_filter* gc_filter);
-void gcsynth_disable(struct gcsynth_filter* gc_filter);
-int  gcsynth_isEnabled(struct gcsynth_filter* gc_filter);
+
+void gcsynth_filter_enable(struct gcsynth_filter* gc_filter);
+void gcsynth_filter_disable(struct gcsynth_filter* gc_filter);
+int  gcsynth_filter_isEnabled(struct gcsynth_filter* gc_filter);
 
 
 
