@@ -25,6 +25,21 @@ static void _voice_data_router(void *userdata, int chan, double* buf, int len);
 static void lock_channel(int channel);
 static void unlock_channel(int channel);
 
+static void set_channel_state(int channel, char* plugin_label, int enabled);
+ 
+void gcsynth_channel_enable_filter(int channel, char* plugin_label)
+{
+    lock_channel(channel);
+    set_channel_state(channel, plugin_label,1);
+    unlock_channel(channel);
+}
+
+void gcsynth_channel_disable_filter(int channel, char* plugin_label)
+{
+    lock_channel(channel);
+    set_channel_state(channel, plugin_label,0);
+    unlock_channel(channel);
+}
 
 
 int gcsynth_channel_add_filter(int channel, const char* filepath, char* plugin_label)
@@ -129,7 +144,7 @@ static void _voice_data_router(void *userdata, int chan, double* buf, int len)
     if (c->filter_chain != NULL) {
         
         // copy the voice buffer from fluid synth (double) to the ladspa buffer (float)
-        for(i = 0; i < len && i < FLUID_BUFSIZE; i++) fc_buffer[i] = buf[i];
+        for(i = 0; i < len && i < FLUID_BUFSIZE; i++) fc_buffer[i] = (float) buf[i];
 
         // walk through the filter chain
         for(iter = g_list_first(c->filter_chain);
@@ -142,7 +157,7 @@ static void _voice_data_router(void *userdata, int chan, double* buf, int len)
         }
 
         // output fc_buffer to the fluidsynth buffer
-        for(i = 0; i < len && i < FLUID_BUFSIZE; i++) buf[i] = fc_buffer[i];
+        for(i = 0; i < len && i < FLUID_BUFSIZE; i++) buf[i] = (double) fc_buffer[i];
     } 
 }
 
@@ -293,15 +308,17 @@ static struct gcsynth_filter* find_by_name(
     return NULL;
 }
  
+ static void set_channel_state(int channel, char* plugin_label, int enabled)
+ {
+    struct gcsynth_channel* c = &ChannelFilters[channel]; 
+    struct gcsynth_filter* f = find_by_name(c, plugin_label);
 
-
-
-
-
-
-
-
-
-
-
+    if (f) {
+        if (enabled) {
+            gcsynth_filter_enable(f);
+        } else {
+            gcsynth_filter_disable(f);
+        }
+    }  
+ }
 

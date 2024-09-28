@@ -20,6 +20,10 @@ int gcsynth_channel_remove_filter(int channel, char* plugin_label_or_all);
 // create all filters for all channels
 void gcsynth_remove_all_filters();
 
+void gcsynth_channel_enable_filter(int channel, char* plugin_label);
+void gcsynth_channel_disable_filter(int channel, char* plugin_label);
+
+
 int gcsynth_channel_set_control_by_index(int channel, char* plugin_label, 
     int control_num, float value);
 int gcsynth_channel_set_control_by_name(int channel, char* plugin_label, 

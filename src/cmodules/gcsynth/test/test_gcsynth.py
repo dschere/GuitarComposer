@@ -69,8 +69,8 @@ class TestGcSynth(unittest.TestCase):
          
     def test0301_apply_filter_test(self):
         print("test0301_apply_filter_test")
-        path = "/usr/lib/ladspa/sine.so"
-        label = "sine_fcac"
+        path = "/usr/lib/ladspa/tap_chorusflanger.so"
+        label = "tap_chorusflanger"
 
         data = {
             "sfpaths": [base_dir+"/data/sf/27mg_Symphony_Hall_Bank.SF2"],
@@ -81,6 +81,7 @@ class TestGcSynth(unittest.TestCase):
 #        print("1"); time.sleep(0.01)
         gcsynth.start(data)
         gcsynth.filter_add(0,path,label)
+        gcsynth.filter_enable(0,label)
         #gcsynth.filter_set_control_by_index(0,label,0,440.0)
         #gcsynth.filter_set_control_by_index(0,label,1,1)
 
@@ -91,10 +92,12 @@ class TestGcSynth(unittest.TestCase):
         """ 
         
 
-        gcsynth.noteon(0, 70, 40)
+        gcsynth.noteon(0, 70, 60)
+        gcsynth.noteon(1, 75, 60)
+
 #        print("2"); time.sleep(0.01)
 
-        time.sleep(4.0)
+        time.sleep(3.0)
         gcsynth.noteoff(0, 70)
         gcsynth.stop()
 #        print("3"); time.sleep(0.01)

@@ -60,11 +60,7 @@ int gcsynth_filter_setbyindex(struct gcsynth_filter* gc_filter, int, LADSPA_Data
 int gcsynth_filter_run(struct gcsynth_filter* gc_filter, LADSPA_Data* fc_buffer, int len)
 {
     unsigned long int i;
-    int pd;
-    int in_buf_idx = 0;
-    int out_buf_idx = 0;
-    int ctl_buf_idx = 0;
-
+ 
     if (gc_filter->enabled) {
         
         /*
@@ -85,41 +81,14 @@ int gcsynth_filter_run(struct gcsynth_filter* gc_filter, LADSPA_Data* fc_buffer,
             );
         }
 
-        // connect ports, which is required for each call to run() according to the docs
+        // connect all ports
         for(i = 0; i < gc_filter->desc->PortCount; i++) {
-            pd = gc_filter->desc->PortDescriptors[i];
-            if (LADSPA_IS_PORT_AUDIO(pd) && 
-                LADSPA_IS_PORT_INPUT(pd) &&
-                in_buf_idx < gc_filter->in_buf_count) 
-            {
-                gc_filter->desc->connect_port(
-                    gc_filter->plugin_instance,
-                    i,
-                    gc_filter->in_data_buffer[in_buf_idx++]
-                );    
-            }    
-            else if (
-                LADSPA_IS_PORT_AUDIO(pd) && 
-                LADSPA_IS_PORT_OUTPUT(pd) && 
-                out_buf_idx < gc_filter->out_buf_count)
-            {
-                gc_filter->desc->connect_port(
-                    gc_filter->plugin_instance,
-                    i,
-                    gc_filter->out_data_buffer[out_buf_idx++]
-                );
-            }
-            else if (LADSPA_IS_PORT_CONTROL(pd) && 
-                     ctl_buf_idx < gc_filter->num_controls) 
-            {
-                // &gc_filter->controls[gc_filter->num_controls].value
-                gc_filter->desc->connect_port(
-                    gc_filter->plugin_instance,
-                    i,
-                    &gc_filter->controls[ctl_buf_idx++].value
-                );
-            }
-        } // end connect
+            gc_filter->desc->connect_port(
+                gc_filter->plugin_instance,
+                i,
+                gc_filter->port_map[i]
+            );
+        }
 
         // run the filter and populate the output buffer
         gc_filter->desc->run(gc_filter->plugin_instance, len);
@@ -132,6 +101,8 @@ int gcsynth_filter_run(struct gcsynth_filter* gc_filter, LADSPA_Data* fc_buffer,
                 len
             );
         }
+    } else {
+        printf("disabled\n");
     }
     
     gc_filter->frame_count++;
@@ -143,18 +114,20 @@ int gcsynth_filter_run(struct gcsynth_filter* gc_filter, LADSPA_Data* fc_buffer,
 void gcsynth_filter_enable(struct gcsynth_filter* gc_filter)
 {
     if ((gc_filter->enabled == 0) && gc_filter->desc->activate) {
+        printf("%s is activated\n", gc_filter->desc->Label);
         gc_filter->desc->activate(gc_filter->plugin_instance);
-        gc_filter->enabled = 1;
     }
+    gc_filter->enabled = 1;
 }
 
 void gcsynth_filter_disable(struct gcsynth_filter* gc_filter)
 {
     if ((gc_filter->enabled == 1) && gc_filter->desc->deactivate)
     {
+        printf("%s deactivated\n", gc_filter->desc->Label);
         gc_filter->desc->deactivate(gc_filter->plugin_instance);
-        gc_filter->enabled = 0;
     }
+    gc_filter->enabled = 0;
 }
 
 int  gcsynth_filter_isEnabled(struct gcsynth_filter* gc_filter)
@@ -201,53 +174,16 @@ static void setup_ctl_value(struct gcsynth_filter* gc_filter,
     control->is_logarithmic = LADSPA_IS_HINT_LOGARITHMIC(h->HintDescriptor);
     control->is_integer = LADSPA_IS_HINT_INTEGER(h->HintDescriptor);
 
-    //static LADSPA_Data get_default_value(
-    //struct gcsynth_filter* gc_filter, int iHintDescriptor, unsigned long int lPortIndex)
-
-
     control->default_value = 
        get_default_value(gc_filter, (unsigned long int) ctl,
             &control->has_default);
-
 
     if (LADSPA_IS_PORT_OUTPUT(pd)) {
         control->value = 0;
         control->isOutput = 1;
         control->has_default = 0;
-    // otherwise it an input control port  
     }
-/*     
-    else if (LADSPA_IS_HINT_HAS_DEFAULT(h->HintDescriptor)) {
-        control->has_default = 0;      
-    } else if (LADSPA_IS_HINT_DEFAULT_MINIMUM(h->HintDescriptor)) {
-        control->value = lower;
-    } else if (LADSPA_IS_HINT_DEFAULT_MAXIMUM(h->HintDescriptor)) {
-        control->value = upper;
-    } else if (LADSPA_IS_HINT_DEFAULT_0(h->HintDescriptor)) {
-        control->value = 0.0;
-    } else if (LADSPA_IS_HINT_DEFAULT_1(h->HintDescriptor)) {
-        control->value = 1.0;
-    } else if (LADSPA_IS_HINT_DEFAULT_100(h->HintDescriptor)) {
-        control->value = 100.0;
-    } else if (LADSPA_IS_HINT_DEFAULT_440(h->HintDescriptor)) {
-        control->value = 440.0;
-    } else if (LADSPA_IS_HINT_DEFAULT_LOW(h->HintDescriptor)) {
-        if (LADSPA_IS_HINT_LOGARITHMIC(h->HintDescriptor))
-            control->value = exp(log(lower) * 0.75 + log(upper) * 0.25);
-        else
-            control->value = lower * 0.75 + upper * 0.25;
-    } else if (LADSPA_IS_HINT_DEFAULT_MIDDLE(h->HintDescriptor)) {
-        if (LADSPA_IS_HINT_LOGARITHMIC(h->HintDescriptor))
-            control->value = exp(log(lower) * 0.5 + log(upper) * 0.5);
-        else
-            control->value = lower * 0.5 + upper * 0.5;
-    } else if (LADSPA_IS_HINT_DEFAULT_HIGH(h->HintDescriptor)) {
-        if (LADSPA_IS_HINT_LOGARITHMIC(h->HintDescriptor))
-            control->value = exp(log(lower) * 0.25 + log(upper) * 0.75);
-        else
-            control->value = lower * 0.25 + upper * 0.75;
-    }
-*/
+
     if (control->has_default) {
         control->value = control->default_value;
     }
@@ -311,12 +247,14 @@ static int ladspa_setup(struct gcsynth_filter* gc_filter, const char* path, char
         if (LADSPA_IS_PORT_AUDIO(pd) && 
             LADSPA_IS_PORT_INPUT(pd) &&
             gc_filter->in_buf_count < NUM_IO_PORTMAPS) {
-            
-            gc_filter->desc->connect_port(
-                gc_filter->plugin_instance,
-                i,
-                gc_filter->in_data_buffer[gc_filter->in_buf_count]
+
+            gc_filter->port_map[i] = gc_filter->in_data_buffer[gc_filter->in_buf_count];
+
+            printf("input port %lu (%s) to input host  buffer %d\n",
+                 i, gc_filter->desc->PortNames[i], 
+                 gc_filter->in_buf_count
             );
+
             gc_filter->in_buf_count++;
         }
         // setup output port(s)
@@ -325,11 +263,12 @@ static int ladspa_setup(struct gcsynth_filter* gc_filter, const char* path, char
             LADSPA_IS_PORT_OUTPUT(pd) &&
             gc_filter->out_buf_count < NUM_IO_PORTMAPS) {
 
-            gc_filter->desc->connect_port(
-                gc_filter->plugin_instance,
-                i,
-                gc_filter->out_data_buffer[gc_filter->out_buf_count]
+            gc_filter->port_map[i] = gc_filter->out_data_buffer[gc_filter->out_buf_count];
+            printf("output port %lu (%s) to output host buffer %d\n",
+                 i, gc_filter->desc->PortNames[i], 
+                 gc_filter->out_buf_count
             );
+
             gc_filter->out_buf_count++;
         }   
         // setup control ports
@@ -339,16 +278,24 @@ static int ladspa_setup(struct gcsynth_filter* gc_filter, const char* path, char
             // setup structure, ranges, and a default value.
             setup_ctl_value(gc_filter, 
                i, &gc_filter->controls[gc_filter->num_controls], pd);
+            gc_filter->port_map[i] = &gc_filter->controls[gc_filter->num_controls].value;   
 
-            gc_filter->desc->connect_port(
-                gc_filter->plugin_instance,
-                i,
-                &gc_filter->controls[gc_filter->num_controls].value
-            );
+            printf("control port %lu (%s) to control buffer, default %f\n",
+                 i, gc_filter->desc->PortNames[i], 
+                 gc_filter->controls[gc_filter->num_controls].value);
 
             // increment the number of controls
             gc_filter->num_controls++;
         }
+    }
+
+    // connect all ports, must be called before activate
+    for(i = 0; i < gc_filter->desc->PortCount; i++) {
+        gc_filter->desc->connect_port(
+            gc_filter->plugin_instance,
+            i,
+            gc_filter->port_map[i]
+        );
     }
 
     // enable filter by default
@@ -436,5 +383,6 @@ static LADSPA_Data get_default_value(
 
 printf("%s set to %f has_default=%d, iHintDescriptor=0x%X lPortIndex=%lu\n", 
     psDescriptor->PortNames[lPortIndex], fDefault, *has_default, iHintDescriptor, lPortIndex);
+
     return fDefault;
 }

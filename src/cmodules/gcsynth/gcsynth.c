@@ -164,6 +164,52 @@ static PyObject* py_query_filter(PyObject* self, PyObject* args) {
     return control_info_list;
 }
 
+/*
+
+void gcsynth_channel_enable_filter(int channel, char* plugin_label);
+void gcsynth_channel_disable_filter(int channel, char* plugin_label);
+
+*/
+
+static PyObject* py_gcsynth_channel_enable_filter(PyObject* self, PyObject* args) {
+    int channel;
+    char* plugin_label;
+
+    // Parse the Python tuple, expecting two strings and a dictionary
+    if (!PyArg_ParseTuple(args, "is", &channel, &plugin_label)) {
+        return NULL;  // Return NULL to indicate an error if the parsing failed
+    }
+
+    if (channel < 0 || channel >= MAX_CHANNELS) {
+        gcsynth_raise_exception("channel must be between 0-64");
+        return NULL;
+    }
+
+    gcsynth_channel_enable_filter(channel, plugin_label);
+
+    Py_RETURN_NONE;
+}
+
+
+static PyObject* py_gcsynth_channel_disable_filter(PyObject* self, PyObject* args) {
+    int channel;
+    char* plugin_label;
+
+    // Parse the Python tuple, expecting two strings and a dictionary
+    if (!PyArg_ParseTuple(args, "is", &channel, &plugin_label)) {
+        return NULL;  // Return NULL to indicate an error if the parsing failed
+    }
+
+    if (channel < 0 || channel >= MAX_CHANNELS) {
+        gcsynth_raise_exception("channel must be between 0-64");
+        return NULL;
+    }
+
+    gcsynth_channel_disable_filter(channel, plugin_label);
+
+    Py_RETURN_NONE;
+}
+
 static PyObject* py_load_ladspa_filter(PyObject* self, PyObject* args) {
     int channel;
     const char* filepath;
@@ -423,6 +469,10 @@ static PyMethodDef GCSynthMethods[] = {
     {"filter_add",py_load_ladspa_filter, METH_VARARGS,"create a filter for a channel"},
     {"filter_remove",py_gcsynth_channel_remove_filter, METH_VARARGS,"remove filter from channel"},
     {"filter_query",py_query_filter, METH_VARARGS,"py_query_filter(path,plugin_label)->[{info}]"},
+
+    {"filter_enable",py_gcsynth_channel_enable_filter, METH_VARARGS, "enable filter"},
+    {"filter_disable",py_gcsynth_channel_disable_filter, METH_VARARGS, "disable filter"},
+
 
     {"filter_set_control_by_name", py_gcsynth_channel_set_control_by_name, 
         METH_VARARGS,"filter_set_control_by_name(chan,plugin_label,name,value)" },

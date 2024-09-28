@@ -8,6 +8,7 @@
 #endif
 
 #define MAX_LADSPA_CONTROLS 32
+#define MAX_LADSPA_PORTS    MAX_LADSPA_CONTROLS + 4
 
 //make this adjustable? although I've never seen the need
 #define SAMPLE_RATE 44100
@@ -55,6 +56,10 @@ struct gcsynth_filter {
     int out_buf_count;
     LADSPA_Data in_data_buffer[NUM_IO_PORTMAPS][FLUID_BUFSIZE];
     LADSPA_Data out_data_buffer[NUM_IO_PORTMAPS][FLUID_BUFSIZE];
+
+    // port maps
+    //  port number -> buffer
+    LADSPA_Data* port_map[MAX_LADSPA_PORTS];
 };
 
 
