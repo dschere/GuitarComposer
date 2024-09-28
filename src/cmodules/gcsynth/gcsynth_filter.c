@@ -10,7 +10,9 @@
 
 static int ladspa_setup(struct gcsynth_filter* gc_filter, const char* path, char* label);
 static void ladspa_deallocate(struct gcsynth_filter* gc_filter);
-
+static LADSPA_Data get_default_value(
+    struct gcsynth_filter* gc_filter, unsigned long int lPortIndex,
+    int* has_default);
 
 struct gcsynth_filter* gcsynth_filter_new_ladspa(const char* pathname, char* label)
 {
@@ -110,10 +112,11 @@ int gcsynth_filter_run(struct gcsynth_filter* gc_filter, LADSPA_Data* fc_buffer,
             else if (LADSPA_IS_PORT_CONTROL(pd) && 
                      ctl_buf_idx < gc_filter->num_controls) 
             {
+                // &gc_filter->controls[gc_filter->num_controls].value
                 gc_filter->desc->connect_port(
                     gc_filter->plugin_instance,
                     i,
-                    gc_filter->out_data_buffer[ctl_buf_idx++]
+                    &gc_filter->controls[ctl_buf_idx++].value
                 );
             }
         } // end connect
@@ -198,12 +201,23 @@ static void setup_ctl_value(struct gcsynth_filter* gc_filter,
     control->is_logarithmic = LADSPA_IS_HINT_LOGARITHMIC(h->HintDescriptor);
     control->is_integer = LADSPA_IS_HINT_INTEGER(h->HintDescriptor);
 
+    //static LADSPA_Data get_default_value(
+    //struct gcsynth_filter* gc_filter, int iHintDescriptor, unsigned long int lPortIndex)
+
+
+    control->default_value = 
+       get_default_value(gc_filter, (unsigned long int) ctl,
+            &control->has_default);
+
+
     if (LADSPA_IS_PORT_OUTPUT(pd)) {
         control->value = 0;
         control->isOutput = 1;
         control->has_default = 0;
     // otherwise it an input control port  
-    } else if (LADSPA_IS_HINT_HAS_DEFAULT(h->HintDescriptor)) {
+    }
+/*     
+    else if (LADSPA_IS_HINT_HAS_DEFAULT(h->HintDescriptor)) {
         control->has_default = 0;      
     } else if (LADSPA_IS_HINT_DEFAULT_MINIMUM(h->HintDescriptor)) {
         control->value = lower;
@@ -233,9 +247,9 @@ static void setup_ctl_value(struct gcsynth_filter* gc_filter,
         else
             control->value = lower * 0.25 + upper * 0.75;
     }
-
+*/
     if (control->has_default) {
-        control->default_value = control->value;
+        control->value = control->default_value;
     }
 
 }
@@ -320,7 +334,7 @@ static int ladspa_setup(struct gcsynth_filter* gc_filter, const char* path, char
         }   
         // setup control ports
         else if (LADSPA_IS_PORT_CONTROL(pd) && 
-        gc_filter->num_controls < MAX_LADSPA_CONTROLS) {
+            gc_filter->num_controls < MAX_LADSPA_CONTROLS) {
 
             // setup structure, ranges, and a default value.
             setup_ctl_value(gc_filter, 
@@ -341,4 +355,86 @@ static int ladspa_setup(struct gcsynth_filter* gc_filter, const char* path, char
     gcsynth_filter_enable(gc_filter);
 
     return 0;
+}
+// this code was lifted/refactored from analyseplugin utility
+static LADSPA_Data get_default_value(
+    struct gcsynth_filter* gc_filter, unsigned long int lPortIndex, int* has_default)
+{
+    LADSPA_Data fDefault = 0;
+    const LADSPA_Descriptor * psDescriptor = gc_filter->desc;
+    int iHintDescriptor = psDescriptor->PortRangeHints[lPortIndex].HintDescriptor;
+
+    *has_default = 1;
+
+    switch (iHintDescriptor & LADSPA_HINT_DEFAULT_MASK) {
+	case LADSPA_HINT_DEFAULT_NONE:
+      *has_default = 0;
+	  break;
+	case LADSPA_HINT_DEFAULT_MINIMUM:
+	  fDefault = psDescriptor->PortRangeHints[lPortIndex].LowerBound;
+	  break;
+	case LADSPA_HINT_DEFAULT_LOW:
+	  if (LADSPA_IS_HINT_LOGARITHMIC(iHintDescriptor)) {
+	    fDefault 
+	      = exp(log(psDescriptor->PortRangeHints[lPortIndex].LowerBound) 
+		    * 0.75
+		    + log(psDescriptor->PortRangeHints[lPortIndex].UpperBound) 
+		    * 0.25);
+	  }
+	  else {
+	    fDefault 
+	      = (psDescriptor->PortRangeHints[lPortIndex].LowerBound
+		 * 0.75
+		 + psDescriptor->PortRangeHints[lPortIndex].UpperBound
+		 * 0.25);
+	  }
+	  break;
+	case LADSPA_HINT_DEFAULT_MIDDLE:
+	  if (LADSPA_IS_HINT_LOGARITHMIC(iHintDescriptor)) {
+	    fDefault 
+	      = sqrt(psDescriptor->PortRangeHints[lPortIndex].LowerBound
+		     * psDescriptor->PortRangeHints[lPortIndex].UpperBound);
+	  }
+	  else {
+	    fDefault 
+	      = 0.5 * (psDescriptor->PortRangeHints[lPortIndex].LowerBound
+		       + psDescriptor->PortRangeHints[lPortIndex].UpperBound);
+	  }
+	  break;
+	case LADSPA_HINT_DEFAULT_HIGH:
+	  if (LADSPA_IS_HINT_LOGARITHMIC(iHintDescriptor)) {
+	    fDefault 
+	      = exp(log(psDescriptor->PortRangeHints[lPortIndex].LowerBound) 
+		    * 0.25
+		    + log(psDescriptor->PortRangeHints[lPortIndex].UpperBound) 
+		    * 0.75);
+	  }
+	  else {
+	    fDefault 
+	      = (psDescriptor->PortRangeHints[lPortIndex].LowerBound
+		 * 0.25
+		 + psDescriptor->PortRangeHints[lPortIndex].UpperBound
+		 * 0.75);
+	  }
+	  break;
+	case LADSPA_HINT_DEFAULT_MAXIMUM:
+	  fDefault = psDescriptor->PortRangeHints[lPortIndex].UpperBound;
+	  break;
+	case LADSPA_HINT_DEFAULT_0:
+	  fDefault = 0.0;
+	  break;
+	case LADSPA_HINT_DEFAULT_1:
+	  fDefault = 1.0;
+	  break;
+	case LADSPA_HINT_DEFAULT_100:
+	  fDefault = 100.0;
+	  break;
+	case LADSPA_HINT_DEFAULT_440:
+	  fDefault = 440.0;
+	  break;
+	}
+
+printf("%s set to %f has_default=%d, iHintDescriptor=0x%X lPortIndex=%lu\n", 
+    psDescriptor->PortNames[lPortIndex], fDefault, *has_default, iHintDescriptor, lPortIndex);
+    return fDefault;
 }

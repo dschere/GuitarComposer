@@ -49,6 +49,15 @@ int gcsynth_channel_remove_filter(int channel, char* plugin_label)
     return ret;
 }
 
+void gcsynth_remove_all_filters()
+{
+    int channel;
+    for(channel = 0; channel < MAX_CHANNELS; channel++) {
+        gcsynth_channel_remove_filter(channel, NULL);
+    }
+}
+
+
 int gcsynth_channel_set_control_by_index(int channel, char* plugin_label, 
     int control_num, float value)
 {
@@ -113,6 +122,7 @@ static void _voice_data_router(void *userdata, int chan, double* buf, int len)
     int i;
     LADSPA_Data fc_buffer[FLUID_BUFSIZE];
     GList* iter;
+
     
     // len is always 
     struct gcsynth_channel *c = &ChannelFilters[chan];

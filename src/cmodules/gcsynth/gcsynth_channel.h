@@ -17,6 +17,8 @@ struct gcsynth_channel {
 // with a channel.
 int gcsynth_channel_add_filter(int channel, const char* filepath, char* plugin_label);
 int gcsynth_channel_remove_filter(int channel, char* plugin_label_or_all);
+// create all filters for all channels
+void gcsynth_remove_all_filters();
 
 int gcsynth_channel_set_control_by_index(int channel, char* plugin_label, 
     int control_num, float value);

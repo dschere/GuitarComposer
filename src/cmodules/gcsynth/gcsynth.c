@@ -205,6 +205,69 @@ static PyObject* py_gcsynth_noteon(PyObject* self, PyObject* args) {
     Py_RETURN_NONE;
 }
 
+//int fluid_synth_program_select(fluid_synth_t *synth, int chan, int sfont_id,
+//                               int bank_num, int preset_num);
+static PyObject* py_fluid_synth_program_select(PyObject* self, PyObject* args) {
+    int chan;
+    int sfont_id;
+    int bank_num;
+    int preset_num;
+
+    // Parse the Python tuple, expecting two strings and a dictionary
+    if (!PyArg_ParseTuple(args, "iiii", &chan, &sfont_id, &bank_num, &preset_num)) {
+        return NULL;  // Return NULL to indicate an error if the parsing failed
+    }
+
+    gcsynth_select(&GcSynth, chan, sfont_id, bank_num, preset_num);
+    
+    Py_RETURN_NONE;
+
+}
+
+/*
+int gcsynth_channel_set_control_by_index(int channel, char* plugin_label, 
+    int control_num, float value);
+int gcsynth_channel_set_control_by_name(int channel, char* plugin_label, 
+    char* control_name, float value);
+*/
+static PyObject* py_gcsynth_channel_set_control_by_name
+    (PyObject* self, PyObject* args) {
+    int channel;
+    char* plugin_label;
+    char* control_name;
+    float value;
+
+
+    // Parse the Python tuple, expecting two strings and a dictionary
+    if (!PyArg_ParseTuple(args, "issf", &channel, &plugin_label, &control_name, &value)) {
+        return NULL;  // Return NULL to indicate an error if the parsing failed
+    }
+
+    gcsynth_channel_set_control_by_name(channel, plugin_label, 
+        control_name, value);
+
+    Py_RETURN_NONE;    
+}
+
+
+static PyObject* py_gcsynth_channel_set_control_by_index
+    (PyObject* self, PyObject* args) {
+    int channel;
+    char* plugin_label;
+    int control_num;
+    float value;
+
+
+    // Parse the Python tuple, expecting two strings and a dictionary
+    if (!PyArg_ParseTuple(args, "isif", &channel, &plugin_label, &control_num, &value)) {
+        return NULL;  // Return NULL to indicate an error if the parsing failed
+    }
+
+    gcsynth_channel_set_control_by_index(channel, plugin_label, 
+        control_num, value);
+
+    Py_RETURN_NONE;    
+}
 
 static PyObject* py_gcsynth_noteoff(PyObject* self, PyObject* args) {
     int channel;
@@ -237,6 +300,7 @@ static PyObject* py_gcsynth_channel_remove_filter(PyObject* self, PyObject* args
 
 static PyObject* py_gcsynth_stop(PyObject* self, PyObject* args) {
     gcsynth_stop(&GcSynth);
+    gcsynth_remove_all_filters();
     Py_RETURN_NONE;
 }
 
@@ -354,13 +418,20 @@ static PyMethodDef GCSynthMethods[] = {
     {"start", py_gcsynth_start, METH_VARARGS, "Start the gcsynth."},
     {"noteoff", py_gcsynth_noteoff,METH_VARARGS, "noteoff(chan,midicode)"},
     {"noteon", py_gcsynth_noteon,METH_VARARGS, "noteon(chan,midicod,velocity)"},
+    {"select", py_fluid_synth_program_select, METH_VARARGS, "select(chan,sfont_id,bank,preset)"},
     
-    {"add_filter",py_load_ladspa_filter, METH_VARARGS,"create a filter for a channel"},
-    {"remove_filter",py_gcsynth_channel_remove_filter, METH_VARARGS,"remove filter from channel"},
-    {"query_filter",py_query_filter, METH_VARARGS,"py_query_filter(path,plugin_label)->[{info}]"},
+    {"filter_add",py_load_ladspa_filter, METH_VARARGS,"create a filter for a channel"},
+    {"filter_remove",py_gcsynth_channel_remove_filter, METH_VARARGS,"remove filter from channel"},
+    {"filter_query",py_query_filter, METH_VARARGS,"py_query_filter(path,plugin_label)->[{info}]"},
+
+    {"filter_set_control_by_name", py_gcsynth_channel_set_control_by_name, 
+        METH_VARARGS,"filter_set_control_by_name(chan,plugin_label,name,value)" },
+
+    {"filter_set_control_by_index", py_gcsynth_channel_set_control_by_index, 
+        METH_VARARGS,"filter_set_control_by_name(chan,plugin_label,index,value)" },
 
     // aid in unit testing
-    {"test_filter",py_filter_test,METH_VARARGS,"test_filter(path,plugin_label)-> pass/fail test"},
+    {"test_filter",py_filter_test,METH_VARARGS,"test_filter(path,plugin_label)-> pass or raise exception"},
     {NULL, NULL, 0, NULL}
 };
 

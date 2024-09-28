@@ -46,8 +46,8 @@ gcsynth_module = Extension(
     include_dirs=_include_dirs,  # Include path
     library_dirs=_library_dirs,  # Library path
     libraries   =_libraries,     # Link against packages
-    extra_compile_args=['-g2'],  # Add the -g2 flag for debug symbols
-    extra_link_args=['-g2', '-lasound']      # Ensure the linker also gets the debug symbols
+    extra_compile_args=['-g3'],  # Add the -g2 flag for debug symbols
+    extra_link_args=['-g3', '-lasound']      # Ensure the linker also gets the debug symbols
 )
 
 # Setup the module

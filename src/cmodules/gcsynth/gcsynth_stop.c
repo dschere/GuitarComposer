@@ -2,6 +2,7 @@
 
 void gcsynth_stop(struct gcsynth* gcSynth)
 {
+    
     if(gcSynth->adriver)
     {
         delete_fluid_audio_driver(gcSynth->adriver);

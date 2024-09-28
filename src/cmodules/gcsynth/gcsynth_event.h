@@ -6,6 +6,6 @@
 
 void gcsynth_noteon(struct gcsynth* gcs, int chan, int midicode, int velocity);
 void gcsynth_noteoff(struct gcsynth* gcs, int chan, int midicode);
-
+void gcsynth_select(struct gcsynth* gcs, int chan,  int sfont_id, int bank_num, int preset_num);
 
 #endif
