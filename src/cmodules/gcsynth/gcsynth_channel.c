@@ -7,7 +7,14 @@
 #include "gcsynth_filter.h"
 
 
-static struct gcsynth_channel ChannelFilters[MAX_CHANNELS]; 
+static struct gcsynth_channel ChannelFilters[MAX_CHANNELS];
+
+
+static GMutex StateMutex;
+static int    StateMutexInitialized;
+static int    GcsynthIdCount = 0;
+static struct gcsynth_active_state GcsynthState;
+
 
 static struct gcsynth_filter* find_by_name(
     struct gcsynth_channel* c, char* plugin_label);  
@@ -322,3 +329,46 @@ static struct gcsynth_filter* find_by_name(
     }  
  }
 
+/*
+static GMutex StateMutex;
+static int    StateMutexInitialized;
+static struct gcsynth_active_state GcsynthState;
+*/
+struct gcsynth_active_state gcsynth_get_active_state()
+{
+    struct gcsynth_active_state state;
+
+    if (StateMutexInitialized == 0) {
+        g_mutex_init(&StateMutex);
+        StateMutexInitialized = 1;
+    }
+
+    g_mutex_lock(&StateMutex);
+    state = GcsynthState;
+    g_mutex_unlock(&StateMutex); 
+
+    return state;
+}
+
+void gcsynth_update_state_when_started()
+{
+    if (StateMutexInitialized == 0) {
+        g_mutex_init(&StateMutex);
+        StateMutexInitialized = 1;
+    }
+    g_mutex_lock(&StateMutex);
+    GcsynthState.instance_id = GcsynthIdCount++;
+    GcsynthState.running = 1;
+    g_mutex_unlock(&StateMutex);
+}
+
+void gcsynth_update_state_when_stopped()
+{
+    if (StateMutexInitialized == 0) {
+        g_mutex_init(&StateMutex);
+        StateMutexInitialized = 1;
+    }
+    g_mutex_lock(&StateMutex);
+    GcsynthState.running = 0;
+    g_mutex_unlock(&StateMutex);
+}

@@ -11,6 +11,7 @@
 #include "gcsynth_filter.h"
 #include "gcsynth_channel.h"
 #include "gcsynth_event.h"
+#include "pyutil.h"
 
 static PyObject *GcsynthException = NULL;
 static struct gcsynth GcSynth;
@@ -27,6 +28,7 @@ static void gcsynth_start_args_init(
     char* errmsg
 );
 
+static struct scheduled_event* scheduled_event_new(PyObject* dict);
 
 
 // api
@@ -37,6 +39,7 @@ void gcsynth_raise_exception(char* errmsg) {
         PyErr_SetString(GcsynthException, errmsg);
     }
 }
+
 
 
 static PyObject* py_filter_test(PyObject* self, PyObject* args) {
@@ -164,12 +167,6 @@ static PyObject* py_query_filter(PyObject* self, PyObject* args) {
     return control_info_list;
 }
 
-/*
-
-void gcsynth_channel_enable_filter(int channel, char* plugin_label);
-void gcsynth_channel_disable_filter(int channel, char* plugin_label);
-
-*/
 
 static PyObject* py_gcsynth_channel_enable_filter(PyObject* self, PyObject* args) {
     int channel;
@@ -207,6 +204,23 @@ static PyObject* py_gcsynth_channel_disable_filter(PyObject* self, PyObject* arg
 
     gcsynth_channel_disable_filter(channel, plugin_label);
 
+    Py_RETURN_NONE;
+}
+
+static PyObject* py_gcsynth_event(PyObject* self, PyObject* args) {
+    PyObject* event_params;
+    struct scheduled_event* s_event;
+
+    if (!PyArg_ParseTuple(args,"O",&event_params)) {
+        return NULL;
+    }
+
+    s_event = event_from_pydata(event_params);
+    if (s_event) {
+        gcsynth_schedule(&GcSynth, s_event);
+    }
+
+//struct scheduled_event* event_from_pydata(PyObject* dict);
     Py_RETURN_NONE;
 }
 
@@ -270,12 +284,6 @@ static PyObject* py_fluid_synth_program_select(PyObject* self, PyObject* args) {
 
 }
 
-/*
-int gcsynth_channel_set_control_by_index(int channel, char* plugin_label, 
-    int control_num, float value);
-int gcsynth_channel_set_control_by_name(int channel, char* plugin_label, 
-    char* control_name, float value);
-*/
 static PyObject* py_gcsynth_channel_set_control_by_name
     (PyObject* self, PyObject* args) {
     int channel;
@@ -355,7 +363,7 @@ static PyObject* py_gcsynth_start(PyObject* self, PyObject* args) {
     PyObject* input_dict;
     char errmsg[ERRMSG_SIZE];
     int i;
-
+    
     GcSynth.cfg.num_sfpaths = 0;
     GcSynth.cfg.num_midi_channels = NUM_CHANNELS; 
 
@@ -382,17 +390,8 @@ static PyObject* py_gcsynth_start(PyObject* self, PyObject* args) {
         gcsynth_start(&GcSynth);
     }
 
-    // cleanup
-    for(i = 0; i < GcSynth.cfg.num_sfpaths; i++) {
-        free(GcSynth.cfg.sfpaths[i]);
-    }
-
-    Py_RETURN_NONE; // Return None to Python
+    Py_RETURN_NONE; 
 }
-
-
-
-
 
 static long PyDict_GetItemLong(PyObject* dict, char* key, int defval)
 {
@@ -450,9 +449,6 @@ static void gcsynth_start_args_init(
 }
 
 
-
-
-
 // ------------ interface for moduler loader in python
 
 
@@ -472,7 +468,7 @@ static PyMethodDef GCSynthMethods[] = {
 
     {"filter_enable",py_gcsynth_channel_enable_filter, METH_VARARGS, "enable filter"},
     {"filter_disable",py_gcsynth_channel_disable_filter, METH_VARARGS, "disable filter"},
-
+    {"timer_event",py_gcsynth_event,METH_VARARGS,"send an event that gets executed in the future"},
 
     {"filter_set_control_by_name", py_gcsynth_channel_set_control_by_name, 
         METH_VARARGS,"filter_set_control_by_name(chan,plugin_label,name,value)" },
@@ -494,6 +490,7 @@ static struct PyModuleDef gcsynthmodule = {
     GCSynthMethods
 };
 
+
 // Initialization function
 PyMODINIT_FUNC PyInit_gcsynth(void) {
     // Create the custom exception
@@ -508,6 +505,18 @@ PyMODINIT_FUNC PyInit_gcsynth(void) {
 
     // Add the custom exception to the module
     PyModule_AddObject(module, "GcsynthException", GcsynthException);
+
+    // add constants
+    PyModule_AddIntConstant(module, "EV_NOTEON", EV_NOTEON);
+    PyModule_AddIntConstant(module, "EV_NOTEOFF", EV_NOTEOFF);
+    PyModule_AddIntConstant(module, "EV_FILTER_ADD", EV_FILTER_ADD);
+    PyModule_AddIntConstant(module, "EV_FILTER_REMOVE", EV_FILTER_REMOVE);
+    PyModule_AddIntConstant(module, "EV_FILTER_ENABLE", EV_FILTER_ENABLE);
+    PyModule_AddIntConstant(module, "EV_FILTER_DISABLE", EV_FILTER_DISABLE);
+    PyModule_AddIntConstant(module, "EV_FILTER_CONTROL", EV_FILTER_CONTROL);
+    PyModule_AddIntConstant(module, "EV_PITCH_WHEEL", EV_PITCH_WHEEL);
+
+
 
     return module;
 }

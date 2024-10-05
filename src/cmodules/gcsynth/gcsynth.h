@@ -12,6 +12,10 @@
 
 #define NUM_CHANNELS 32
 #define MAX_CHANNELS 64
+// +/- 12 semitones
+#define PITCH_WHEEL_SENSITIVITY 12
+
+
 
 enum {
     NOWARNING,
@@ -36,7 +40,8 @@ struct gcsynth {
     fluid_synth_t*        synth;
     fluid_settings_t*     settings;
     fluid_audio_driver_t* adriver;
-
+    fluid_sequencer_t*    sequencer;
+    short synth_destination, client_destination;
 
     struct gcsynth_cfg cfg;
     //PerChannelFxFuncType callback;

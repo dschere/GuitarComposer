@@ -2,6 +2,7 @@
 #include <unistd.h>
 
 #include "gcsynth.h"
+#include "gcsynth_event.h"
 
 void gcsynth_start(struct gcsynth* gcSynth)
 {
@@ -56,6 +57,17 @@ void gcsynth_start(struct gcsynth* gcSynth)
 
             fluid_synth_set_gain(gcSynth->synth, 1.0);
 
+            gcsynth_sequencer_setup(gcSynth);
+
+            // set defaults for each channel
+            for(i = 0; i < cfg->num_midi_channels; i++) {
+                fluid_synth_pitch_wheel_sens(gcSynth->synth, 
+                    i, PITCH_WHEEL_SENSITIVITY);
+            }
+
+            // set state  
+            gcsynth_update_state_when_started();
+
             // ready to rock and roll    
             printf("fluidsynth started!\n");
         } else {
@@ -65,3 +77,4 @@ void gcsynth_start(struct gcsynth* gcSynth)
         RAISE("new_fluid_settings failed, unable to start synth!")
     }
 }
+

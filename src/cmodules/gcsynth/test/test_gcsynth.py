@@ -69,8 +69,8 @@ class TestGcSynth(unittest.TestCase):
          
     def test0301_apply_filter_test(self):
         print("test0301_apply_filter_test")
-        path = "/usr/lib/ladspa/tap_chorusflanger.so"
-        label = "tap_chorusflanger"
+        path = "/usr/lib/ladspa/tap_reverb.so"
+        label = "tap_reverb"
 
         data = {
             "sfpaths": [base_dir+"/data/sf/27mg_Symphony_Hall_Bank.SF2"],
@@ -80,6 +80,17 @@ class TestGcSynth(unittest.TestCase):
 
 #        print("1"); time.sleep(0.01)
         gcsynth.start(data)
+        
+        #print(json.dumps(sf_info, sort_keys=True, indent=4))
+
+        gcsynth.select(0,1,1,95)
+
+        gcsynth.noteon(0, 60, 60)
+        gcsynth.noteon(0, 65, 60)
+
+        time.sleep(5.0)
+
+
         gcsynth.filter_add(0,path,label)
         gcsynth.filter_enable(0,label)
         #gcsynth.filter_set_control_by_index(0,label,0,440.0)
@@ -92,13 +103,15 @@ class TestGcSynth(unittest.TestCase):
         """ 
         
 
-        gcsynth.noteon(0, 70, 60)
-        gcsynth.noteon(1, 75, 60)
+        gcsynth.noteon(0, 60, 60)
+        gcsynth.noteon(0, 65, 60)
 
 #        print("2"); time.sleep(0.01)
 
-        time.sleep(3.0)
-        gcsynth.noteoff(0, 70)
+        time.sleep(10.0)
+        
+        
+        
         gcsynth.stop()
 #        print("3"); time.sleep(0.01)
 

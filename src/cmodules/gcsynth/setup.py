@@ -26,7 +26,8 @@ CSOURCES = [
     'gcsynth_stop.c',
     'gcsynth_filter.c',
     'gcsynth_channel.c',
-    'gcsynth_event.c'
+    'gcsynth_event.c',
+    'pyutil.c'
 ]
 
 """
