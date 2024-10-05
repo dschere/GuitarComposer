@@ -32,6 +32,10 @@ struct scheduled_event {
     int midi_code;
     int velocity;
 
+    int sfont_id;
+    int bank_num;
+    int preset_num;
+
     const char* plugin_label;
     const char* plugin_path;
     int   enable;

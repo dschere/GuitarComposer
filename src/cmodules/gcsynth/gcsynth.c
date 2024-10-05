@@ -215,10 +215,34 @@ static PyObject* py_gcsynth_event(PyObject* self, PyObject* args) {
         return NULL;
     }
 
-    s_event = event_from_pydata(event_params);
-    if (s_event) {
-        gcsynth_schedule(&GcSynth, s_event);
+    if (PyDict_Check(event_params)) {
+        s_event = event_from_pydata(event_params);
+        if (s_event) {
+            gcsynth_schedule(&GcSynth, s_event);
+        } else {
+            return NULL;
+        }
     }
+    else if (PyList_Check(event_params)) {
+        PyObject* list = event_params;
+        Py_ssize_t size = PyList_Size(list);
+        for (Py_ssize_t i = 0; i < size; i++) {
+            PyObject *item = PyList_GetItem(list, i);  // Borrowed reference
+            s_event = event_from_pydata(item);
+            if (s_event) {
+                gcsynth_schedule(&GcSynth, s_event);
+            } else {
+                return NULL;
+            }
+        }
+    }
+    else {
+        gcsynth_raise_exception(
+  "gcsynth_event expects either list of dictionaries or a single dictionary."
+        );
+        return NULL;
+    }
+
 
 //struct scheduled_event* event_from_pydata(PyObject* dict);
     Py_RETURN_NONE;

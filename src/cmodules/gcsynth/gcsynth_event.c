@@ -137,6 +137,11 @@ static void gcsynth_schedule_fluidsynth_event(struct gcsynth* gcs,
         case EV_NOTEOFF:
             fluid_event_noteoff(ev, s_event->channel, s_event->midi_code);
             break;
+        case EV_SELECT:
+            fluid_event_program_select(ev, s_event->channel, 
+                 s_event->sfont_id, s_event->bank_num, 
+                 s_event->preset_num);
+            break;    
         case EV_PITCH_WHEEL:
             //	MIDI pitch bend value (0-16383, 8192 = no bend)
             pitch = (int) PITCH_WHEEL_MIDRANGE + (s_event->pitch_change/PITCH_WHEEL_SENSITIVITY);
