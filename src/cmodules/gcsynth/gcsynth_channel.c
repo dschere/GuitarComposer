@@ -33,7 +33,15 @@ static void lock_channel(int channel);
 static void unlock_channel(int channel);
 
 static void set_channel_state(int channel, char* plugin_label, int enabled);
- 
+
+void gcsynth_channel_gain(int channel, float gain)
+{
+    lock_channel(channel);
+    ChannelFilters[channel].gain = gain;
+    unlock_channel(channel);
+}
+
+
 void gcsynth_channel_enable_filter(int channel, char* plugin_label)
 {
     lock_channel(channel);
@@ -148,6 +156,14 @@ static void _voice_data_router(void *userdata, int chan, double* buf, int len)
     
     // len is always 
     struct gcsynth_channel *c = &ChannelFilters[chan];
+
+    // adjust volume of channel if directed.
+    if (c->gain != 0.0) {
+        for(i = 0; i < len && i < FLUID_BUFSIZE; i++) {
+            buf[i] *= (1.0 + c->gain);
+        }
+    }
+
     if (c->filter_chain != NULL) {
         
         // copy the voice buffer from fluid synth (double) to the ladspa buffer (float)

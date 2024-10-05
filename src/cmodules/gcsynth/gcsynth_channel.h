@@ -9,6 +9,7 @@ struct gcsynth_channel {
     GList* filter_chain;
     GMutex mutex;
     int initialized;
+    float gain; // per channel gain adjustment 0 means no change.
 };
 
 //Note channel has already been range checked prior to these function calls.
@@ -22,6 +23,7 @@ void gcsynth_remove_all_filters();
 
 void gcsynth_channel_enable_filter(int channel, char* plugin_label);
 void gcsynth_channel_disable_filter(int channel, char* plugin_label);
+void gcsynth_channel_gain(int channel, float gain);
 
 
 int gcsynth_channel_set_control_by_index(int channel, char* plugin_label, 

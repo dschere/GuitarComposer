@@ -167,6 +167,18 @@ static PyObject* py_query_filter(PyObject* self, PyObject* args) {
     return control_info_list;
 }
 
+static PyObject* py_channel_gain(PyObject* self, PyObject* args) {
+    int channel;
+    float gain;
+
+    if (!PyArg_ParseTuple(args, "if", &channel, &gain)) {
+        return NULL;  // Return NULL to indicate an error if the parsing failed
+    }
+
+    gcsynth_channel_gain(channel, gain);
+
+    Py_RETURN_NONE;
+}
 
 static PyObject* py_gcsynth_channel_enable_filter(PyObject* self, PyObject* args) {
     int channel;
@@ -497,8 +509,11 @@ static PyMethodDef GCSynthMethods[] = {
     {"filter_set_control_by_name", py_gcsynth_channel_set_control_by_name, 
         METH_VARARGS,"filter_set_control_by_name(chan,plugin_label,name,value)" },
 
+
     {"filter_set_control_by_index", py_gcsynth_channel_set_control_by_index, 
         METH_VARARGS,"filter_set_control_by_name(chan,plugin_label,index,value)" },
+
+    {"channel_gain",py_channel_gain,METH_VARARGS,"channel_gain(chan,v) v = 0 no change"},
 
     // aid in unit testing
     {"test_filter",py_filter_test,METH_VARARGS,"test_filter(path,plugin_label)-> pass or raise exception"},
