@@ -20,6 +20,15 @@ static struct gcsynth GcSynth;
 #define PyDict_SetItemString2(dict, key, py_value) \
     {PyDict_SetItemString(dict,key,py_value); Py_DECREF(py_value);}    
 
+#define CHECK_CHANNEL_VALUE(channel) \
+    if (channel < 0 || channel >= MAX_CHANNELS) { \
+        char msg[256]; \
+        sprintf(msg,"channel %d needs to be within 0 and %d\n", \
+             channel, MAX_CHANNELS); \
+        raise_value_error(msg); \
+        return NULL; \
+    } 
+
 
 // decoding routines
 static void gcsynth_start_args_init(
@@ -28,7 +37,7 @@ static void gcsynth_start_args_init(
     char* errmsg
 );
 
-static struct scheduled_event* scheduled_event_new(PyObject* dict);
+//static struct scheduled_event* scheduled_event_new(PyObject* dict);
 
 
 // api
@@ -175,6 +184,8 @@ static PyObject* py_channel_gain(PyObject* self, PyObject* args) {
         return NULL;  // Return NULL to indicate an error if the parsing failed
     }
 
+    CHECK_CHANNEL_VALUE(channel)
+
     gcsynth_channel_gain(channel, gain);
 
     Py_RETURN_NONE;
@@ -189,10 +200,7 @@ static PyObject* py_gcsynth_channel_enable_filter(PyObject* self, PyObject* args
         return NULL;  // Return NULL to indicate an error if the parsing failed
     }
 
-    if (channel < 0 || channel >= MAX_CHANNELS) {
-        gcsynth_raise_exception("channel must be between 0-64");
-        return NULL;
-    }
+    CHECK_CHANNEL_VALUE(channel)
 
     gcsynth_channel_enable_filter(channel, plugin_label);
 
@@ -209,10 +217,7 @@ static PyObject* py_gcsynth_channel_disable_filter(PyObject* self, PyObject* arg
         return NULL;  // Return NULL to indicate an error if the parsing failed
     }
 
-    if (channel < 0 || channel >= MAX_CHANNELS) {
-        gcsynth_raise_exception("channel must be between 0-64");
-        return NULL;
-    }
+    CHECK_CHANNEL_VALUE(channel)
 
     gcsynth_channel_disable_filter(channel, plugin_label);
 
@@ -273,10 +278,7 @@ static PyObject* py_load_ladspa_filter(PyObject* self, PyObject* args) {
         return NULL;  // Return NULL to indicate an error if the parsing failed
     }
 
-    if (channel < 0 || channel >= MAX_CHANNELS) {
-        gcsynth_raise_exception("channel must be between 0-64");
-        return NULL;
-    }
+    CHECK_CHANNEL_VALUE(channel)
 
     // setup controls values if present, these will initialize plugin
     if (gcsynth_channel_add_filter(channel, filepath, (char*) plugin_label) == -1) {
@@ -304,17 +306,19 @@ static PyObject* py_gcsynth_noteon(PyObject* self, PyObject* args) {
 //int fluid_synth_program_select(fluid_synth_t *synth, int chan, int sfont_id,
 //                               int bank_num, int preset_num);
 static PyObject* py_fluid_synth_program_select(PyObject* self, PyObject* args) {
-    int chan;
+    int channel;
     int sfont_id;
     int bank_num;
     int preset_num;
 
     // Parse the Python tuple, expecting two strings and a dictionary
-    if (!PyArg_ParseTuple(args, "iiii", &chan, &sfont_id, &bank_num, &preset_num)) {
+    if (!PyArg_ParseTuple(args, "iiii", &channel, &sfont_id, &bank_num, &preset_num)) {
         return NULL;  // Return NULL to indicate an error if the parsing failed
     }
 
-    gcsynth_select(&GcSynth, chan, sfont_id, bank_num, preset_num);
+    CHECK_CHANNEL_VALUE(channel)
+
+    gcsynth_select(&GcSynth, channel, sfont_id, bank_num, preset_num);
     
     Py_RETURN_NONE;
 
@@ -332,6 +336,8 @@ static PyObject* py_gcsynth_channel_set_control_by_name
     if (!PyArg_ParseTuple(args, "issf", &channel, &plugin_label, &control_name, &value)) {
         return NULL;  // Return NULL to indicate an error if the parsing failed
     }
+
+    CHECK_CHANNEL_VALUE(channel)
 
     gcsynth_channel_set_control_by_name(channel, plugin_label, 
         control_name, value);
@@ -353,6 +359,8 @@ static PyObject* py_gcsynth_channel_set_control_by_index
         return NULL;  // Return NULL to indicate an error if the parsing failed
     }
 
+    CHECK_CHANNEL_VALUE(channel)
+
     gcsynth_channel_set_control_by_index(channel, plugin_label, 
         control_num, value);
 
@@ -368,6 +376,8 @@ static PyObject* py_gcsynth_noteoff(PyObject* self, PyObject* args) {
         return NULL;  // Return NULL to indicate an error if the parsing failed
     }
 
+    CHECK_CHANNEL_VALUE(channel)
+
     gcsynth_noteoff(&GcSynth, channel, midicode);
     
     Py_RETURN_NONE;
@@ -382,6 +392,8 @@ static PyObject* py_gcsynth_channel_remove_filter(PyObject* self, PyObject* args
     if (!PyArg_ParseTuple(args, "i|s", &channel, &plugin_label_or_all)) {
         return NULL;  // Return NULL to indicate an error if the parsing failed
     }
+
+    CHECK_CHANNEL_VALUE(channel)
     
     gcsynth_channel_remove_filter(channel, plugin_label_or_all);
 

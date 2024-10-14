@@ -2,6 +2,11 @@
 
 #include "pyutil.h"
 
+void raise_value_error(char *msg) {
+    // Raise a ValueError with a custom message
+    PyErr_SetString(PyExc_ValueError, msg);
+}
+
 const char *get_dict_str_field(PyObject* dict, const char*key, const char* defval)
 {
     PyObject* dict_field = NULL;

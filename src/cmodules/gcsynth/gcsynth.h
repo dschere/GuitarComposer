@@ -54,7 +54,6 @@ void gcsynth_stop(struct gcsynth* gcSynth);
 void gcsynth_raise_exception(char* text);
 
 
-
 /**
  * python api
  * 

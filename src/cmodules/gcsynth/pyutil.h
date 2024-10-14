@@ -11,6 +11,7 @@ float       get_dict_flt_field(PyObject* dict, const char*key, float defval);
 
 struct scheduled_event* event_from_pydata(PyObject* dict);
 
+void raise_value_error(char* msg);
 
 
 #endif

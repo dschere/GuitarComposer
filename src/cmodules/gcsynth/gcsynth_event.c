@@ -14,7 +14,7 @@ static void gcsynth_schedule_fluidsynth_event(struct gcsynth* gcs,
     struct scheduled_event* s_event);
 static void gcsynth_schedule_custom_event(struct gcsynth* gcs, 
     struct scheduled_event* s_event);
-static void* thread_timer_function(void* arg);    
+//static void* thread_timer_function(void* arg);    
 
 
 void gcsynth_noteon(struct gcsynth* gcs, int chan, int midicode, int velocity)
