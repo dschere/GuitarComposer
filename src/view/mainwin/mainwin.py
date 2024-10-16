@@ -5,6 +5,8 @@ from PyQt6.QtWidgets import (
     QWidget, QSplitter, QStatusBar, QVBoxLayout, 
 )
 from PyQt6.QtGui import QAction
+from view.mainwin.fretboard import GuitarFretboard
+
 
 class MainWindow(QMainWindow):
     def create_menubar(self):
@@ -95,7 +97,9 @@ class MainWindow(QMainWindow):
         #self.tab_widget.addTab(QWidget(), "Tab 2")
 
         # Create a simple QWidget for the bottom-right pane
-        self.bottom_widget = QWidget()
+        #FINDME
+        #self.bottom_widget = QWidget()
+        self.bottom_widget = GuitarFretboard()
 
         # Create the vertical splitter for the left and right panes
         self.vertical_splitter = QSplitter(Qt.Orientation.Horizontal)
