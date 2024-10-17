@@ -1,10 +1,12 @@
 import os
 import xml.etree.ElementTree as ET
+from singleton_decorator import singleton
 
 from util.midi import midi_codes
 
 SCALE_XML_DB = os.environ['GC_BASE_DIR']+"/data/music_theory/scales.xml"
 
+@singleton
 class MusicScales:
     def __init__(self):
         self.scales = {}
@@ -16,7 +18,8 @@ class MusicScales:
             self.scales[n] = keys
         
         self.sorted_names = sorted(self.scales)
-
+    
+    
     def generate_midi_scale_codes(self, _scale_name, key):
         scale_name = _scale_name.lower()
         if scale_name not in self.scales:
@@ -33,7 +36,7 @@ class MusicScales:
                 break
             mc_list.append(mc)
             i += 1
-        return mc_list
+        return mc_list, s
         
 def unittest():
     ms = MusicScales()

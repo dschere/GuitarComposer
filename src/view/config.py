@@ -7,8 +7,9 @@ grouped as associated with a theme.
 The class names here match the class names they provide styling information
 for.
 """
+from singleton_decorator import singleton
 
-
+@singleton
 class _GuitarFretboardStyle:
     # silver
     string_color_rgb = (192, 192, 192)
@@ -18,10 +19,23 @@ class _GuitarFretboardStyle:
     fretboard_bg_color_rgb = (128, 0, 32)   
     # gold
     orament_color_rgb = (255, 235, 14) 
-    # red
-    text_color_rgb = (255, 0, 0)
+    # egg shell
+    text_color_rgb = (240, 234, 214)
     # onyx
     background_color_rgb = (53, 57, 53)
+    # cyan
+    scale_root_color_rgb = (0, 255, 255) 
+    # navy
+    scale_color_rgb = (0, 0, 128)
+
+@singleton
+class _LabelText:
+    # TODO, tie into localization so these can be switched.
+
+    filter_scale = "Filter scales:"
+    scales       = "Scales:"
+    keys         = "Keys:"
 
 
 GuitarFretboardStyle = _GuitarFretboardStyle()    
+LabelText = _LabelText()

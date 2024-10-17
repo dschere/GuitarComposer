@@ -4,6 +4,7 @@ from PyQt6.QtGui import QPainter, QPen, QColor, QBrush, QPolygon, QFont
 from PyQt6.QtCore import Qt, QPoint
 
 from view.config import GuitarFretboardStyle
+from util.midi import midi_codes
 
 class GuitarFretboard(QWidget):
     STRING_SPACING = 30
@@ -17,6 +18,12 @@ class GuitarFretboard(QWidget):
         self.setGeometry(100, 100, 1050, 250)  # Increased width to fit more frets
         self.tuning = []
         self.dots = []
+        self.scale = []
+        self.scale_seq = None
+    
+    def setScale(self, scale, scale_seq):
+        self.scale = scale
+        self.scale_seq = scale_seq
 
     def setTuning(self, tuning):
         self.tuning = tuning
@@ -24,17 +31,46 @@ class GuitarFretboard(QWidget):
     def addDot(self, fret, string, rgb):
         self.dots.append((fret,string,QColor(*rgb)))
 
+    def _render_scale(self, painter: QPainter, fret_positions: list):
+        if len(self.scale) == 0:
+            return # nothing to render
+        
+        mc_ranges_per_string = []
+        for (string,text) in enumerate(self.tuning):
+            y = self.START_Y + (string * self.STRING_SPACING)
+            start_mc = midi_codes.midi_code(text)
+            end_mc = start_mc + 24
+            mc_ranges_per_string.append((y,start_mc,end_mc))
+
+        def_scale_color = QColor(*GuitarFretboardStyle.scale_color_rgb)
+        root_color = QColor(*GuitarFretboardStyle.scale_root_color_rgb)
+        for (i,midi_code) in enumerate(self.scale):
+            steps = self.scale_seq[i % len(self.scale_seq)]
+            if steps == 1:
+                color = root_color
+            else:
+                color = def_scale_color    
+
+            for (y, start_mc, end_mc) in mc_ranges_per_string:
+                if midi_code >= start_mc and midi_code <= end_mc:
+                    fret = midi_code - start_mc
+                    x = fret_positions[fret]
+                    r = 20        
+                    painter.setBrush(QBrush(color, Qt.BrushStyle.SolidPattern))
+                    painter.drawEllipse(int(x) - 10, int(y) - 10, r, r)
+
+
     def _draw_dots(self, painter: QPainter, fret_positions: list):
         for (fret, string, qp) in self.dots:
             x = fret_positions[fret]
             r = 20
             if fret > 0:
-                x = int( (fret_positions[fret] + fret_positions[fret-1])/2 )
+                #x = int( (fret_positions[fret] + fret_positions[fret-1])/2 )
+                x = fret_positions[fret]
             y = self.START_Y + ((string-1) * self.STRING_SPACING)
              
-
             painter.setBrush(QBrush(qp, Qt.BrushStyle.SolidPattern))
-            painter.drawEllipse(int(x) - 10, int(y) - 10, r, r)
+            painter.drawEllipse(int(x) -10 , int(y) - 10, r, r)
 
     def _draw_tuning(self, painter: QPainter):
         text_color = QColor(*GuitarFretboardStyle.text_color_rgb)
@@ -147,10 +183,13 @@ class GuitarFretboard(QWidget):
             painter.drawLine(start_x, y, end_x, y)
 
         self._draw_tuning(painter)
+        self._render_scale(painter, fret_positions)
         self._draw_dots(painter, fret_positions)
 
 
 if __name__ == "__main__":
+    from util.scale import MusicScales
+
     app = QApplication(sys.argv)
     window = GuitarFretboard()
 
@@ -163,6 +202,9 @@ if __name__ == "__main__":
         "E2"
     ]   
     window.setTuning(tuning)
-    window.addDot(12,1,(0,255,255))
+    ms = MusicScales()
+    scale, scale_seq = ms.generate_midi_scale_codes("Major Scale","C")
+    window.setScale(scale, scale_seq)
+    window.addDot(12,1,(0,255,0))
     window.show()
     sys.exit(app.exec())
