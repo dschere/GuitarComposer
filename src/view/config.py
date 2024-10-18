@@ -35,6 +35,8 @@ class _LabelText:
     filter_scale = "Filter scales:"
     scales       = "Scales:"
     keys         = "Keys:"
+    scale_selector_group = "Fretboard Overlay" 
+    clear_scale  = "Clear"
 
 
 GuitarFretboardStyle = _GuitarFretboardStyle()    

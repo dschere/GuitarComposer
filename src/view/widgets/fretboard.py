@@ -6,6 +6,8 @@ from PyQt6.QtCore import Qt, QPoint
 from view.config import GuitarFretboardStyle
 from util.midi import midi_codes
 
+from view.events import Signals, ScaleSelectedEvent, ClearScaleEvent 
+
 class GuitarFretboard(QWidget):
     STRING_SPACING = 30
     START_X = 50
@@ -15,12 +17,32 @@ class GuitarFretboard(QWidget):
     def __init__(self):
         super().__init__()
         #self.setWindowTitle("Guitar Fretboard")
-        self.setGeometry(100, 100, 1050, 250)  # Increased width to fit more frets
-        self.tuning = []
+        self.setGeometry(100, 100, 1025, 250)  # Increased width to fit more frets
+        self.setFixedHeight(250)
+        self.setFixedWidth(1025)
+        self.tuning = [
+            "E4",
+            "B3",
+            "G3",
+            "D3",
+            "A2",
+            "E2"
+        ]
         self.dots = []
         self.scale = []
         self.scale_seq = None
-    
+
+        Signals.scale_selected.connect(self.on_scale_selected)
+        Signals.clear_scale.connect(self.on_clear_scale_overlay)
+
+    def on_scale_selected(self, evt : ScaleSelectedEvent):
+        self.setScale(evt.scale_midi, evt.scale_seq)
+        self.update()
+
+    def on_clear_scale_overlay(self):
+        self.scale = []
+        self.update()
+
     def setScale(self, scale, scale_seq):
         self.scale = scale
         self.scale_seq = scale_seq
@@ -59,6 +81,7 @@ class GuitarFretboard(QWidget):
                     painter.setBrush(QBrush(color, Qt.BrushStyle.SolidPattern))
                     painter.drawEllipse(int(x) - 10, int(y) - 10, r, r)
 
+        
 
     def _draw_dots(self, painter: QPainter, fret_positions: list):
         for (fret, string, qp) in self.dots:
@@ -150,8 +173,6 @@ class GuitarFretboard(QWidget):
 
             # Decrease spacing for the next fret by 1 pixel
             x += max(initial_fret_spacing - i, 5)  # Ensuring the spacing doesn't get too small
-
-
 
         # Drawing a gold circle between the 3rd and 4th strings on the 3rd fret
         orn_color = QColor(*GuitarFretboardStyle.orament_color_rgb)  # RGB for gold

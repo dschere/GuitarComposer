@@ -11,11 +11,14 @@ class ScaleSelectedEvent:
         self.scale_seq = []
         self.key = ""
 
+class ClearScaleEvent:
+    pass
+
 
 @singleton
 class _Signals(QObject):
     scale_selected = pyqtSignal(ScaleSelectedEvent)
-
+    clear_scale = pyqtSignal(ClearScaleEvent)
 
 Signals = _Signals()
     
