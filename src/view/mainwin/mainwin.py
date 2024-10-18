@@ -7,6 +7,8 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtGui import QAction
 from view.mainwin.fretboard_view import fretboard_view
 
+from view.events import Signals
+from view.config import ORAGANIZATION, APP_NAME
 
 class MainWindow(QMainWindow):
     def create_menubar(self):
@@ -131,20 +133,25 @@ class MainWindow(QMainWindow):
 
     def save_settings(self):
         """Save the splitter sizes and window geometry."""
-        settings = QSettings("MyCompany", "MyApp")
+        settings = QSettings(ORAGANIZATION, APP_NAME)
         settings.setValue("geometry", self.saveGeometry())  # Save window size and position
         settings.setValue("vertical_splitter_state", self.vertical_splitter.saveState())
         settings.setValue("horizontal_splitter_state", self.horizontal_splitter.saveState())
 
+        Signals.save_settings.emit(settings)  
+
     def load_settings(self):
         """Restore the splitter sizes and window geometry."""
-        settings = QSettings("MyCompany", "MyApp")
+        settings = QSettings(ORAGANIZATION, APP_NAME)
         if settings.contains("geometry"):
             self.restoreGeometry(settings.value("geometry"))
         if settings.contains("vertical_splitter_state"):
             self.vertical_splitter.restoreState(settings.value("vertical_splitter_state"))
         if settings.contains("horizontal_splitter_state"):
             self.horizontal_splitter.restoreState(settings.value("horizontal_splitter_state"))
+
+        Signals.load_settings.emit(settings)  
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

@@ -1,5 +1,8 @@
+"""
+Controller for the current active editor.
 
 
+"""
 
 
 class EditorController:

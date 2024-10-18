@@ -9,8 +9,14 @@ from view.events import Signals, ScaleSelectedEvent, ClearScaleEvent
 
 class FilterableScaleSelector(QWidget):
         
+
     def __init__(self):
         super().__init__()
+
+        self.scale_widget_name = __class__.__name__ + ".scale"
+        self.key_widget_name = __class__.__name__ + ".key"
+        self.filter_widget_name = __class__.__name__ + ".filter"
+ 
         self.music_scales = MusicScales()
 
         # Main vertical layout
@@ -64,6 +70,23 @@ class FilterableScaleSelector(QWidget):
 
         self.scale_combo_box.currentIndexChanged.connect(self.on_scale_selection)
         self.key_combo_box.currentIndexChanged.connect(self.on_scale_selection)
+        Signals.load_settings.connect(self.on_load_settings)
+        Signals.save_settings.connect(self.on_save_settings)
+
+
+    def on_load_settings(self, settings):
+        if settings.contains(self.scale_widget_name):
+            self.scale_combo_box.setCurrentText( settings.value(self.scale_widget_name))
+        if settings.contains(self.key_widget_name):
+            self.key_combo_box.setCurrentText(settings.value(self.key_widget_name))
+        #if settings.contains(self.filter_widget_name):
+        #    self.filter_input.setText(settings.value(self.filter_widget_name))
+
+
+    def on_save_settings(self, settings):
+        settings.setValue(self.scale_widget_name, self.scale_combo_box.currentText())    
+        settings.setValue(self.key_widget_name, self.key_combo_box.currentText())    
+        #settings.setValue(self.filter_widget_name, self.filter_input.text())
 
     def on_clear_click(self, *args):
         Signals.clear_scale.emit( ClearScaleEvent() )

@@ -41,3 +41,6 @@ class _LabelText:
 
 GuitarFretboardStyle = _GuitarFretboardStyle()    
 LabelText = _LabelText()
+
+ORAGANIZATION = "OneManShow Enterprises"
+APP_NAME = "GuitarComposer"

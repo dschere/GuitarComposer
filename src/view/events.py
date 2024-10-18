@@ -19,6 +19,8 @@ class ClearScaleEvent:
 class _Signals(QObject):
     scale_selected = pyqtSignal(ScaleSelectedEvent)
     clear_scale = pyqtSignal(ClearScaleEvent)
+    load_settings = pyqtSignal(object)
+    save_settings = pyqtSignal(object)
 
 Signals = _Signals()
     
