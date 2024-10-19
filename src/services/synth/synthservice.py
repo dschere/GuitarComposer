@@ -2,8 +2,26 @@ from singleton_decorator import singleton
 from services.synth.instrument_info import instrument_info
 
 import gcsynth
+import traceback
 from services.synth.sequencer import sequencer
+from multiprocessing import Process, SimpleQueue
+import logging
 
+
+def gcsynth_proc(q, r):
+    while True:
+        msg = q.get()
+        if not msg:
+            break
+        try:
+            (funcname, args) = msg
+            f = getattr(gcsynth,funcname)
+            logging.info("gcsynth.%s( %s )" % (funcname, str(args)))
+            result = (False, f( *args ))
+        except gcsynth.GcsynthException as e_obj:
+            result = (True, str(e_obj))
+
+        r.put(result)    
 
 @singleton
 class synthservice:
@@ -12,56 +30,87 @@ class synthservice:
         # filenames, instrument data etc.
         self.db = instrument_info()
 
+        # launch the synth in a child process
+        # it is a heavilly multithreaded library and causes bus
+        # errors when mixed with 
+        self.send_q = SimpleQueue()
+        self.recv_q = SimpleQueue()
+        
+
+        self.p = Process(target=gcsynth_proc, args=(self.send_q,self.recv_q,), daemon=True)
+        self.p.start()
+
+    def transact(self, funcname, *args):
+        msg = (funcname, args)
+        self.send_q.put(msg)
+        
+        (error, result) = self.recv_q.get()
+        if error:
+            raise RuntimeError(error)
+        return result
+
+    def shutdown(self):
+        self.send_q.put(None)
+
     def getSequencer(self):
         return sequencer(self)        
 
     def start(self):
-        gcsynth.start({"sfpaths": self.db.sfpaths})
-
+        return self.transact("start", {"sfpaths": self.db.sfpaths})
+        
     def stop(self):
-        gcsynth.stop()
+        return self.transact("stop")
 
     def noteoff(self, channel : int, midicode: int):
-        gcsynth.noteoff(self, channel, midicode)
+        return self.transact("noteoff", channel, midicode)
 
     def noteon(self, channel : int , midicode: int, velocity: int):    
-        gcsynth.noteon(channel, midicode, velocity)
+        return self.transact("noteon", channel, midicode, velocity)
 
     def select(self, channel : int , sfont_id : int, bank_num : int , preset_num : int):
-        gcsynth.select(channel, sfont_id, bank_num, preset_num)
+        return self.transact("select", channel, sfont_id, bank_num, preset_num)
 
     def filter_add(self, channel: int, filepath: str, plugin_label: str):
-        gcsynth.filter_add(channel, filepath, plugin_label)
+        return self.transact("filter_add", channel, filepath, plugin_label)
 
     def filter_remove(self, channel: int, plugin_label: str):
-        gcsynth.filter_remove(channel, plugin_label)
+        return self.transact("filter_remove", channel, plugin_label)
 
     def filter_remove_all(self, channel: int):
-        gcsynth.filter_remove(channel)
+        return self.transact("filter_remove", channel)
 
     def filter_query(self, filepath: str, plugin_label: str):
-        return gcsynth.filter_query(filepath, plugin_label)
+        return self.transact("filter_query", filepath, plugin_label)
     
     def filter_enable(self, channel: int, plugin_label: str):
-        gcsynth.filter_enable(channel, plugin_label)
+        return self.transact("filter_enable",channel, plugin_label)
 
     def filter_disable(self, channel: int, plugin_label: str):
-        gcsynth.filter_disable(channel, plugin_label)
+        return self.transact("filter_disable", channel, plugin_label)
 
     def filter_set_control_by_name(self, channel: int, plugin_label: str, name: str, value: float):
-        gcsynth.filter_set_control_by_name(channel, plugin_label, name, value)
+        return self.transact("filter_set_control_by_name", channel, plugin_label, name, value)
 
     def filter_set_control_by_index(self, channel: int, plugin_label: str, index: int, value: float):
-        gcsynth.filter_set_control_by_index(channel, plugin_label, index, value)
+        return self.transact("filter_set_control_by_index", channel, plugin_label, index, value)
 
     def channel_gain(self, channel: int, change: float):
-        gcsynth.channel_gain(channel, change)
+        return self.transact("channel_gain", channel, change)
 
     def timer_event(self, ev_or_ev_list):
-        gcsynth.timer_event(ev_or_ev_list)
+        return self.transact("timer_event", ev_or_ev_list)
 
     def instrument_info(self):
         return self.db.instruments
     
+if __name__ == '__main__':
+    import time
+
+    ss = synthservice()
+    ss.start()
+    ss.noteon(0,60,80)
+    time.sleep(2.0)
+    ss.stop()
+    ss.shutdown()
     
 

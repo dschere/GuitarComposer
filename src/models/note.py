@@ -7,3 +7,5 @@ class Note:
         self.fret = None
         self.string = None
         self.accent = '#'
+
+        self.is_playing = False

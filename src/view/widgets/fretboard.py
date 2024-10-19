@@ -1,12 +1,17 @@
 import sys
+import logging 
+
 from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget
-from PyQt6.QtGui import QPainter, QPen, QColor, QBrush, QPolygon, QFont
+from PyQt6.QtGui import QPainter, QPen, QColor, QBrush, QPolygon, QFont, QMouseEvent
 from PyQt6.QtCore import Qt, QPoint
 
 from view.config import GuitarFretboardStyle
 from util.midi import midi_codes
+from util.coordinateMap import CoordinateMap
 
-from view.events import Signals, ScaleSelectedEvent, ClearScaleEvent 
+from view.events import Signals, ScaleSelectedEvent, ClearScaleEvent
+
+from models.note import Note
 
 class GuitarFretboard(QWidget):
     STRING_SPACING = 30
@@ -14,9 +19,49 @@ class GuitarFretboard(QWidget):
     END_X = 1000
     START_Y = 50
 
+    def _init_coordinate_map(self, fret_positions, string_positions):
+        self.cm = CoordinateMap(
+            self.START_X-10,
+            self.START_Y-10,
+            self.END_X+10,
+            self.START_Y + (len(self.tuning) * self.STRING_SPACING) + 10)
+        for (string, string_y_pos) in enumerate(string_positions):
+            start_midi = midi_codes.midi_code(self.tuning[string])
+            for (fret, fret_x_pos) in enumerate(fret_positions):
+                n = Note()
+                n.midi_code = start_midi + fret
+                n.fret = fret
+                n.string = string
+                n.velocity = 80
+                self.cm.add(fret_x_pos, string_y_pos, n)
+
+    def _update_active_notes(self, n: Note):
+        logging.debug(str(vars(n)))
+        fret_playing = self.string_playing_fret[n.string]
+        if fret_playing != -1:
+            self.removeDot(fret_playing,n.string)
+        if n.is_playing:
+            self.addDot(n.fret, n.string, GuitarFretboardStyle.note_press)
+            self.string_playing_fret[n.string] = n.fret
+        self.update()
+
+    def mousePressEvent(self, event: QMouseEvent):
+        if event.button() == Qt.MouseButton.LeftButton:
+            x = event.position().x()
+            y = event.position().y()
+            n = self.cm.match(x, y)
+            if n:
+                # Toggle state
+                n.is_playing = not n.is_playing 
+                if n.is_playing:
+                    Signals.preview_play.emit(n)
+                else:
+                    Signals.preview_stop.emit(n)
+                self._update_active_notes(n)
+
     def __init__(self):
         super().__init__()
-        #self.setWindowTitle("Guitar Fretboard")
+        
         self.setGeometry(100, 100, 1025, 250)  # Increased width to fit more frets
         self.setFixedHeight(250)
         self.setFixedWidth(1025)
@@ -28,12 +73,17 @@ class GuitarFretboard(QWidget):
             "A2",
             "E2"
         ]
-        self.dots = []
+        # keep track of strings playing notes, only one allowed per string
+        self.string_playing_fret = [-1 for i in range(len(self.tuning))]
+        self.dots = {}
         self.scale = []
         self.scale_seq = None
+        self.cm = None
 
         Signals.scale_selected.connect(self.on_scale_selected)
         Signals.clear_scale.connect(self.on_clear_scale_overlay)
+
+
 
     def on_scale_selected(self, evt : ScaleSelectedEvent):
         self.setScale(evt.scale_midi, evt.scale_seq)
@@ -51,7 +101,12 @@ class GuitarFretboard(QWidget):
         self.tuning = tuning
 
     def addDot(self, fret, string, rgb):
-        self.dots.append((fret,string,QColor(*rgb)))
+        self.dots[(fret,string)] = QColor(*rgb)
+
+    def removeDot(self, fret, string):
+        k = (fret,string)
+        if k in self.dots:
+            del self.dots[k]
 
     def _render_scale(self, painter: QPainter, fret_positions: list):
         if len(self.scale) == 0:
@@ -81,16 +136,14 @@ class GuitarFretboard(QWidget):
                     painter.setBrush(QBrush(color, Qt.BrushStyle.SolidPattern))
                     painter.drawEllipse(int(x) - 10, int(y) - 10, r, r)
 
-        
-
     def _draw_dots(self, painter: QPainter, fret_positions: list):
-        for (fret, string, qp) in self.dots:
+        for ((fret, string), qp) in self.dots.items():
             x = fret_positions[fret]
             r = 20
             if fret > 0:
                 #x = int( (fret_positions[fret] + fret_positions[fret-1])/2 )
                 x = fret_positions[fret]
-            y = self.START_Y + ((string-1) * self.STRING_SPACING)
+            y = self.START_Y + (string * self.STRING_SPACING)
              
             painter.setBrush(QBrush(qp, Qt.BrushStyle.SolidPattern))
             painter.drawEllipse(int(x) -10 , int(y) - 10, r, r)
@@ -197,8 +250,10 @@ class GuitarFretboard(QWidget):
                 fret, g_str)
 
         string_color = QColor(*GuitarFretboardStyle.string_color_rgb) 
+        string_positions = []
         for i in range(num_strings):
             y = start_y + i * string_spacing
+            string_positions.append(y)
             string_pen = QPen(string_color, i+3)
             painter.setPen(string_pen)    
             painter.drawLine(start_x, y, end_x, y)
@@ -206,7 +261,10 @@ class GuitarFretboard(QWidget):
         self._draw_tuning(painter)
         self._render_scale(painter, fret_positions)
         self._draw_dots(painter, fret_positions)
-
+        if not self.cm:
+            self._init_coordinate_map(fret_positions, string_positions)
+        
+        
 
 if __name__ == "__main__":
     from util.scale import MusicScales
@@ -227,5 +285,15 @@ if __name__ == "__main__":
     scale, scale_seq = ms.generate_midi_scale_codes("Major Scale","C")
     window.setScale(scale, scale_seq)
     window.addDot(12,1,(0,255,0))
+
+    def handle_play(n : Note):
+        print("preview_play " + str(vars(n)))
+    def handle_stop(n : Note):
+        print("preview_stop " + str(vars(n)))
+
+    Signals.preview_play.connect(handle_play)
+    Signals.preview_stop.connect(handle_stop)
+
+
     window.show()
     sys.exit(app.exec())

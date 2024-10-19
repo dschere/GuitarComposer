@@ -79,14 +79,11 @@ class FilterableScaleSelector(QWidget):
             self.scale_combo_box.setCurrentText( settings.value(self.scale_widget_name))
         if settings.contains(self.key_widget_name):
             self.key_combo_box.setCurrentText(settings.value(self.key_widget_name))
-        #if settings.contains(self.filter_widget_name):
-        #    self.filter_input.setText(settings.value(self.filter_widget_name))
 
 
     def on_save_settings(self, settings):
         settings.setValue(self.scale_widget_name, self.scale_combo_box.currentText())    
         settings.setValue(self.key_widget_name, self.key_combo_box.currentText())    
-        #settings.setValue(self.filter_widget_name, self.filter_input.text())
 
     def on_clear_click(self, *args):
         Signals.clear_scale.emit( ClearScaleEvent() )

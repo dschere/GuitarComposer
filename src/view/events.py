@@ -4,6 +4,7 @@ Central place for custom signals/slots for the application
 from PyQt6.QtCore import QObject, pyqtSignal
 from singleton_decorator import singleton
 
+from models.note import Note
 
 class ScaleSelectedEvent:
     def __init__(self):
@@ -14,13 +15,18 @@ class ScaleSelectedEvent:
 class ClearScaleEvent:
     pass
 
-
 @singleton
 class _Signals(QObject):
     scale_selected = pyqtSignal(ScaleSelectedEvent)
     clear_scale = pyqtSignal(ClearScaleEvent)
     load_settings = pyqtSignal(object)
     save_settings = pyqtSignal(object)
+    preview_play = pyqtSignal(Note)
+    preview_stop = pyqtSignal(Note)
+
+    startup = pyqtSignal(object)
+    shutdown = pyqtSignal(object)
+    
 
 Signals = _Signals()
     

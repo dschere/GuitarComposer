@@ -27,6 +27,8 @@ class _GuitarFretboardStyle:
     scale_root_color_rgb = (0, 255, 255) 
     # navy
     scale_color_rgb = (0, 0, 128)
+    # purple
+    note_press = (255,0,255)
 
 @singleton
 class _LabelText:
