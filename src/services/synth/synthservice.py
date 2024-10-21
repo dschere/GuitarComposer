@@ -11,9 +11,9 @@ from multiprocessing import Process, SimpleQueue
 
 
 def gcsynth_proc(q, r):
-    (reader,writer) = os.pipe()
-    w_error = os.fdopen(writer,"w")
-    r_error = os.fdopen(reader,"r")
+    (reader, writer) = os.pipe()
+    w_error = os.fdopen(writer, "w")
+    r_error = os.fdopen(reader, "r")
     faulthandler.enable(file=w_error)
 
     while True:
@@ -52,6 +52,9 @@ class synthservice:
         self.p = Process(target=gcsynth_proc, args=(
             self.send_q, self.recv_q,), daemon=True)
         self.p.start()
+
+    def find(self, instrument_name):
+        return self.db.find(instrument_name)
 
     def transact(self, funcname, *args):
         msg = (funcname, args)

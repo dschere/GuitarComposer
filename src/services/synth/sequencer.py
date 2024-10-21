@@ -7,6 +7,7 @@ over time.
 import typing
 import gcsynth
 
+
 class timer_event:
     def __init__(self, when: int, channel: int, ev_type: int):
         self.when = when
@@ -24,15 +25,18 @@ class timer_event:
     def encode(self) -> dict:
         return vars(self)
 
+
 class pitch_change(timer_event):
     """
     changes the pitch in semitones.
 
     value: 0.0 means no change, range -12.0 to 12.0 
     """
+
     def __init__(self, when: int, channel: int, value: float):
         super().__init__(when, channel, gcsynth.EV_PITCH_WHEEL)
         self.pitch_change = value
+
 
 class filter_add(timer_event):
     def __init__(self, when: int, channel: int, plugin_path: str, plugin_label: str):
@@ -40,10 +44,12 @@ class filter_add(timer_event):
         self.plugin_path = plugin_path
         self.plugin_label = plugin_label
 
+
 class filter_remove(timer_event):
-    def __init__(self, when: int, channel: int , plugin_label: str):
+    def __init__(self, when: int, channel: int, plugin_label: str):
         super().__init__(when, channel, gcsynth.EV_FILTER_REMOVE)
         self.plugin_label = plugin_label
+
 
 class filter_enable(timer_event):
     def __init__(self, when: int, channel: int, plugin_label: str):
@@ -51,11 +57,13 @@ class filter_enable(timer_event):
         self.enable = 1
         self.plugin_label = plugin_label
 
+
 class filter_disable(timer_event):
     def __init__(self, when: int, channel: int, plugin_label: str):
         super().__init__(when, channel, gcsynth.EV_FILTER_DISABLE)
         self.enable = 0
         self.plugin_label = plugin_label
+
 
 class filter_control(timer_event):
     def __init__(self, when: int, channel: int, plugin_label: str, name: str, value: float):
@@ -76,10 +84,8 @@ class sequencer:
         self.te_events[te.when] = items
 
     def play(self):
-        # flatten dictionary sorted by timer event 
+        # flatten dictionary sorted by timer event
         play_list = []
         for (when, te_list) in sorted(self.te_events):
             play_list += te_list
         self.synth_service.timer_event(play_list)
-         
-

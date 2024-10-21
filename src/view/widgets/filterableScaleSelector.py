@@ -8,7 +8,6 @@ from view.events import Signals, ScaleSelectedEvent, ClearScaleEvent
 
 
 class FilterableScaleSelector(QWidget):
-        
 
     def __init__(self):
         super().__init__()
@@ -16,12 +15,12 @@ class FilterableScaleSelector(QWidget):
         self.scale_widget_name = __class__.__name__ + ".scale"
         self.key_widget_name = __class__.__name__ + ".key"
         self.filter_widget_name = __class__.__name__ + ".filter"
- 
+
         self.music_scales = MusicScales()
 
         # Main vertical layout
         main_layout = QVBoxLayout()
-        
+
         # Create the filter label and filter input
         filter_layout = QHBoxLayout()
         filter_label = QLabel(LabelText.filter_scale, self)
@@ -43,10 +42,11 @@ class FilterableScaleSelector(QWidget):
         key_layout = QHBoxLayout()
         key_label = QLabel(LabelText.keys, self)
         self.key_combo_box = QComboBox()
-        key_items = ["A","A#/Bb","B","C","C#/Db","D","D#/Eb","E","F","F#/Gb","G","G#/Ab"]
+        key_items = ["A", "A#/Bb", "B", "C", "C#/Db",
+                     "D", "D#/Eb", "E", "F", "F#/Gb", "G", "G#/Ab"]
         self.key_combo_box.addItems(key_items)
         key_layout.addWidget(key_label)
-        key_layout.addWidget(self.key_combo_box) 
+        key_layout.addWidget(self.key_combo_box)
 
         btn_layout = QHBoxLayout()
         clear_btn = QPushButton(LabelText.clear_scale)
@@ -59,7 +59,8 @@ class FilterableScaleSelector(QWidget):
         main_layout.addLayout(key_layout)
         main_layout.addLayout(btn_layout)
 
-        main_layout.setContentsMargins(0, 0, 0, 0)  # No margins around the layout
+        # No margins around the layout
+        main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(1)
 
         # Set layout to the window
@@ -68,35 +69,38 @@ class FilterableScaleSelector(QWidget):
         # Connect filter input to filtering method
         self.filter_input.textChanged.connect(self.filter_items)
 
-        self.scale_combo_box.currentIndexChanged.connect(self.on_scale_selection)
+        self.scale_combo_box.currentIndexChanged.connect(
+            self.on_scale_selection)
         self.key_combo_box.currentIndexChanged.connect(self.on_scale_selection)
         Signals.load_settings.connect(self.on_load_settings)
         Signals.save_settings.connect(self.on_save_settings)
 
-
     def on_load_settings(self, settings):
         if settings.contains(self.scale_widget_name):
-            self.scale_combo_box.setCurrentText( settings.value(self.scale_widget_name))
+            self.scale_combo_box.setCurrentText(
+                settings.value(self.scale_widget_name))
         if settings.contains(self.key_widget_name):
-            self.key_combo_box.setCurrentText(settings.value(self.key_widget_name))
-
+            self.key_combo_box.setCurrentText(
+                settings.value(self.key_widget_name))
 
     def on_save_settings(self, settings):
-        settings.setValue(self.scale_widget_name, self.scale_combo_box.currentText())    
-        settings.setValue(self.key_widget_name, self.key_combo_box.currentText())    
+        settings.setValue(self.scale_widget_name,
+                          self.scale_combo_box.currentText())
+        settings.setValue(self.key_widget_name,
+                          self.key_combo_box.currentText())
 
     def on_clear_click(self, *args):
-        Signals.clear_scale.emit( ClearScaleEvent() )
+        Signals.clear_scale.emit(ClearScaleEvent())
 
     def on_scale_selection(self, *args):
         # capture selection and compute midi codes
         scale_name = self.scale_combo_box.currentText()
         key = self.key_combo_box.currentText().split("/")[0]
         if len(scale_name) == 0:
-            return 
+            return
 
-        (mc_list,seq) = self.music_scales.generate_midi_scale_codes(scale_name, key)
-        
+        (mc_list, seq) = self.music_scales.generate_midi_scale_codes(scale_name, key)
+
         # emit message
         msg = ScaleSelectedEvent()
         msg.key = key
@@ -109,14 +113,15 @@ class FilterableScaleSelector(QWidget):
         self.scale_combo_box.clear()
 
         # Filter combo box items based on the text input
-        filtered_items = [item for item in self.items if filter_text in item.lower()]
+        filtered_items = [
+            item for item in self.items if filter_text in item.lower()]
         self.scale_combo_box.addItems(filtered_items)
 
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = FilterableScaleSelector()
-    
+
     def msg_handler(obj):
         print(vars(obj))
     Signals.scale_selected.connect(msg_handler)

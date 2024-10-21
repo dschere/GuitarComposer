@@ -9,6 +9,7 @@ for.
 """
 from singleton_decorator import singleton
 
+
 @singleton
 class _GuitarFretboardStyle:
     # silver
@@ -16,32 +17,33 @@ class _GuitarFretboardStyle:
     # copper
     fret_color_rgb = (184, 115, 51)
     # burgundy
-    fretboard_bg_color_rgb = (128, 0, 32)   
+    fretboard_bg_color_rgb = (128, 0, 32)
     # gold
-    orament_color_rgb = (255, 235, 14) 
+    orament_color_rgb = (255, 235, 14)
     # egg shell
     text_color_rgb = (240, 234, 214)
     # onyx
     background_color_rgb = (53, 57, 53)
     # cyan
-    scale_root_color_rgb = (0, 255, 255) 
+    scale_root_color_rgb = (0, 255, 255)
     # navy
     scale_color_rgb = (0, 0, 128)
     # purple
-    note_press = (255,0,255)
+    note_press = (255, 0, 255)
+
 
 @singleton
 class _LabelText:
     # TODO, tie into localization so these can be switched.
 
     filter_scale = "Filter scales:"
-    scales       = "Scales:"
-    keys         = "Keys:"
-    scale_selector_group = "Fretboard Overlay" 
-    clear_scale  = "Clear"
+    scales = "Scales:"
+    keys = "Keys:"
+    scale_selector_group = "Fretboard Overlay"
+    clear_scale = "Clear"
 
 
-GuitarFretboardStyle = _GuitarFretboardStyle()    
+GuitarFretboardStyle = _GuitarFretboardStyle()
 LabelText = _LabelText()
 
 ORAGANIZATION = "OneManShow Enterprises"

@@ -31,12 +31,12 @@ class TestGcSynth(unittest.TestCase):
         success = False
         try:
             gcsynth.start(fake_data)
-            
+
         except gcsynth.GcsynthException:
             print("success, forced an exception and was caght!")   
             success = True
         assert(success)
-        
+
     def test0103_start_play_stop(self):
         print("test0103_start_play_stop")
         data = {
@@ -50,23 +50,23 @@ class TestGcSynth(unittest.TestCase):
 
         gcsynth.stop()
 
-    
+
     def test0201_filter_info(self):
         print("test0201_filter_info")
         path = "/usr/lib/ladspa/guitarix_compressor.so"
         label = "guitarix_compressor"
         info = gcsynth.filter_query(path, label)
         print(json.dumps(info, sort_keys=True, indent=4))    
-         
 
-        
+
+
     def test0202_filter_test(self):
         print("test0202_filter_test")
         path = "/usr/lib/ladspa/guitarix_distortion.so"
         label = "guitarix-distortion"
         gcsynth.test_filter(path, label)
     """
-         
+
     def test0301_apply_filter_test(self):
         print("test0301_apply_filter_test")
         path = "/usr/lib/ladspa/tap_reverb.so"
@@ -80,28 +80,26 @@ class TestGcSynth(unittest.TestCase):
 
 #        print("1"); time.sleep(0.01)
         gcsynth.start(data)
-        
-        #print(json.dumps(sf_info, sort_keys=True, indent=4))
 
-        gcsynth.select(0,1,1,95)
+        # print(json.dumps(sf_info, sort_keys=True, indent=4))
+
+        gcsynth.select(0, 1, 1, 95)
 
         gcsynth.noteon(0, 60, 60)
         gcsynth.noteon(0, 65, 60)
 
         time.sleep(5.0)
 
-
-        gcsynth.filter_add(0,path,label)
-        gcsynth.filter_enable(0,label)
-        #gcsynth.filter_set_control_by_index(0,label,0,440.0)
-        #gcsynth.filter_set_control_by_index(0,label,1,1)
+        gcsynth.filter_add(0, path, label)
+        gcsynth.filter_enable(0, label)
+        # gcsynth.filter_set_control_by_index(0,label,0,440.0)
+        # gcsynth.filter_set_control_by_index(0,label,1,1)
 
         """
             {"filter_set_control_by_index", py_gcsynth_channel_set_control_by_index, 
         METH_VARARGS,"filter_set_control_by_name(chan,plugin_label,index,value)" },
 
-        """ 
-        
+        """
 
         gcsynth.noteon(0, 60, 60)
         gcsynth.noteon(0, 65, 60)
@@ -109,13 +107,11 @@ class TestGcSynth(unittest.TestCase):
 #        print("2"); time.sleep(0.01)
 
         time.sleep(10.0)
-        
-        
-        
+
         gcsynth.stop()
 #        print("3"); time.sleep(0.01)
 
-        gcsynth.filter_remove(0,label)
+        gcsynth.filter_remove(0, label)
 #        print("4"); time.sleep(0.01)
 
     """

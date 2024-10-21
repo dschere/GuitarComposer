@@ -6,7 +6,6 @@ import traceback
 base_dir = os.sep.join(os.path.abspath(__file__).split(os.sep)[:-5])
 
 
-
 class timer_event:
     def __init__(self, when, channel, ev_type):
         self.when = when
@@ -32,26 +31,31 @@ class filter_add(timer_event):
         self.plugin_path = plugin_path
         self.plugin_label = plugin_label
 
+
 class filter_remove(timer_event):
     def __init__(self, when, channel, plugin_label):
         super().__init__(when, channel, gcsynth.EV_FILTER_REMOVE)
         self.plugin_label = plugin_label
+
 
 class filter_enable(timer_event):
     def __init__(self, when, channel, plugin_label):
         super().__init__(when, channel, gcsynth.EV_FILTER_ENABLE)
         self.enable = 1
 
+
 class filter_disable(timer_event):
     def __init__(self, when, channel, plugin_label):
         super().__init__(when, channel, gcsynth.EV_FILTER_DISABLE)
         self.enable = 0
+
 
 class filter_control(timer_event):
     def __init__(self, when, channel, plugin_label, name, value):
         super().__init__(when, channel, gcsynth.EV_FILTER_CONTROL)
         self.control_name = name
         self.control_value = value
+
 
 class noteon(timer_event):
     def __init__(self, when, channel, key, vel):
@@ -61,16 +65,17 @@ class noteon(timer_event):
         self.midi_code = key
         self.velocity = vel
 
+
 class noteoff(timer_event):
     def __init__(self, when, channel, plugin_label, key):
         super().__init__(when, channel, gcsynth.EV_NOTEOFF)
         self.midi_code = key
 
+
 class pitch_change(timer_event):
     def __init__(self, when, channel, semitones):
         super().__init__(when, channel, gcsynth.EV_PITCH_WHEEL)
         self.pitch_change = semitones
-
 
 
 def gcsynth_start_stop(func):
@@ -89,7 +94,3 @@ def gcsynth_start_stop(func):
         gcsynth.stop()
         return result
     return wrapper
-
-
-
-

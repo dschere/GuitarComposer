@@ -6,14 +6,17 @@ from singleton_decorator import singleton
 
 from models.note import Note
 
+
 class ScaleSelectedEvent:
     def __init__(self):
         self.scale_midi = []
         self.scale_seq = []
         self.key = ""
 
+
 class ClearScaleEvent:
     pass
+
 
 @singleton
 class _Signals(QObject):
@@ -26,7 +29,6 @@ class _Signals(QObject):
 
     startup = pyqtSignal(object)
     shutdown = pyqtSignal(object)
-    
+
 
 Signals = _Signals()
-    

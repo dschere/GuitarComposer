@@ -5,6 +5,7 @@ from view.widgets.fretboard import GuitarFretboard
 
 from view.config import LabelText
 
+
 class fretboard_view(QWidget):
     def __init__(self):
         super().__init__()
@@ -26,6 +27,3 @@ class fretboard_view(QWidget):
         layout.addWidget(group_box)
 
         self.setLayout(layout)
-
-
-        

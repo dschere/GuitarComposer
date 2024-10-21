@@ -33,37 +33,37 @@ class CoordinateMap:
         self.top = top
         self.bottom = bottom
         self.right = right
-    
+
         self.data = {}
         self.x = []
         self.y = []
 
     def add(self, x, y, obj):
-        self.data[(x,y)] = obj
+        self.data[(x, y)] = obj
         self.x.append(x)
         self.y.append(y)
         self.x.sort()
-        self.y.sort()    
-        
+        self.y.sort()
+
     def match(self, x, y):
         if x >= self.left and x <= self.right:
             if y >= self.top and y < self.bottom:
                 nearest_x = find_nearest_match(self.x, x)
                 nearest_y = find_nearest_match(self.y, y)
-                return self.data.get( (nearest_x,nearest_y) )
-            
+                return self.data.get((nearest_x, nearest_y))
+
+
 if __name__ == '__main__':
-    cm = CoordinateMap(0,0,100,100)
-    cm.add(10,10,"a")
-    cm.add(15,10,"b")
-    cm.add(20,10,"c")
-    cm.add(10,20,"d")
-    cm.add(15,20,"e")
-    cm.add(20,20,"f")
+    cm = CoordinateMap(0, 0, 100, 100)
+    cm.add(10, 10, "a")
+    cm.add(15, 10, "b")
+    cm.add(20, 10, "c")
+    cm.add(10, 20, "d")
+    cm.add(15, 20, "e")
+    cm.add(20, 20, "f")
 
     import sys
-    for y in range(10,21):
-        for x in range(10,21):
-            sys.stdout.write("%s " % cm.match(x,y))
+    for y in range(10, 21):
+        for x in range(10, 21):
+            sys.stdout.write("%s " % cm.match(x, y))
         print("")
-

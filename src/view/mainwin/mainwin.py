@@ -1,8 +1,8 @@
 import sys
 from PyQt6.QtCore import Qt, QSettings
 from PyQt6.QtWidgets import (
-    QApplication, QMainWindow, QToolBar, QTreeView, QTabWidget, 
-    QWidget, QSplitter, QStatusBar, QVBoxLayout, 
+    QApplication, QMainWindow, QToolBar, QTreeView, QTabWidget,
+    QWidget, QSplitter, QStatusBar, QVBoxLayout,
 )
 from PyQt6.QtGui import QAction
 from view.mainwin.fretboard_view import fretboard_view
@@ -10,9 +10,10 @@ from view.mainwin.fretboard_view import fretboard_view
 from view.events import Signals
 from view.config import ORAGANIZATION, APP_NAME
 
+
 class MainWindow(QMainWindow):
     def create_menubar(self):
-         # Create the menu bar
+        # Create the menu bar
         menu_bar = self.menuBar()
 
         # File menu
@@ -60,8 +61,8 @@ class MainWindow(QMainWindow):
         settings_action = QAction("Settings", self)
         options_action = QAction("Options", self)
 
-        #settings_action.triggered.connect(self.show_message)
-        #options_action.triggered.connect(self.show_message)
+        # settings_action.triggered.connect(self.show_message)
+        # options_action.triggered.connect(self.show_message)
 
         tools_menu.addAction(settings_action)
         tools_menu.addAction(options_action)
@@ -69,9 +70,9 @@ class MainWindow(QMainWindow):
         # Create a toolbar and add some actions
         toolbar = QToolBar("Main Toolbar")
         self.addToolBar(toolbar)
-        #toolbar.addAction(new_action)
-        #toolbar.addAction(open_action)
-        #toolbar.addAction(save_action)
+        # toolbar.addAction(new_action)
+        # toolbar.addAction(open_action)
+        # toolbar.addAction(save_action)
 
     def __init__(self):
         super().__init__()
@@ -96,11 +97,11 @@ class MainWindow(QMainWindow):
         # Create the tab widget for the top-right pane
         self.tab_widget = QTabWidget()
         self.tab_widget.addTab(QWidget(), "Tab 1")
-        #self.tab_widget.addTab(QWidget(), "Tab 2")
+        # self.tab_widget.addTab(QWidget(), "Tab 2")
 
         # Create a simple QWidget for the bottom-right pane
-        #FINDME
-        #self.bottom_widget = QWidget()
+        # FINDME
+        # self.bottom_widget = QWidget()
         self.bottom_widget = fretboard_view()
 
         # Create the vertical splitter for the left and right panes
@@ -134,11 +135,14 @@ class MainWindow(QMainWindow):
     def save_settings(self):
         """Save the splitter sizes and window geometry."""
         settings = QSettings(ORAGANIZATION, APP_NAME)
-        settings.setValue("geometry", self.saveGeometry())  # Save window size and position
-        settings.setValue("vertical_splitter_state", self.vertical_splitter.saveState())
-        settings.setValue("horizontal_splitter_state", self.horizontal_splitter.saveState())
+        # Save window size and position
+        settings.setValue("geometry", self.saveGeometry())
+        settings.setValue("vertical_splitter_state",
+                          self.vertical_splitter.saveState())
+        settings.setValue("horizontal_splitter_state",
+                          self.horizontal_splitter.saveState())
 
-        Signals.save_settings.emit(settings)  
+        Signals.save_settings.emit(settings)
 
     def load_settings(self):
         """Restore the splitter sizes and window geometry."""
@@ -146,11 +150,13 @@ class MainWindow(QMainWindow):
         if settings.contains("geometry"):
             self.restoreGeometry(settings.value("geometry"))
         if settings.contains("vertical_splitter_state"):
-            self.vertical_splitter.restoreState(settings.value("vertical_splitter_state"))
+            self.vertical_splitter.restoreState(
+                settings.value("vertical_splitter_state"))
         if settings.contains("horizontal_splitter_state"):
-            self.horizontal_splitter.restoreState(settings.value("horizontal_splitter_state"))
+            self.horizontal_splitter.restoreState(
+                settings.value("horizontal_splitter_state"))
 
-        Signals.load_settings.emit(settings)  
+        Signals.load_settings.emit(settings)
 
 
 if __name__ == "__main__":

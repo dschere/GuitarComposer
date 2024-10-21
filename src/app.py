@@ -1,41 +1,45 @@
 #!/usr/bin/env python
 
+from view.events import Signals
+from view.mainwin.mainwin import MainWindow
+from controllers.appcontroller import AppController
+from PyQt6.QtWidgets import QApplication
+from services.synth.synthservice import synthservice
 import sys
 import atexit
 import logging
 import os
 
 # setup logging for application
+
+
 def setup_logger():
     fmt = "%(asctime)s %(thread)d %(filename)s:%(lineno)d %(levelname)s\n`"
     fmt += "- %(message)s"
-    loglevel = os.environ.get("GC_LOGLEVEL","DEBUG")
-    if not hasattr(logging,loglevel):
+    loglevel = os.environ.get("GC_LOGLEVEL", "DEBUG")
+    if not hasattr(logging, loglevel):
         print("Warning: undefined LOGLEVEL '%s' falling back to DEBUG!" % loglevel)
-        loglevel = 'DEBUG'      
+        loglevel = 'DEBUG'
     logging.basicConfig(stream=sys.stdout,
-        format=fmt,
-        level=getattr(logging,loglevel)
-    )
+                        format=fmt,
+                        level=getattr(logging, loglevel)
+                        )
+
+
 setup_logger()
 
 
 # !!!!! Create services before loading any Qt libraries
-# sequence is important 
-from services.synth.synthservice import synthservice
+# sequence is important
 
 # launches a child process that is dedicated to managing
 # the audio synthesizer.
-SynthService = synthservice()
+__builtins__.SynthService = synthservice()
+# ^^^^ -> make this globally accessible throughout application 
 
 
 ##################################################################
 
-from PyQt6.QtWidgets import QApplication
-
-from controllers.appcontroller import AppController
-from view.mainwin.mainwin import MainWindow
-from view.events import Signals
 
 class GuitarComposer(QApplication):
     def __init__(self, argv):
@@ -45,13 +49,14 @@ class GuitarComposer(QApplication):
         Signals.startup.connect(self.create_controller)
 
     def create_controller(self):
-        self.app_controller = AppController(SynthService)            
+        self.app_controller = AppController(SynthService)
 
     def setup(self):
         Signals.startup.emit(self)
 
     def on_shutdown(self):
         Signals.shutdown.emit(self)
+
 
 if __name__ == '__main__':
     # start service
@@ -65,4 +70,3 @@ if __name__ == '__main__':
 
     # stop service
     SynthService.shutdown()
-
