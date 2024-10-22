@@ -37,6 +37,35 @@ def gcsynth_proc(q, r):
 
         r.put(result)
 
+class midi_channel_manager:
+    DRUM_CHANNEL = 9
+    def __init__(self, synth):
+        self.c_index = 0
+        self.synth = synth
+        self.num_channels = gcsynth.NUM_CHANNELS
+        self.channel_state = [None for i in range(self.num_channels)] 
+
+    def alloc(self, instrument_name):
+        chan = None
+        if self.c_index < self.num_channels:
+            chan = self.c_index
+            spec = self.synth.find(instrument_name)
+            if not spec:
+                raise ValueError("Unknown instrument name '%s'" % instrument_name)
+            self.channel_state[chan] = spec
+            self.synth.select(
+                chan, 
+                spec.sfont_id,
+                spec.bank_num,
+                spec.preset_num 
+            )
+            self.c_index += 1
+            # skip over drum channel.
+            if self.c_index == self.DRUM_CHANNEL:
+                self.c_index += 1
+        return chan
+
+
 
 @singleton
 class synthservice:
@@ -44,6 +73,7 @@ class synthservice:
         # scan soundfonts and produce an archive of information
         # filenames, instrument data etc.
         self.db = instrument_info()
+        self.cm = midi_channel_manager(self)
 
         # create message queues
         self.send_q = SimpleQueue()
@@ -53,9 +83,14 @@ class synthservice:
             self.send_q, self.recv_q,), daemon=True)
         self.p.start()
 
-    def find(self, instrument_name):
-        return self.db.find(instrument_name)
+    def alloc(self, instrument_name):
+        return self.cm.self.cm(instrument_name)
 
+    def find(self, instrument_name):
+        """lookup instrument information that can be used to setup a channel"""
+        return self.db.find(instrument_name)
+    
+    
     def transact(self, funcname, *args):
         msg = (funcname, args)
         self.send_q.put(msg)

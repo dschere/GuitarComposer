@@ -28,6 +28,7 @@ class _Signals(QObject):
     preview_stop = pyqtSignal(Note)
 
     startup = pyqtSignal(object)
+    ready = pyqtSignal(object)  # all startup handlers have run app is up.
     shutdown = pyqtSignal(object)
 
 

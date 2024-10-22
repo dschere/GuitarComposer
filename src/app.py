@@ -4,6 +4,7 @@ from view.events import Signals
 from view.mainwin.mainwin import MainWindow
 from controllers.appcontroller import AppController
 from PyQt6.QtWidgets import QApplication
+from PyQt6.QtCore import QTimer
 from services.synth.synthservice import synthservice
 import sys
 import atexit
@@ -34,7 +35,7 @@ setup_logger()
 
 # launches a child process that is dedicated to managing
 # the audio synthesizer.
-__builtins__.SynthService = synthservice()
+SynthService = synthservice()
 # ^^^^ -> make this globally accessible throughout application 
 
 
@@ -44,7 +45,7 @@ __builtins__.SynthService = synthservice()
 class GuitarComposer(QApplication):
     def __init__(self, argv):
         super().__init__(argv)
-
+        self.synth = SynthService
         atexit.register(self.on_shutdown)
         Signals.startup.connect(self.create_controller)
 
@@ -53,6 +54,15 @@ class GuitarComposer(QApplication):
 
     def setup(self):
         Signals.startup.emit(self)
+
+        self.timer = QTimer(self)
+        self.timer.setSingleShot(True)  # Set the timer to one-shot mode
+        self.timer.timeout.connect(self.on_ready)
+        self.timer.start(220) #<- twitch frequency
+
+    def on_ready(self):
+        # broadcast ready event
+        Signals.ready.emit(self)
 
     def on_shutdown(self):
         Signals.shutdown.emit(self)

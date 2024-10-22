@@ -566,7 +566,7 @@ PyMODINIT_FUNC PyInit_gcsynth(void) {
     PyModule_AddIntConstant(module, "EV_FILTER_DISABLE", EV_FILTER_DISABLE);
     PyModule_AddIntConstant(module, "EV_FILTER_CONTROL", EV_FILTER_CONTROL);
     PyModule_AddIntConstant(module, "EV_PITCH_WHEEL", EV_PITCH_WHEEL);
-
+    PyModule_AddIntConstant(module, "NUM_CHANNELS", NUM_CHANNELS);
 
 
     return module;
