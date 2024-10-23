@@ -24,6 +24,19 @@ class timer_event:
 
     def encode(self) -> dict:
         return vars(self)
+    
+
+
+class noteon(timer_event):
+    def __init__(self, when, channel, key, vel):
+        super().__init__(when, channel, gcsynth.EV_NOTEON)
+        self.midi_code = key
+        self.velocity = vel
+
+class noteoff(timer_event):
+    def __init__(self, when, channel, key):
+        super().__init__(when, channel, gcsynth.EV_NOTEOFF)
+        self.midi_code = key
 
 
 class pitch_change(timer_event):
