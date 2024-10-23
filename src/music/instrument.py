@@ -69,7 +69,7 @@ class MultiInstrumentImp(InstrumentInterface):
         instr_2_chan = {}
         for name in instrument_names:
             # reserve a channel for this instrument
-            instr_2_chan[name] = self.instr.synth.alloc()
+            instr_2_chan[name] = self.instr.synth.alloc(name)
 
         # create a table that maps each guitar string to a set
         # channels and velocity multipliers so that multiple
@@ -189,3 +189,6 @@ class Instrument:
 
     def __getattr__(self, n):
         return getattr(self.implementation, n)
+
+
+

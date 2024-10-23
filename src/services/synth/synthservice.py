@@ -84,7 +84,7 @@ class synthservice:
         self.p.start()
 
     def alloc(self, instrument_name):
-        return self.cm(instrument_name)
+        return self.cm.alloc(instrument_name)
 
     def find(self, instrument_name):
         """lookup instrument information that can be used to setup a channel"""
