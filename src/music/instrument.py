@@ -191,4 +191,12 @@ class Instrument:
         return getattr(self.implementation, n)
 
 
-
+def getInstrumentList():
+    #Note: these are both singletons 
+    custom_instruments = CustomInstruments()
+    synth = synthservice()
+    
+    names = custom_instruments.db.keys() + \
+        [spec.name for spec in synth.instrument_info()]
+    names.sort()
+    return names 
