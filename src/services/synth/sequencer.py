@@ -93,12 +93,19 @@ class sequencer:
 
     def add(self, te: timer_event):
         items = self.te_events.get(te.when, [])
-        items.append(te)
+        items.append(te.encode())
         self.te_events[te.when] = items
 
     def play(self):
         # flatten dictionary sorted by timer event
         play_list = []
-        for (when, te_list) in sorted(self.te_events):
-            play_list += te_list
-        self.synth_service.timer_event(play_list)
+        for when in sorted(self.te_events):
+            play_list += self.te_events[when]
+        try:    
+            self.synth_service.timer_event(play_list)
+        except:
+            print("error in sequence play, this is a dump of the playlist:")
+            for (i,item) in enumerate(play_list):   
+                print((i,item.__class__.__name__,vars(item)))
+            # reraise
+            raise      

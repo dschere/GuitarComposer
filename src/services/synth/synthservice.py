@@ -3,6 +3,7 @@ import gcsynth
 from io import StringIO
 import faulthandler
 import os
+import sys
 
 from singleton_decorator import singleton
 from services.synth.instrument_info import instrument_info
@@ -23,8 +24,13 @@ def gcsynth_proc(q, r):
         try:
             (funcname, args) = msg
             f = getattr(gcsynth, funcname)
-            logging.debug("gcsynth.%s( %s )" % (funcname, str(args)))
+            
+            #sys.stdout.write("%s(%s)" % (funcname,str(args)))
+            #sys.stdout.flush()
             result = (False, f(*args))
+            #sys.stdout.write(" -> %s\n"  % str(result))
+            #sys.stdout.flush()
+
         except gcsynth.GcsynthException as e_obj:
             logging.error("gcsynth.%s( %s ) -> caused exception!" %
                           (funcname, str(args)))
@@ -36,6 +42,7 @@ def gcsynth_proc(q, r):
             result = (True, "c exception")
 
         r.put(result)
+        
 
 class midi_channel_manager:
     DRUM_CHANNEL = 9
@@ -92,6 +99,9 @@ class synthservice:
     
     
     def transact(self, funcname, *args):
+        if not self.p.is_alive():
+            raise RuntimeError("gcsynth parent process is no longer running!")
+        
         msg = (funcname, args)
         self.send_q.put(msg)
 
