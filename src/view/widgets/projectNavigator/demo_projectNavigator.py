@@ -7,6 +7,9 @@ class InstrumentDelegate(QStyledItemDelegate):
     """Custom delegate for rendering a dropdown (QComboBox) in the 'Instrument' node."""
     def createEditor(self, parent, option, index):
         if index.data() == "Instrument":  # Apply only to the 'Instrument' node
+            item = index.model().itemFromIndex(index) 
+            print(item.data())
+            
             editor = QComboBox(parent)
             editor.addItems(["Piano", "Guitar", "Drums", "Bass", "Violin"])
             return editor
@@ -14,6 +17,7 @@ class InstrumentDelegate(QStyledItemDelegate):
 
     def setEditorData(self, editor, index):
         if isinstance(editor, QComboBox):
+            print("setEditorData")
             value = index.model().data(index, Qt.ItemDataRole.EditRole)
             editor.setCurrentText(value)
         else:
@@ -21,10 +25,16 @@ class InstrumentDelegate(QStyledItemDelegate):
 
     def setModelData(self, editor, model, index):
         if isinstance(editor, QComboBox):
+            print("setModelData")
             model.setData(index, editor.currentText(), Qt.ItemDataRole.EditRole)
         else:
             super().setModelData(editor, model, index)
 
+class TrackProp:
+    counter = 0
+    def __init__(self):
+        self.track_num = self.counter
+        self.counter += 1
 
 def create_track_node(track_name):
     track = QStandardItem(track_name)
@@ -39,6 +49,9 @@ def create_track_node(track_name):
     # Add properties node with instrument dropdown
     properties_item = QStandardItem("Properties")
     instrument_item = QStandardItem("Instrument")
+
+    instrument_item.setData(TrackProp())
+
     instrument_item.setEditable(True)  # This will allow the dropdown to be editable only for this node
     properties_item.appendRow(instrument_item)
     track.appendRow(properties_item)

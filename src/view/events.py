@@ -17,6 +17,10 @@ class ScaleSelectedEvent:
 class ClearScaleEvent:
     pass
 
+class InstrumentSelectedEvent:
+    def __init__(self):
+        self.track = None
+        self.instrument = None
 
 @singleton
 class _Signals(QObject):
@@ -30,6 +34,8 @@ class _Signals(QObject):
     startup = pyqtSignal(object)
     ready = pyqtSignal(object)  # all startup handlers have run app is up.
     shutdown = pyqtSignal(object)
+
+    instrument_selected = pyqtSignal(InstrumentSelectedEvent)
 
 
 Signals = _Signals()

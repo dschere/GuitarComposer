@@ -35,9 +35,10 @@ class _GuitarFretboardStyle:
 @singleton
 class _LabelText:
     # TODO, tie into localization so these can be switched.
-
+    filter_instruments = "Filter instruments:"
     filter_scale = "Filter scales:"
     scales = "Scales:"
+    instruments = "Instruments:"
     keys = "Keys:"
     scale_selector_group = "Fretboard Overlay"
     clear_scale = "Clear"
