@@ -1,41 +1,35 @@
-from PyQt6.QtWidgets import QHBoxLayout, QLineEdit, QLabel, QVBoxLayout, QPushButton, QToolBar, QApplication, QTreeView, QComboBox, QStyledItemDelegate, QWidget
-from PyQt6.QtGui import QStandardItemModel, QStandardItem, QIcon, QColor
-from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QVBoxLayout, QTreeView, QWidget
+from PyQt6.QtGui import QStandardItemModel
 
-from view.widgets.projectNavigator.TrackTreeNode import TrackTreeNode
+from view.widgets.projectNavigator.TrackTreeNode import TrackTreeDialog
 from view.events import Signals
-import logging
-
-class ProjectDelegate(QStyledItemDelegate):
-    """Custom delegate for rendering a dropdown (QComboBox) in the 'Instrument' node."""
-    def createEditor(self, parent, option, index):
-        if index.data() == "Instrument":  # Apply only to the 'Instrument' node
-            item = index.model().itemFromIndex(index)
-            track_model = item.data()
-            track_widget = TrackTreeNode(track_model)
-            track_widget.setParent(parent)
-            return track_widget
-        return super().createEditor(parent, option, index)
+from PyQt6.QtCore import QModelIndex
 
 class Navigator(QWidget):
 
     def update_tree_model(self, model):
-        logging.debug("setting up navigator model")
-        print(model)
+        self.tree_model = model
         self.tree_view.setModel(model)
-        self.tree_view.update()
 
+    
+    def on_tree_clicked(self, index: QModelIndex):
+        # Get the clicked item
+        clicked_item = index.model().itemFromIndex(index)
+        if clicked_item.text() == 'properties':
+            item = index.model().itemFromIndex(index)
+            track_model = item.data()
+            dialog = TrackTreeDialog(self, track_model)  
+            dialog.show() 
+        
     def __init__(self):
         super().__init__()
-        # qt's model for representing a TreeView
-        tree_model = QStandardItemModel()
-        self.tree_view = QTreeView()
-        self.tree_view.setModel(tree_model)
-        self.tree_view.setEditTriggers(QTreeView.EditTrigger.DoubleClicked | QTreeView.EditTrigger.SelectedClicked)
 
-        # Add delegate to handle dropdown for the 'Instrument' node only
-        delegate = ProjectDelegate()
-        self.tree_view.setItemDelegate(delegate)  # Apply the delegate globally, but it will only affect the 'Instrument' node
+        # placeholder model for representing a TreeView
+        self.tree_model = QStandardItemModel()
+        self.tree_view = QTreeView()
+        self.tree_view.setModel(self.tree_model)
+        self.tree_view.setEditTriggers(QTreeView.EditTrigger.DoubleClicked | QTreeView.EditTrigger.SelectedClicked)
+        self.tree_view.clicked.connect(self.on_tree_clicked)
 
         layout = QVBoxLayout()
         layout.addWidget(self.tree_view)

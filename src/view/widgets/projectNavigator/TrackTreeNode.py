@@ -1,9 +1,14 @@
-from PyQt6.QtWidgets import QHBoxLayout, QLineEdit, QLabel, QVBoxLayout, QComboBox, QWidget
+from PyQt6.QtWidgets import QHBoxLayout, QDialogButtonBox, QPushButton, QDialog, QLineEdit, QLabel, QVBoxLayout, QComboBox, QWidget
 from PyQt6.QtCore import Qt
 
 from music.instrument import getInstrumentList
 from view.config import LabelText
 from view.events import Signals, InstrumentSelectedEvent 
+
+from view.config import LabelText
+
+import logging
+
 
 """ 
 The sub widget that draws a 
@@ -15,18 +20,18 @@ The sub widget that draws a
   along the track associated with this event
 * able to filter the instrument list    
 """
-class TrackTreeNode(QWidget):
+class TrackTreeDialog(QDialog):
     instrument_names = getInstrumentList()
     title = "Instrument"
 
-
+   
     def _filter_instruments(self):
         filter_text = self.filter_input.text().lower()
         self.instruments_combo_box.clear()
 
         # Filter combo box items based on the text input
         filtered_items = [
-            item for item in self.items if filter_text in item.lower()]
+            item for item in self.instrument_names if filter_text in item.lower()]
         self.instruments_combo_box.addItems(filtered_items)
 
     def _on_instrument_selected(self):
@@ -35,13 +40,20 @@ class TrackTreeNode(QWidget):
         evt.track = self.track_model
         Signals.instrument_selected.emit(evt)
 
-    def __init__(self, track_model):
-        super().__init__()
-
+    def __init__(self, parent, track_model):
+        super().__init__(parent)
+        self.setWindowTitle(LabelText.nav_track_properties)
         self.track_model = track_model
 
         # filtered drop down menu to select an instrument
         main_layout = QVBoxLayout()
+
+         # Create OK and Cancel buttons
+        button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+        
+        # Connect the buttons to the dialog's accept() and reject() slots
+        button_box.accepted.connect(self.accept)
+        button_box.rejected.connect(self.reject)
 
         # line 1 is text box that allows the user to search an instrument.
         filter_layout = QHBoxLayout()
@@ -67,6 +79,7 @@ class TrackTreeNode(QWidget):
         # add to main layout
         main_layout.addLayout(filter_layout)
         main_layout.addLayout(combo_layout)
+        main_layout.addWidget(button_box)
 
         self.setLayout(main_layout)
 

@@ -6,7 +6,7 @@ import json
 import uuid
 import logging
 
-from PyQt6.QtGui import QStandardItemModel, QStandardItem
+from PyQt6.QtGui import QStandardItemModel, QStandardItem, QIcon
 from PyQt6.QtCore import QTimer, QSettings
 from PyQt6.QtCore import Qt
 
@@ -16,6 +16,7 @@ from models.track import Track
 from view.events import Signals
 from util.projectRepo import ProjectRepo
 from music.instrument import Instrument
+from view.config import LabelText
 
 FRETBOARD_CHANNEL = 0
 
@@ -39,11 +40,17 @@ class SongController:
         root = QStandardItem(">> " + self.song.title)
         for (i,track) in enumerate(self.song.tracks):
             n = i + 1
-            track_item = QStandardItem(f"track {n}")
-            instrument_item = QStandardItem("Instrument")
-            instrument_item.setData(track)
+            track_item = QStandardItem(LabelText.track + f" {n}")
+            properties_item = QStandardItem(LabelText.properties)
 
-            track_item.appendRow(instrument_item)
+            # Set the icon and text for the 'Properties' node
+            gear_icon = QIcon.fromTheme("emblem-system")  
+            properties_item.setIcon(gear_icon)
+
+            # associate our track model with the tree model used for visualization
+            properties_item.setData(track)
+
+            track_item.appendRow(properties_item)
             root.appendRow(track_item)
         return root    
 
