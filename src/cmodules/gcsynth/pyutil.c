@@ -83,6 +83,17 @@ struct scheduled_event {
 */
 static unsigned long EventIdCounter = 0;
 
+static void print_event(struct scheduled_event* ev) {
+    printf("scheduled_event:\n");
+    if (ev) {
+        printf("\nev_type = %d, ev_channel = %d, when=%d \n",
+            ev->ev_type, ev->channel, ev->when
+        ); 
+    } else {
+        printf("null\n");
+    }
+}
+
 struct scheduled_event* event_from_pydata(PyObject* dict)
 {
     struct scheduled_event* ev = (struct scheduled_event*)
@@ -90,7 +101,7 @@ struct scheduled_event* event_from_pydata(PyObject* dict)
     char* errmsg = NULL;    
 
     if (ev) {
-        ev->ev_type = get_dict_int_field(dict,"ev_type",-1);
+        ev->ev_type = get_dict_int_field(dict,"ev_type",-1);        
         if ((ev->channel = get_dict_int_field(dict,"channel",-1)) == -1) {
             errmsg = "event_from_pydata: channel is required ";    
         }
@@ -176,6 +187,7 @@ struct scheduled_event* event_from_pydata(PyObject* dict)
 
     // handle errors
     if (errmsg) {
+        print_event(ev);
         gcsynth_raise_exception(errmsg);
         if (ev) {
             free(ev);

@@ -24,6 +24,19 @@ class timer_event:
 
     def encode(self) -> dict:
         return vars(self)
+    
+
+
+class noteon(timer_event):
+    def __init__(self, when, channel, key, vel):
+        super().__init__(when, channel, gcsynth.EV_NOTEON)
+        self.midi_code = key
+        self.velocity = vel
+
+class noteoff(timer_event):
+    def __init__(self, when, channel, key):
+        super().__init__(when, channel, gcsynth.EV_NOTEOFF)
+        self.midi_code = key
 
 
 class pitch_change(timer_event):
@@ -80,12 +93,19 @@ class sequencer:
 
     def add(self, te: timer_event):
         items = self.te_events.get(te.when, [])
-        items.append(te)
+        items.append(te.encode())
         self.te_events[te.when] = items
 
     def play(self):
         # flatten dictionary sorted by timer event
         play_list = []
-        for (when, te_list) in sorted(self.te_events):
-            play_list += te_list
-        self.synth_service.timer_event(play_list)
+        for when in sorted(self.te_events):
+            play_list += self.te_events[when]
+        try:    
+            self.synth_service.timer_event(play_list)
+        except:
+            print("error in sequence play, this is a dump of the playlist:")
+            for (i,item) in enumerate(play_list):   
+                print((i,item.__class__.__name__,vars(item)))
+            # reraise
+            raise      

@@ -3,6 +3,7 @@ import gcsynth
 from io import StringIO
 import faulthandler
 import os
+import sys
 
 from singleton_decorator import singleton
 from services.synth.instrument_info import instrument_info
@@ -23,8 +24,13 @@ def gcsynth_proc(q, r):
         try:
             (funcname, args) = msg
             f = getattr(gcsynth, funcname)
-            logging.debug("gcsynth.%s( %s )" % (funcname, str(args)))
+            
+            #sys.stdout.write("%s(%s)" % (funcname,str(args)))
+            #sys.stdout.flush()
             result = (False, f(*args))
+            #sys.stdout.write(" -> %s\n"  % str(result))
+            #sys.stdout.flush()
+
         except gcsynth.GcsynthException as e_obj:
             logging.error("gcsynth.%s( %s ) -> caused exception!" %
                           (funcname, str(args)))
@@ -36,14 +42,19 @@ def gcsynth_proc(q, r):
             result = (True, "c exception")
 
         r.put(result)
+        
 
 class midi_channel_manager:
     DRUM_CHANNEL = 9
+    
     def __init__(self, synth):
-        self.c_index = 0
+        self.c_index = 1
         self.synth = synth
         self.num_channels = gcsynth.NUM_CHANNELS
         self.channel_state = [None for i in range(self.num_channels)] 
+
+    def reset(self):
+        self.c_index = 1
 
     def alloc(self, instrument_name):
         chan = None
@@ -83,8 +94,11 @@ class synthservice:
             self.send_q, self.recv_q,), daemon=True)
         self.p.start()
 
+    def reset_channel_manager(self):
+        self.cm.reset()
+
     def alloc(self, instrument_name):
-        return self.cm.self.cm(instrument_name)
+        return self.cm.alloc(instrument_name)
 
     def find(self, instrument_name):
         """lookup instrument information that can be used to setup a channel"""
@@ -92,6 +106,9 @@ class synthservice:
     
     
     def transact(self, funcname, *args):
+        if not self.p.is_alive():
+            raise RuntimeError("gcsynth parent process is no longer running!")
+        
         msg = (funcname, args)
         self.send_q.put(msg)
 
