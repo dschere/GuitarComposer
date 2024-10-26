@@ -10,6 +10,8 @@ from view.mainwin.fretboard_view import fretboard_view
 from view.events import Signals
 from view.config import ORAGANIZATION, APP_NAME
 
+from view.widgets.projectNavigator.navigator import Navigator
+
 
 class MainWindow(QMainWindow):
     def create_menubar(self):
@@ -92,7 +94,8 @@ class MainWindow(QMainWindow):
         self.setStatusBar(status_bar)
 
         # Create the tree view for the left pane
-        self.tree_view = QTreeView()
+        #self.tree_view = QTreeView()
+        self.tree_view = Navigator()
 
         # Create the tab widget for the top-right pane
         self.tab_widget = QTabWidget()

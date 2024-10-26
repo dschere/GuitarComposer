@@ -11,6 +11,7 @@ import atexit
 import logging
 import os
 
+
 # setup logging for application
 
 
@@ -42,41 +43,59 @@ SynthService = synthservice()
 ##################################################################
 
 
+
 class GuitarComposer(QApplication):
     def __init__(self, argv):
         super().__init__(argv)
         self.synth = SynthService
-        atexit.register(self.on_shutdown)
-        Signals.startup.connect(self.create_controller)
 
-    def create_controller(self):
+        # setup controllers first
         self.app_controller = AppController(SynthService)
+        atexit.register(self.on_shutdown)
 
-    def setup(self):
-        Signals.startup.emit(self)
-
-        self.timer = QTimer(self)
-        self.timer.setSingleShot(True)  # Set the timer to one-shot mode
-        self.timer.timeout.connect(self.on_ready)
-        self.timer.start(220) #<- twitch frequency
-
-    def on_ready(self):
-        # broadcast ready event
-        Signals.ready.emit(self)
 
     def on_shutdown(self):
         Signals.shutdown.emit(self)
 
 
-if __name__ == '__main__':
+def main():
+    logging.debug("Running with debug log level")
     # start service
     SynthService.start()
 
     app = GuitarComposer(sys.argv)
     window = MainWindow()
-    app.setup()
     window.show()
-    sys.exit(app.exec())
+    
+    # broadcast ready event
+    #   synth started
+    #   controllers loaded
+    #   gui created
+    Signals.ready.emit(app)
+
+    sys.exit(app.exec()) #<- main event loop
 
     # stop service
     SynthService.shutdown()
+
+def lint_project():
+    from pylint import run_pylint
+    import glob
+    
+    base_dir = os.environ['GC_CODE_DIR']
+    cmd = "find %s -name \"*.py\""
+    flist = [f[:-1] for f in os.popen(cmd % base_dir).readlines()]
+    sys.argv = [sys.argv[0],'--errors-only'] + flist
+    run_pylint()
+
+
+
+if __name__ == '__main__':
+    cmd = "exec"
+    if len(sys.argv) == 2:
+        cmd = sys.argv[1]
+
+    if cmd == "lint":    
+        lint_project()
+    else:    
+        main()

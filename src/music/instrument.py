@@ -7,6 +7,7 @@ from services.synth import sequencer as SeqEvt
 from view.events import Signals
 
 from models.note import Note
+from models.track import Track
 from util.midi import midi_codes
 
 
@@ -21,14 +22,8 @@ class CustomInstruments:
         return self.db.get(name)
 
 
-StandardTuning = [
-    "E4",
-    "B3",
-    "G3",
-    "D3",
-    "A2",
-    "E2"
-]
+
+StandardTuning = Track().tuning
 
 DropDTuning = [
     "E4",
@@ -196,7 +191,9 @@ def getInstrumentList():
     custom_instruments = CustomInstruments()
     synth = synthservice()
     
-    names = custom_instruments.db.keys() + \
-        [spec.name for spec in synth.instrument_info()]
+    names = list(custom_instruments.db.keys())
+    for sf_spec in synth.instrument_info():
+        for instr_spec in sf_spec['instruments']:
+            names.append(instr_spec['name'])
     names.sort()
     return names 

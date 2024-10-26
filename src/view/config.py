@@ -49,3 +49,4 @@ LabelText = _LabelText()
 
 ORAGANIZATION = "OneManShow Enterprises"
 APP_NAME = "GuitarComposer"
+

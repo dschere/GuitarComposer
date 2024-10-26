@@ -1,9 +1,10 @@
 
 
-class song:
+
+class Song:
     def __init__(self):
-        # instrument -> list of measures
-        self.tracks = {}
+        # instrument name -> list of measures
+        self.tracks = []
         self.title = "noname"
         self.author = ""
 

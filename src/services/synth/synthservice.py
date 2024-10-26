@@ -46,11 +46,15 @@ def gcsynth_proc(q, r):
 
 class midi_channel_manager:
     DRUM_CHANNEL = 9
+    
     def __init__(self, synth):
-        self.c_index = 0
+        self.c_index = 1
         self.synth = synth
         self.num_channels = gcsynth.NUM_CHANNELS
         self.channel_state = [None for i in range(self.num_channels)] 
+
+    def reset(self):
+        self.c_index = 1
 
     def alloc(self, instrument_name):
         chan = None
@@ -89,6 +93,9 @@ class synthservice:
         self.p = Process(target=gcsynth_proc, args=(
             self.send_q, self.recv_q,), daemon=True)
         self.p.start()
+
+    def reset_channel_manager(self):
+        self.cm.reset()
 
     def alloc(self, instrument_name):
         return self.cm.alloc(instrument_name)
