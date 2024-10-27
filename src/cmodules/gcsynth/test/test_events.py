@@ -59,6 +59,28 @@ class Test_GcSynth_Events(unittest.TestCase):
         gcsynth.stop()
 
 
+    def test04_strum_a_chord(self):
+        data = {"sfpaths": [
+            "/home/david/proj/GuitarComposer/data/sf/27mg_Symphony_Hall_Bank.SF2"]}
+        gcsynth.start(copy.deepcopy(data))
+
+        chord = [
+            vars(noteon(1000, 0, 65, 100)),
+            vars(noteon(1020, 1, 60, 100)),
+            vars(noteon(1040, 2, 55, 100)),
+            vars(noteon(1040, 3, 50, 100))
+        ]
+        gcsynth.timer_event(chord)
+        gcsynth.reset_channel(0)
+        gcsynth.reset_channel(1)
+        gcsynth.reset_channel(2)
+        gcsynth.reset_channel(3)
+
+        print("should hear nothing since channels are reset prior to play!")
+        time.sleep(3.0)
+        gcsynth.stop()
+
+
 if __name__ == '__main__':
     unittest.main()
     print("after unit tests")

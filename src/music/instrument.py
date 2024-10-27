@@ -42,12 +42,12 @@ DADGADTuning = [
 ]
 
 
-class InstrumentInterface:
+class InstrumentBaseImp:
     def note_event(self, n: Note):
         "play either a note or a rest"
 
 
-class MultiInstrumentImp(InstrumentInterface):
+class MultiInstrumentImp(InstrumentBaseImp):
     def __init__(self, instr, multi_instr_spec):
         self.instr = instr
 
@@ -63,6 +63,7 @@ class MultiInstrumentImp(InstrumentInterface):
         for name in instrument_names:
             # reserve a channel for this instrument
             instr_2_chan[name] = self.instr.synth.alloc(name)
+        self.channels_used = set(instr_2_chan.values())
 
         # create a table that maps each guitar string to a set
         # channels and velocity multipliers so that multiple
@@ -76,6 +77,10 @@ class MultiInstrumentImp(InstrumentInterface):
             self.string_map.append(chan_mix)
 
         self.instr_2_chan = instr_2_chan
+
+    def clear_events(self):
+        for chan in self.channels_used:
+            self.instr.synth.reset_channel(chan)
 
     def note_event(self, n: Note):
         "play note on potentially multiple channels"
@@ -106,13 +111,15 @@ class MultiInstrumentImp(InstrumentInterface):
                 s.play()
 
 
-class SingleInstrumentImp(InstrumentInterface):
+class SingleInstrumentImp(InstrumentBaseImp):
     def __init__(self, instr, chan):
         self.instr = instr
         self.chan = chan
 
-    def note_event(self, n: Note):
+    def clear_events(self):
+        self.instr.synth.reset_channel(self.chan)    
 
+    def note_event(self, n: Note):
         midicode_in_use = self.instr.string_playing[n.string]
         if self.instr.one_note_per_string and midicode_in_use:
             self.instr.synth.noteoff(self.chan, midicode_in_use)

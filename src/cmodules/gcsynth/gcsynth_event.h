@@ -60,6 +60,8 @@ void gcsynth_select(struct gcsynth* gcs, int chan,  int sfont_id, int bank_num, 
 
 
 void gcsynth_sequencer_setup(struct gcsynth* gcs);
+void gcsynth_sequencer_remove_channel_events(struct gcsynth* gcs, int chan);
+
 
 
 #endif

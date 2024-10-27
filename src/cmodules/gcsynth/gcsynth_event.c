@@ -8,7 +8,7 @@
 #include "gcsynth_channel.h"
 
 
-
+unsigned int ChannelClients[MAX_CHANNELS];
 
 static void gcsynth_schedule_fluidsynth_event(struct gcsynth* gcs, 
     struct scheduled_event* s_event);
@@ -112,7 +112,7 @@ static void gcsynth_schedule_custom_event(struct gcsynth* gcs,
     struct scheduled_event* s_event)
 {
     fluid_event_t *ev = new_fluid_event();
-    fluid_event_set_source(ev, -1);
+    fluid_event_set_source(ev, ChannelClients[s_event->channel]);
     fluid_event_set_dest(ev, gcs->synth_destination);
     fluid_event_timer(ev, s_event, timer_function);
     fluid_sequencer_send_at(gcs->sequencer, ev, s_event->when, 0);
@@ -125,7 +125,7 @@ static void gcsynth_schedule_fluidsynth_event(struct gcsynth* gcs,
     struct scheduled_event* s_event)
 {
     fluid_event_t *ev = new_fluid_event();
-    fluid_event_set_source(ev, -1);
+    fluid_event_set_source(ev, ChannelClients[s_event->channel]);
     fluid_event_set_dest(ev, gcs->synth_destination);
     int pitch;
 
@@ -157,6 +157,12 @@ static void gcsynth_schedule_fluidsynth_event(struct gcsynth* gcs,
         
 }
 
+void gcsynth_sequencer_remove_channel_events(struct gcsynth* gcs, int chan)
+{
+    fluid_sequencer_remove_events(gcs->sequencer, 
+    ChannelClients[chan], gcs->synth_destination, -1);
+}
+
 /*
 TODO WE ARE LIMITED TO 825 THREADS.
 
@@ -169,9 +175,16 @@ should allow for user data to be attached to the fluid_synth_event
 
 void gcsynth_sequencer_setup(struct gcsynth* gcs)
 {
+    int chan;
+
     gcs->sequencer = new_fluid_sequencer2(0);
             
     /* register the synth with the sequencer */
     gcs->synth_destination = fluid_sequencer_register_fluidsynth(gcs->sequencer,
                                 gcs->synth);
+
+    for(chan = 0; chan < MAX_CHANNELS; chan++) {
+        ChannelClients[chan] = fluid_sequencer_register_fluidsynth(
+            gcs->sequencer, gcs->synth);
+    }                            
 }

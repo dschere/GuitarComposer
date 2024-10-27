@@ -14,7 +14,7 @@ flake8:
   script:
     - python --version
     - pip install flake8
-    - lake8 `find ./src -name "*.py" | grep -v ./src/cmodules`
+    - flake8 `find ./src -name "*.py" | grep -v ./src/cmodules`
   # only:
   #   - merge_requests
 

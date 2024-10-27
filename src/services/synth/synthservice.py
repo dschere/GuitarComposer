@@ -25,7 +25,9 @@ def gcsynth_proc(q, r):
 
             # sys.stdout.write("%s(%s)" % (funcname,str(args)))
             # sys.stdout.flush()
+            # -- execute gcsynth function
             result = (False, f(*args))
+
             # sys.stdout.write(" -> %s\n"  % str(result))
             # sys.stdout.flush()
 
@@ -51,28 +53,40 @@ class midi_channel_manager:
         self.num_channels = gcsynth.NUM_CHANNELS
         self.channel_state = [None for i in range(self.num_channels)]
 
+    def checkout_channel(self):
+        chan = None
+        for i in range(self.num_channels):
+            if not self.channel_state[self.c_index]:
+                chan = self.c_index
+
+            # ring increment counter, skip over the drum channel
+            self.c_index = (self.c_index + 1) % self.num_channels
+            if self.c_index == self.DRUM_CHANNEL:
+                self.c_index += 1
+
+            if chan:
+                break
+        return chan
+
     def reset(self):
         self.c_index = 1
 
     def alloc(self, instrument_name):
-        chan = None
-        if self.c_index < self.num_channels:
-            chan = self.c_index
-            spec = self.synth.find(instrument_name)
-            if not spec:
-                raise ValueError("Unknown instrument name '%s'" %
-                                 instrument_name)
-            self.channel_state[chan] = spec
-            self.synth.select(
-                chan,
-                spec.sfont_id,
-                spec.bank_num,
-                spec.preset_num
-            )
-            self.c_index += 1
-            # skip over drum channel.
-            if self.c_index == self.DRUM_CHANNEL:
-                self.c_index += 1
+        spec = self.synth.find(instrument_name)
+        if not spec:
+            raise ValueError("Unknown instrument name '%s'" %
+                             instrument_name)
+        chan = self.checkout_channel()
+        if not chan:
+            raise RuntimeError("Not enough channels!")
+
+        self.channel_state[chan] = spec
+        self.synth.select(
+            chan,
+            spec.sfont_id,
+            spec.bank_num,
+            spec.preset_num
+        )
         return chan
 
 
@@ -120,6 +134,9 @@ class synthservice:
 
     def getSequencer(self):
         return sequencer(self)
+
+    def reset_channel(self, chan):
+        return self.transact("reset_channel", chan)
 
     def start(self):
         return self.transact("start", {"sfpaths": self.db.sfpaths})

@@ -383,6 +383,20 @@ static PyObject* py_gcsynth_noteoff(PyObject* self, PyObject* args) {
     Py_RETURN_NONE;
 }
 
+static PyObject* py_fluid_synth_reset_basic_channel(PyObject* self, PyObject* args) {
+    int channel;
+    // Parse the Python tuple, expecting two strings and a dictionary
+    if (!PyArg_ParseTuple(args, "i", &channel)) {
+        return NULL;  // Return NULL to indicate an error if the parsing failed
+    }
+
+    CHECK_CHANNEL_VALUE(channel)
+    
+    fluid_synth_reset_basic_channel(GcSynth.synth, channel);
+
+    Py_RETURN_NONE;
+}
+
 //int gcsynth_channel_remove_filter(int channel, char* plugin_label);
 static PyObject* py_gcsynth_channel_remove_filter(PyObject* self, PyObject* args) {
     int channel;
@@ -526,6 +540,7 @@ static PyMethodDef GCSynthMethods[] = {
         METH_VARARGS,"filter_set_control_by_name(chan,plugin_label,index,value)" },
 
     {"channel_gain",py_channel_gain,METH_VARARGS,"channel_gain(chan,v) v = 0 no change"},
+    {"reset_channel",py_fluid_synth_reset_basic_channel,METH_VARARGS,"reset_channel(chan)"},
 
     // aid in unit testing
     {"test_filter",py_filter_test,METH_VARARGS,"test_filter(path,plugin_label)-> pass or raise exception"},
