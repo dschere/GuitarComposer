@@ -22,12 +22,15 @@ class ClearScaleEvent:
 class NewSongEvent:
     pass
 
+
 class CloseSongEvent:
     pass
+
 
 class OpenSongEvent:
     def __init__(self):
         self.filename = None
+
 
 class SaveSongEvent:
     def __init__(self):
@@ -38,6 +41,7 @@ class InstrumentSelectedEvent:
     def __init__(self):
         self.track = None
         self.instrument = None
+
 
 @singleton
 class _Signals(QObject):

@@ -4,7 +4,6 @@ import json
 from singleton_decorator import singleton
 from services.synth.synthservice import synthservice
 from services.synth import sequencer as SeqEvt
-from view.events import Signals
 
 from models.note import Note
 from models.track import Track
@@ -20,7 +19,6 @@ class CustomInstruments:
 
     def getSpec(self, name):
         return self.db.get(name)
-
 
 
 StandardTuning = Track().tuning
@@ -137,17 +135,16 @@ class SingleInstrumentImp(InstrumentInterface):
             s.play()
 
 
-
-
 class Instrument:
-    """ 
-    Object used to represent a midi instrument. It may also represent a collection
-    of midi instruments. It acts as a conduit for communications with the synthservice
-    singleton object. 
+    """
+    Object used to represent a midi instrument. It may also
+    represent a collection of midi instruments. It acts as a
+    conduit for communications with the synthservice
+    singleton object.
 
-    Each instrument can be represented by multiple configured midid channels. For instance
-    an electrict guitar would have a muted channel, a distortion channel, a fret
-    noise channel etc.
+    Each instrument can be represented by multiple configured
+    midi channels. For instance an electrict guitar would have
+    a muted channel, a distortion channel, a fret noise channel etc.
     """
 
     # get references to singletons
@@ -187,13 +184,13 @@ class Instrument:
 
 
 def getInstrumentList():
-    #Note: these are both singletons 
+    # Note: these are both singletons
     custom_instruments = CustomInstruments()
     synth = synthservice()
-    
+
     names = list(custom_instruments.db.keys())
     for sf_spec in synth.instrument_info():
         for instr_spec in sf_spec['instruments']:
             names.append(instr_spec['name'])
     names.sort()
-    return names 
+    return names

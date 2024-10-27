@@ -1,15 +1,13 @@
-""" 
+"""
 Simple managment scheme for projects for GC.
 
 <home>/GuitarComposerUserdata
       /GuitarComposerUserdata/songs/<title>.dat
-       
       /GuitarComposerUserdata/live-capture/<name>/
-       audio capture 
+       audio capture
 """
 import os
 import glob
-import atexit
 from singleton_decorator import singleton
 import pickle
 import logging
@@ -36,11 +34,11 @@ class ProjectRepo:
 
     def getTitles(self):
         return self.titles
-    
-    def load_song(self, title : str):
+
+    def load_song(self, title: str):
         fn = USER_SONG_DIR+"/"+title+".data"
-        return pickle.loads(open(fn,'rb').read())
-    
+        return pickle.loads(open(fn, 'rb').read())
+
     def delete_song(self, title):
         if title in self.titles:
             fn = USER_SONG_DIR+"/"+title+".data"
@@ -48,15 +46,14 @@ class ProjectRepo:
                 os.remove(fn)
                 self.titles.remove(title)
             else:
-                logging.info(f"{fn} does not exist")    
+                logging.info(f"{fn} does not exist")
         else:
-            logging.info("title '%s' not in %s" % (title,str(self.titles)))
+            logging.info("title '%s' not in %s" % (title, str(self.titles)))
 
-    def save_song(self, song_model : Song):
+    def save_song(self, song_model: Song):
         fn = USER_SONG_DIR + "/" + song_model.title + ".data"
         data = pickle.dumps(song_model)
-        open(fn,'wb').write(data)
-
+        open(fn, 'wb').write(data)
 
 
 if __name__ == '__main__':
@@ -67,7 +64,6 @@ if __name__ == '__main__':
     if s.title not in pr.getTitles():
         pr.save_song(s)
         t = pr.load_song(s.title)
-        assert(t.title == s.title)         
+        assert (t.title == s.title)
         pr.delete_song(s.title)
-        assert(s.title not in pr.getTitles())
-
+        assert (s.title not in pr.getTitles())

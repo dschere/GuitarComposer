@@ -1,4 +1,4 @@
-""" 
+"""
 Generic object used to solve the problem of mapping a mouse coordinate to
 a set graphic images (frets and strings) or a note on staff etc.
 """

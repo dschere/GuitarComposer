@@ -12,5 +12,3 @@ class Track:
             "E2"
         ]
         self.measures = []
-        
-

@@ -1,7 +1,7 @@
 import sys
 from PyQt6.QtCore import Qt, QSettings
 from PyQt6.QtWidgets import (
-    QApplication, QMainWindow, QToolBar, QTreeView, QTabWidget,
+    QApplication, QMainWindow, QToolBar, QTabWidget,
     QWidget, QSplitter, QStatusBar, QVBoxLayout,
 )
 from PyQt6.QtGui import QAction
@@ -94,7 +94,7 @@ class MainWindow(QMainWindow):
         self.setStatusBar(status_bar)
 
         # Create the tree view for the left pane
-        #self.tree_view = QTreeView()
+        # self.tree_view = QTreeView()
         self.tree_view = Navigator()
 
         # Create the tab widget for the top-right pane
