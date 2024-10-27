@@ -29,7 +29,8 @@ class Navigator(QWidget):
         self.tree_view = QTreeView()
         self.tree_view.setModel(self.tree_model)
         self.tree_view.setEditTriggers(
-            QTreeView.EditTrigger.DoubleClicked | QTreeView.EditTrigger.SelectedClicked)
+            QTreeView.EditTrigger.DoubleClicked |
+            QTreeView.EditTrigger.SelectedClicked)
         self.tree_view.clicked.connect(self.on_tree_clicked)
 
         layout = QVBoxLayout()

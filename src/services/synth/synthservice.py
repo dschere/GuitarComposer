@@ -1,9 +1,7 @@
 import logging
 import gcsynth
-from io import StringIO
 import faulthandler
 import os
-import sys
 
 from singleton_decorator import singleton
 from services.synth.instrument_info import instrument_info
@@ -35,7 +33,7 @@ def gcsynth_proc(q, r):
             logging.error("gcsynth.%s( %s ) -> caused exception!" %
                           (funcname, str(args)))
             result = (True, str(e_obj))
-        except Exception as e_obj:
+        except Exception:
             logging.error("gcsynth.%s( %s ) -> caused exception!" %
                           (funcname, str(args)))
             logging.error(r_error.read())
@@ -135,10 +133,15 @@ class synthservice:
     def noteon(self, channel: int, midicode: int, velocity: int):
         return self.transact("noteon", channel, midicode, velocity)
 
-    def select(self, channel: int, sfont_id: int, bank_num: int, preset_num: int):
+    def select(self,
+               channel: int,
+               sfont_id: int,
+               bank_num: int,
+               preset_num: int):
         return self.transact("select", channel, sfont_id, bank_num, preset_num)
 
-    def filter_add(self, channel: int, filepath: str, plugin_label: str):
+    def filter_add(self, channel: int,
+                   filepath: str, plugin_label: str):
         return self.transact("filter_add", channel, filepath, plugin_label)
 
     def filter_remove(self, channel: int, plugin_label: str):
@@ -156,11 +159,17 @@ class synthservice:
     def filter_disable(self, channel: int, plugin_label: str):
         return self.transact("filter_disable", channel, plugin_label)
 
-    def filter_set_control_by_name(self, channel: int, plugin_label: str, name: str, value: float):
-        return self.transact("filter_set_control_by_name", channel, plugin_label, name, value)
+    def filter_set_control_by_name(self, channel: int,
+                                   plugin_label: str,
+                                   name: str, value: float):
+        return self.transact("filter_set_control_by_name",
+                             channel, plugin_label, name, value)
 
-    def filter_set_control_by_index(self, channel: int, plugin_label: str, index: int, value: float):
-        return self.transact("filter_set_control_by_index", channel, plugin_label, index, value)
+    def filter_set_control_by_index(self,
+                                    channel: int, plugin_label: str,
+                                    index: int, value: float):
+        return self.transact("filter_set_control_by_index",
+                             channel, plugin_label, index, value)
 
     def channel_gain(self, channel: int, change: float):
         return self.transact("channel_gain", channel, change)

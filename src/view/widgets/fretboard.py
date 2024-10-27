@@ -1,15 +1,16 @@
 import sys
 import logging
 
-from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget
-from PyQt6.QtGui import QPainter, QPen, QColor, QBrush, QPolygon, QFont, QMouseEvent
+from PyQt6.QtWidgets import QApplication, QWidget
+from PyQt6.QtGui import (QPainter, QPen, QColor, QBrush,
+                         QPolygon, QFont, QMouseEvent)
 from PyQt6.QtCore import Qt, QPoint
 
 from view.config import GuitarFretboardStyle
 from util.midi import midi_codes
 from util.coordinateMap import CoordinateMap
 
-from view.events import Signals, ScaleSelectedEvent, ClearScaleEvent
+from view.events import Signals, ScaleSelectedEvent
 
 from models.note import Note
 
@@ -158,13 +159,17 @@ class GuitarFretboard(QWidget):
             painter.setPen(text_pen)
             painter.drawText(x, y, text)
 
-    def _draw_dot_using_current_pen(self, painter, start_y, string_spacing, fret_positions, fret, g_string):
+    def _draw_dot_using_current_pen(self, painter,
+                                    start_y, string_spacing,
+                                    fret_positions,
+                                    fret, g_string):
         # Positioning the diamond
         # Midpoint of the 3rd fret
         fret_x = (fret_positions[fret-1] + fret_positions[fret]) / 2
         string_y_lower = start_y + (g_string-1) * \
             string_spacing  # Y position of 3rd string
-        string_y = start_y + g_string * string_spacing  # Y position of 4th string
+        # Y position of 4th string
+        string_y = start_y + g_string * string_spacing
         diamond_center_y = (string_y_lower + string_y) / \
             2  # Center between 3rd and 4th string
 
@@ -256,7 +261,9 @@ class GuitarFretboard(QWidget):
         ]
 
         for (fret, g_str) in ornaments:
-            self._draw_dot_using_current_pen(painter, start_y, string_spacing, fret_positions,
+            self._draw_dot_using_current_pen(painter, start_y,
+                                             string_spacing,
+                                             fret_positions,
                                              fret, g_str)
 
         string_color = QColor(*GuitarFretboardStyle.string_color_rgb)

@@ -1,7 +1,7 @@
 import sys
 from PyQt6.QtCore import Qt, QSettings
 from PyQt6.QtWidgets import (
-    QApplication, QMainWindow, QToolBar, QTreeView, QTabWidget,
+    QApplication, QMainWindow, QToolBar, QTabWidget,
     QWidget, QSplitter, QStatusBar, QVBoxLayout,
 )
 from PyQt6.QtGui import QAction

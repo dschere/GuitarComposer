@@ -1,5 +1,7 @@
 import sys
-from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QGroupBox, QHBoxLayout, QComboBox, QLineEdit, QLabel, QPushButton
+from PyQt6.QtWidgets import (QApplication,
+                             QWidget, QVBoxLayout, QHBoxLayout, QComboBox,
+                             QLineEdit, QLabel, QPushButton)
 
 
 from util.scale import MusicScales
@@ -99,7 +101,9 @@ class FilterableScaleSelector(QWidget):
         if len(scale_name) == 0:
             return
 
-        (mc_list, seq) = self.music_scales.generate_midi_scale_codes(scale_name, key)
+        (mc_list, seq) = \
+            self.music_scales.generate_midi_scale_codes(
+                scale_name, key)
 
         # emit message
         msg = ScaleSelectedEvent()

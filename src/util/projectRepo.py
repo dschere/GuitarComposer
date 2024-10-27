@@ -1,15 +1,13 @@
-""" 
+"""
 Simple managment scheme for projects for GC.
 
 <home>/GuitarComposerUserdata
       /GuitarComposerUserdata/songs/<title>.dat
-       
       /GuitarComposerUserdata/live-capture/<name>/
-       audio capture 
+       audio capture
 """
 import os
 import glob
-import atexit
 from singleton_decorator import singleton
 import pickle
 import logging

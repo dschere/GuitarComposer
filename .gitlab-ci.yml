@@ -1,0 +1,34 @@
+default:
+  image: python:3.9
+
+stages:
+  - lint
+  # - test
+  # - deploy
+
+# before_script:
+#   - pip install flake8
+
+flake8:
+  stage: lint
+  script:
+    - python --version
+    - pip install flake8
+    - lake8 `find ./src -name "*.py" | grep -v ./src/cmodules`
+  # only:
+  #   - merge_requests
+
+
+# test:
+#   stage: test
+#   script:
+#     - echo python manage.py test
+#   only:
+#     - merge_requests
+
+# deploy:
+#   stage: deploy
+#   script:
+#     - echo "It's a good day to deploy"
+#   only:
+#     - merge_requests

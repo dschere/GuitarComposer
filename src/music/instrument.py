@@ -4,7 +4,6 @@ import json
 from singleton_decorator import singleton
 from services.synth.synthservice import synthservice
 from services.synth import sequencer as SeqEvt
-from view.events import Signals
 
 from models.note import Note
 from models.track import Track
@@ -137,14 +136,15 @@ class SingleInstrumentImp(InstrumentInterface):
 
 
 class Instrument:
-    """ 
-    Object used to represent a midi instrument. It may also represent a collection
-    of midi instruments. It acts as a conduit for communications with the synthservice
-    singleton object. 
+    """
+    Object used to represent a midi instrument. It may also
+    represent a collection of midi instruments. It acts as a
+    conduit for communications with the synthservice
+    singleton object.
 
-    Each instrument can be represented by multiple configured midid channels. For instance
-    an electrict guitar would have a muted channel, a distortion channel, a fret
-    noise channel etc.
+    Each instrument can be represented by multiple configured
+    midi channels. For instance an electrict guitar would have
+    a muted channel, a distortion channel, a fret noise channel etc.
     """
 
     # get references to singletons

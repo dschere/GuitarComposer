@@ -4,7 +4,6 @@ to a single linears sequence of events. Some events
 such as bends/slides translate to multiple events
 over time.
 """
-import typing
 import gcsynth
 
 
@@ -43,7 +42,7 @@ class pitch_change(timer_event):
     """
     changes the pitch in semitones.
 
-    value: 0.0 means no change, range -12.0 to 12.0 
+    value: 0.0 means no change, range -12.0 to 12.0
     """
 
     def __init__(self, when: int, channel: int, value: float):
@@ -52,7 +51,8 @@ class pitch_change(timer_event):
 
 
 class filter_add(timer_event):
-    def __init__(self, when: int, channel: int, plugin_path: str, plugin_label: str):
+    def __init__(self, when: int, channel: int,
+                 plugin_path: str, plugin_label: str):
         super().__init__(when, channel, gcsynth.EV_FILTER_ADD)
         self.plugin_path = plugin_path
         self.plugin_label = plugin_label
@@ -79,7 +79,9 @@ class filter_disable(timer_event):
 
 
 class filter_control(timer_event):
-    def __init__(self, when: int, channel: int, plugin_label: str, name: str, value: float):
+    def __init__(self, when: int,
+                 channel: int, plugin_label: str,
+                 name: str, value: float):
         super().__init__(when, channel, gcsynth.EV_FILTER_CONTROL)
         self.control_name = name
         self.control_value = value
@@ -103,7 +105,7 @@ class sequencer:
             play_list += self.te_events[when]
         try:
             self.synth_service.timer_event(play_list)
-        except:
+        except Exception:
             print("error in sequence play, this is a dump of the playlist:")
             for (i, item) in enumerate(play_list):
                 print((i, item.__class__.__name__, vars(item)))

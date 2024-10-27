@@ -7,7 +7,7 @@ import uuid
 import logging
 
 from PyQt6.QtGui import QStandardItemModel, QStandardItem, QIcon
-from PyQt6.QtCore import QTimer, QSettings
+from PyQt6.QtCore import QSettings
 from PyQt6.QtCore import Qt
 
 from models.note import Note
@@ -48,7 +48,8 @@ class SongController:
             gear_icon = QIcon.fromTheme("emblem-system")
             properties_item.setIcon(gear_icon)
 
-            # associate our track model with the tree model used for visualization
+            # associate our track model with the tree model
+            # used for visualization
             properties_item.setData(track)
 
             track_item.appendRow(properties_item)
@@ -87,9 +88,10 @@ def log_model_contents(model: QStandardItemModel):
             # Get the item at the given row and column
             item = model.item(row, column)
             if item:
+                v = item.data(Qt.ItemDataRole.DisplayRole)
                 # Log the item's data (display role by default)
                 logging.debug(
-                    f"    Row {row}, Column {column}: {item.data(Qt.ItemDataRole.DisplayRole)}")
+                    f"    Row {row}, Column {column}: {v}")
 
 
 class AppController:

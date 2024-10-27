@@ -1,24 +1,22 @@
-from PyQt6.QtWidgets import QHBoxLayout, QDialogButtonBox, QPushButton, QDialog, QLineEdit, QLabel, QVBoxLayout, QComboBox, QWidget
-from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import (QHBoxLayout, QDialogButtonBox,
+                             QDialog, QLineEdit, QLabel,
+                             QVBoxLayout, QComboBox)
 
 from music.instrument import getInstrumentList
-from view.config import LabelText
 from view.events import Signals, InstrumentSelectedEvent
 
 from view.config import LabelText
 
-import logging
 
-
-""" 
-The sub widget that draws a 
+"""
+The sub widget that draws a
 
   <filter instrument list>
   <instrument list combo box>
 
 * able to route an instrument selected to asignal and pass
   along the track associated with this event
-* able to filter the instrument list    
+* able to filter the instrument list
 """
 
 
@@ -27,12 +25,12 @@ class TrackTreeDialog(QDialog):
     title = "Instrument"
 
     def _filter_instruments(self):
-        filter_text = self.filter_input.text().lower()
+        ftext = self.filter_input.text().lower()
         self.instruments_combo_box.clear()
 
         # Filter combo box items based on the text input
         filtered_items = [
-            item for item in self.instrument_names if filter_text in item.lower()]
+            item for item in self.instrument_names if ftext in item.lower()]
         self.instruments_combo_box.addItems(filtered_items)
 
     def _on_instrument_selected(self):

@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QGroupBox
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QGroupBox
 
 from view.widgets.filterableScaleSelector import FilterableScaleSelector
 from view.widgets.fretboard import GuitarFretboard
@@ -17,8 +17,15 @@ class fretboard_view(QWidget):
         layout.addWidget(fretboard)
 
         group_box = QGroupBox(LabelText.scale_selector_group)
-        group_box.setStyleSheet("QGroupBox { border: 2px solid gray; border-radius: 5px; margin-top: 10px; }"
-                                "QGroupBox::title { subcontrol-origin: margin; padding: 0 3px; }")
+        group_box.setStyleSheet("""
+            QGroupBox {
+                border: 2px solid gray;
+                border-radius: 5px; margin-top: 10px;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin; padding: 0 3px;
+            }
+        """)
 
         group_layout = QVBoxLayout()
         group_layout.addWidget(scale_selector)
