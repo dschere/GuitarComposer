@@ -80,7 +80,7 @@ class MultiInstrumentImp(InstrumentBaseImp):
 
     def clear_events(self):
         for chan in self.channels_used:
-            self.instr.synth.reset_channel(chan)
+            self.instr.synth.dealloc(chan)
 
     def note_event(self, n: Note):
         "play note on potentially multiple channels"
@@ -117,7 +117,7 @@ class SingleInstrumentImp(InstrumentBaseImp):
         self.chan = chan
 
     def clear_events(self):
-        self.instr.synth.reset_channel(self.chan)    
+        self.instr.synth.dealloc(self.chan)
 
     def note_event(self, n: Note):
         midicode_in_use = self.instr.string_playing[n.string]

@@ -71,6 +71,10 @@ class midi_channel_manager:
     def reset(self):
         self.c_index = 1
 
+    def dealloc(self, chan):
+        self.synth.reset_channel(chan)
+        self.channel_state[chan] = None
+
     def alloc(self, instrument_name):
         spec = self.synth.find(instrument_name)
         if not spec:
@@ -108,6 +112,9 @@ class synthservice:
 
     def reset_channel_manager(self):
         self.cm.reset()
+
+    def dealloc(self, chan):
+        self.cm.dealloc(chan)
 
     def alloc(self, instrument_name):
         return self.cm.alloc(instrument_name)
