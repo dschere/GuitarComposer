@@ -48,8 +48,8 @@ class TrackTreeDialog(QDialog):
         # filtered drop down menu to select an instrument
         main_layout = QVBoxLayout()
 
-         # Create OK and Cancel buttons
-        button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+        # Create OK and Cancel buttons
+        button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok)
         
         # Connect the buttons to the dialog's accept() and reject() slots
         button_box.accepted.connect(self.accept)
@@ -70,6 +70,7 @@ class TrackTreeDialog(QDialog):
         combo_label = QLabel(LabelText.instruments, self)
         self.instruments_combo_box = QComboBox(self)
         self.instruments_combo_box.addItems(self.instrument_names)
+        self.instruments_combo_box.setCurrentText(self.track_model.instrument_name)
         f = self._on_instrument_selected
         self.instruments_combo_box.currentIndexChanged.connect(f)
 

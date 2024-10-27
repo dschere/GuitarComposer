@@ -55,7 +55,6 @@ class SongController:
         return root    
 
 
-
     def addTrack(self, instr_name):
         # assign synth channel(s) to play the instrument
         instrument = Instrument(instr_name)
