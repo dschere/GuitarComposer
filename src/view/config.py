@@ -36,7 +36,7 @@ class _GuitarFretboardStyle:
 class _LabelText:
     # TODO, tie into localization so these can be switched.
     properties = "properties"
-    title = "title"  
+    title = "title"
     track = "track"
 
     filter_instruments = "Filter instruments:"
@@ -47,7 +47,6 @@ class _LabelText:
     scale_selector_group = "Fretboard Overlay"
     clear_scale = "Clear"
     nav_track_properties = "Track properties"
-    
 
 
 GuitarFretboardStyle = _GuitarFretboardStyle()
@@ -55,4 +54,3 @@ LabelText = _LabelText()
 
 ORAGANIZATION = "OneManShow Enterprises"
 APP_NAME = "GuitarComposer"
-

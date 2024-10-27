@@ -5,11 +5,12 @@ from PyQt6.QtCore import Qt
 
 class InstrumentDelegate(QStyledItemDelegate):
     """Custom delegate for rendering a dropdown (QComboBox) in the 'Instrument' node."""
+
     def createEditor(self, parent, option, index):
         if index.data() == "Instrument":  # Apply only to the 'Instrument' node
-            item = index.model().itemFromIndex(index) 
+            item = index.model().itemFromIndex(index)
             print(item.data())
-            
+
             editor = QComboBox(parent)
             editor.addItems(["Piano", "Guitar", "Drums", "Bass", "Violin"])
             return editor
@@ -26,15 +27,19 @@ class InstrumentDelegate(QStyledItemDelegate):
     def setModelData(self, editor, model, index):
         if isinstance(editor, QComboBox):
             print("setModelData")
-            model.setData(index, editor.currentText(), Qt.ItemDataRole.EditRole)
+            model.setData(index, editor.currentText(),
+                          Qt.ItemDataRole.EditRole)
         else:
             super().setModelData(editor, model, index)
 
+
 class TrackProp:
     counter = 0
+
     def __init__(self):
         self.track_num = self.counter
         self.counter += 1
+
 
 def create_track_node(track_name):
     track = QStandardItem(track_name)
@@ -52,7 +57,8 @@ def create_track_node(track_name):
 
     instrument_item.setData(TrackProp())
 
-    instrument_item.setEditable(True)  # This will allow the dropdown to be editable only for this node
+    # This will allow the dropdown to be editable only for this node
+    instrument_item.setEditable(True)
     properties_item.appendRow(instrument_item)
     track.appendRow(properties_item)
 
@@ -98,11 +104,13 @@ if __name__ == '__main__':
     # Create the tree view and set the model
     tree_view = QTreeView()
     tree_view.setModel(model)
-    tree_view.setEditTriggers(QTreeView.EditTrigger.DoubleClicked | QTreeView.EditTrigger.SelectedClicked)
+    tree_view.setEditTriggers(
+        QTreeView.EditTrigger.DoubleClicked | QTreeView.EditTrigger.SelectedClicked)
 
     # Add delegate to handle dropdown for the 'Instrument' node only
     delegate = InstrumentDelegate()
-    tree_view.setItemDelegate(delegate)  # Apply the delegate globally, but it will only affect the 'Instrument' node
+    # Apply the delegate globally, but it will only affect the 'Instrument' node
+    tree_view.setItemDelegate(delegate)
 
     tree_view.setWindowTitle("Project Tree")
     tree_view.resize(600, 400)

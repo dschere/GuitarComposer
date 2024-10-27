@@ -24,7 +24,6 @@ class timer_event:
 
     def encode(self) -> dict:
         return vars(self)
-    
 
 
 class noteon(timer_event):
@@ -32,6 +31,7 @@ class noteon(timer_event):
         super().__init__(when, channel, gcsynth.EV_NOTEON)
         self.midi_code = key
         self.velocity = vel
+
 
 class noteoff(timer_event):
     def __init__(self, when, channel, key):
@@ -101,11 +101,11 @@ class sequencer:
         play_list = []
         for when in sorted(self.te_events):
             play_list += self.te_events[when]
-        try:    
+        try:
             self.synth_service.timer_event(play_list)
         except:
             print("error in sequence play, this is a dump of the playlist:")
-            for (i,item) in enumerate(play_list):   
-                print((i,item.__class__.__name__,vars(item)))
+            for (i, item) in enumerate(play_list):
+                print((i, item.__class__.__name__, vars(item)))
             # reraise
-            raise      
+            raise

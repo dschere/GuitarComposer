@@ -20,6 +20,7 @@ from view.config import LabelText
 
 FRETBOARD_CHANNEL = 0
 
+
 class SongController:
     def __init__(self, title):
         self.song = Song()
@@ -30,21 +31,21 @@ class SongController:
         self.song = s
         for track in self.song.tracks:
             instrument = Instrument(track.instrument_name)
-            self.instruments[track.instrument_name] = instrument        
-        
+            self.instruments[track.instrument_name] = instrument
+
     def title(self):
-        return self.song.title    
+        return self.song.title
 
     def createQModel(self):
         "generate a tree structure for this song"
         root = QStandardItem(">> " + self.song.title)
-        for (i,track) in enumerate(self.song.tracks):
+        for (i, track) in enumerate(self.song.tracks):
             n = i + 1
             track_item = QStandardItem(LabelText.track + f" {n}")
             properties_item = QStandardItem(LabelText.properties)
 
             # Set the icon and text for the 'Properties' node
-            gear_icon = QIcon.fromTheme("emblem-system")  
+            gear_icon = QIcon.fromTheme("emblem-system")
             properties_item.setIcon(gear_icon)
 
             # associate our track model with the tree model used for visualization
@@ -52,8 +53,7 @@ class SongController:
 
             track_item.appendRow(properties_item)
             root.appendRow(track_item)
-        return root    
-
+        return root
 
     def addTrack(self, instr_name):
         # assign synth channel(s) to play the instrument
@@ -63,14 +63,14 @@ class SongController:
         track = Track()
         track.uuid = str(uuid.uuid4())
         track.instrument_name = instr_name
-        self.song.tracks.append( track )
+        self.song.tracks.append(track)
 
         # map the instrument name to a syn interface
         self.instruments[instr_name] = instrument
 
     def removeTrack(self, instr_name):
-        #TODO, must add checkin/checkout capability to the 
-        #channel manager in the synth service.
+        # TODO, must add checkin/checkout capability to the
+        # channel manager in the synth service.
         pass
 
 
@@ -88,7 +88,8 @@ def log_model_contents(model: QStandardItemModel):
             item = model.item(row, column)
             if item:
                 # Log the item's data (display role by default)
-                logging.debug(f"    Row {row}, Column {column}: {item.data(Qt.ItemDataRole.DisplayRole)}")
+                logging.debug(
+                    f"    Row {row}, Column {column}: {item.data(Qt.ItemDataRole.DisplayRole)}")
 
 
 class AppController:
@@ -107,14 +108,14 @@ class AppController:
             titles = sorted(self.song_ctrl)
             logging.debug("setup controllers for %s" % str(titles))
             log_model_contents(root)
-                
-        # send to navigator widget     
+
+        # send to navigator widget
         Signals.update_navigator.emit(root)
 
     def on_ready(self, app):
-        # setup navigator, score editor 
+        # setup navigator, score editor
         titles = self.projects.getTitles()
-        
+
         if len(titles) == 0:
             sc = SongController("noname")
             sc.addTrack('Acoustic Guitar')
@@ -122,22 +123,21 @@ class AppController:
         else:
             for title in titles:
                 song_model = self.projects.load_song(title)
-                sc = SongController(title) 
+                sc = SongController(title)
                 sc.load_model(song_model)
                 self.song_ctrl[sc.title()] = sc
 
-        self.update_navigator()    
+        self.update_navigator()
 
-    def on_load_settings(self, settings : QSettings):
+    def on_load_settings(self, settings: QSettings):
         if settings.contains(self.settings_key):
             val = settings.value(self.settings_key)
             self.active_song_titles = set(json.loads(val))
 
-    def on_save_settings(self, settings : QSettings):
+    def on_save_settings(self, settings: QSettings):
         val = json.dumps(list(self.active_song_titles))
-        settings.setValue(self.settings_key,val)
-        
-        
+        settings.setValue(self.settings_key, val)
+
     def __init__(self, synth_service):
         self.synth_service = synth_service
 
@@ -155,7 +155,6 @@ class AppController:
         Signals.save_settings.connect(self.on_load_settings)
 
         Signals.ready.connect(self.on_ready)
-
 
     def handle_preview_play(self, n: Note):
         self.synth_service.noteon(FRETBOARD_CHANNEL, n.midi_code, n.velocity)

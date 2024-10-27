@@ -22,7 +22,6 @@ class CustomInstruments:
         return self.db.get(name)
 
 
-
 StandardTuning = Track().tuning
 
 DropDTuning = [
@@ -137,8 +136,6 @@ class SingleInstrumentImp(InstrumentInterface):
             s.play()
 
 
-
-
 class Instrument:
     """ 
     Object used to represent a midi instrument. It may also represent a collection
@@ -187,13 +184,13 @@ class Instrument:
 
 
 def getInstrumentList():
-    #Note: these are both singletons 
+    # Note: these are both singletons
     custom_instruments = CustomInstruments()
     synth = synthservice()
-    
+
     names = list(custom_instruments.db.keys())
     for sf_spec in synth.instrument_info():
         for instr_spec in sf_spec['instruments']:
             names.append(instr_spec['name'])
     names.sort()
-    return names 
+    return names

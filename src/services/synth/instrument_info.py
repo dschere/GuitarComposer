@@ -21,6 +21,7 @@ instruments = [{
 }]
 """
 
+
 class instrument_spec:
     def __init__(self):
         self.name = None
@@ -28,6 +29,7 @@ class instrument_spec:
         self.sfont_id = -1
         self.bank_num = -1
         self.preset_num = -1
+
 
 class instrument_info:
     prefered_font = "27mg_Symphony_Hall_Bank.SF2"
@@ -41,9 +43,9 @@ class instrument_info:
         sf_info_file = os.environ['GC_DATA_DIR']+"/sf_info/instruments.json"
         self.sfpaths = glob.glob(sf_dir+"/*")
         self.instruments = []
-        
+
         # give preference to this sound font
-        
+
         self.prefered = {}
         # all others
         self.lookup = {}
@@ -69,9 +71,8 @@ class instrument_info:
                     spec.bank_num = int(m.group(1))
                     spec.preset_num = int(m.group(2))
 
-
                     if sf_filename == self.prefered_font:
-                        self.prefered[spec.name] = spec 
+                        self.prefered[spec.name] = spec
                     else:
                         self.lookup[spec.name] = spec
 
@@ -82,5 +83,5 @@ class instrument_info:
                     })
             self.instruments.append(sf_info)
 
-        f = open(sf_info_file,"w")
+        f = open(sf_info_file, "w")
         f.write(json.dumps(self.instruments, indent=4, sort_keys=True))

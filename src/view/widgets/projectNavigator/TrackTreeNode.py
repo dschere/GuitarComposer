@@ -3,7 +3,7 @@ from PyQt6.QtCore import Qt
 
 from music.instrument import getInstrumentList
 from view.config import LabelText
-from view.events import Signals, InstrumentSelectedEvent 
+from view.events import Signals, InstrumentSelectedEvent
 
 from view.config import LabelText
 
@@ -20,11 +20,12 @@ The sub widget that draws a
   along the track associated with this event
 * able to filter the instrument list    
 """
+
+
 class TrackTreeDialog(QDialog):
     instrument_names = getInstrumentList()
     title = "Instrument"
 
-   
     def _filter_instruments(self):
         filter_text = self.filter_input.text().lower()
         self.instruments_combo_box.clear()
@@ -50,7 +51,7 @@ class TrackTreeDialog(QDialog):
 
         # Create OK and Cancel buttons
         button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok)
-        
+
         # Connect the buttons to the dialog's accept() and reject() slots
         button_box.accepted.connect(self.accept)
         button_box.rejected.connect(self.reject)
@@ -70,7 +71,8 @@ class TrackTreeDialog(QDialog):
         combo_label = QLabel(LabelText.instruments, self)
         self.instruments_combo_box = QComboBox(self)
         self.instruments_combo_box.addItems(self.instrument_names)
-        self.instruments_combo_box.setCurrentText(self.track_model.instrument_name)
+        self.instruments_combo_box.setCurrentText(
+            self.track_model.instrument_name)
         f = self._on_instrument_selected
         self.instruments_combo_box.currentIndexChanged.connect(f)
 
@@ -83,5 +85,3 @@ class TrackTreeDialog(QDialog):
         main_layout.addWidget(button_box)
 
         self.setLayout(main_layout)
-
-        
