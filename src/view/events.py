@@ -64,6 +64,7 @@ class _Signals(QObject):
     save_song = pyqtSignal(SaveSongEvent)
 
     update_navigator = pyqtSignal(QStandardItemModel)
+    fretboard_inst_select = pyqtSignal(object)
 
 
 Signals = _Signals()

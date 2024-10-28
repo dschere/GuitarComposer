@@ -56,8 +56,10 @@ class GuitarFretboard(QWidget):
                 # Toggle state
                 n.is_playing = not n.is_playing
                 if n.is_playing:
+                    n.rest = False
                     Signals.preview_play.emit(n)
                 else:
+                    n.rest = True
                     Signals.preview_stop.emit(n)
                 self._update_active_notes(n)
 

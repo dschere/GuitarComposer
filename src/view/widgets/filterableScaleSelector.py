@@ -7,9 +7,14 @@ from PyQt6.QtWidgets import (QApplication,
 from util.scale import MusicScales
 from view.config import LabelText
 from view.events import Signals, ScaleSelectedEvent, ClearScaleEvent
+from music.instrument import getInstrumentList
 
 
 class FilterableScaleSelector(QWidget):
+
+    def on_inst_select(self):
+        name = self.instr_combo_box.currentText()
+        Signals.fretboard_inst_select.emit(name)
 
     def __init__(self):
         super().__init__()
@@ -22,6 +27,14 @@ class FilterableScaleSelector(QWidget):
 
         # Main vertical layout
         main_layout = QVBoxLayout()
+
+        instrument_layout = QHBoxLayout()
+        instrument_label = QLabel(LabelText.instruments)
+        self.instr_combo_box = QComboBox()
+        instr_list = getInstrumentList()
+        self.instr_combo_box.addItems(instr_list)
+        instrument_layout.addWidget(instrument_label)
+        instrument_layout.addWidget(self.instr_combo_box)
 
         # Create the filter label and filter input
         filter_layout = QHBoxLayout()
@@ -56,6 +69,7 @@ class FilterableScaleSelector(QWidget):
         btn_layout.addWidget(clear_btn)
 
         # Add horizontal layouts to the main vertical layout
+        main_layout.addLayout(instrument_layout)
         main_layout.addLayout(filter_layout)
         main_layout.addLayout(combo_layout)
         main_layout.addLayout(key_layout)
@@ -74,6 +88,8 @@ class FilterableScaleSelector(QWidget):
         self.scale_combo_box.currentIndexChanged.connect(
             self.on_scale_selection)
         self.key_combo_box.currentIndexChanged.connect(self.on_scale_selection)
+        self.instr_combo_box.currentIndexChanged.connect(self.on_inst_select)
+
         Signals.load_settings.connect(self.on_load_settings)
         Signals.save_settings.connect(self.on_save_settings)
 

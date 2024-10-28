@@ -58,7 +58,6 @@ class Test_GcSynth_Events(unittest.TestCase):
         time.sleep(3.0)
         gcsynth.stop()
 
-
     def test04_strum_a_chord(self):
         data = {"sfpaths": [
             "/home/david/proj/GuitarComposer/data/sf/27mg_Symphony_Hall_Bank.SF2"]}
