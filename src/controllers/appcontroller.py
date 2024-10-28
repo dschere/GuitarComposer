@@ -140,12 +140,18 @@ class AppController:
         val = json.dumps(list(self.active_song_titles))
         settings.setValue(self.settings_key, val)
 
+    def on_preview_instr_changed(self, instrument_name):
+        self.preview_instr.free_resources()
+        self.preview_instr = Instrument(instrument_name)
+
     def __init__(self, synth_service):
         self.synth_service = synth_service
 
         self.projects = ProjectRepo()
         self.active_song_titles = set()
         self.song_ctrl = {}
+        self.preview_instr = Instrument("Acoustic Guitar")
+        Signals.fretboard_inst_select.connect(self.on_preview_instr_changed)
 
         # current track being edited.
         self.current_track = None
@@ -159,7 +165,9 @@ class AppController:
         Signals.ready.connect(self.on_ready)
 
     def handle_preview_play(self, n: Note):
-        self.synth_service.noteon(FRETBOARD_CHANNEL, n.midi_code, n.velocity)
+        self.preview_instr.note_event(n)
+        # self.synth_service.noteon(FRETBOARD_CHANNEL, n.midi_code, n.velocity)
 
     def handle_preview_stop(self, n: Note):
-        self.synth_service.noteoff(FRETBOARD_CHANNEL, n.midi_code)
+        self.preview_instr.note_event(n)
+        # self.synth_service.noteoff(FRETBOARD_CHANNEL, n.midi_code)

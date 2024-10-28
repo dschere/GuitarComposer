@@ -78,7 +78,7 @@ class MultiInstrumentImp(InstrumentBaseImp):
 
         self.instr_2_chan = instr_2_chan
 
-    def clear_events(self):
+    def free_resources(self):
         for chan in self.channels_used:
             self.instr.synth.dealloc(chan)
 
@@ -116,7 +116,7 @@ class SingleInstrumentImp(InstrumentBaseImp):
         self.instr = instr
         self.chan = chan
 
-    def clear_events(self):
+    def free_resources(self):
         self.instr.synth.dealloc(self.chan)
 
     def note_event(self, n: Note):
