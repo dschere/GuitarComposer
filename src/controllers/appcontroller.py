@@ -9,6 +9,7 @@ import logging
 from PyQt6.QtGui import QStandardItemModel, QStandardItem, QIcon
 from PyQt6.QtCore import QSettings
 from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QMessageBox
 
 from models.note import Note
 from models.song import Song
@@ -26,35 +27,65 @@ class SongController:
         self.song = Song()
         self.song.title = title
         self.instruments = {}
+        self.q_model = None
 
+    def setTitle(self, title):
+        self.song.title = title    
+
+    def getTitle(self):
+        return self.song.title    
+        
     def load_model(self, s: Song):
         self.song = s
         for track in self.song.tracks:
             instrument = Instrument(track.instrument_name)
-            self.instruments[track.instrument_name] = instrument
+            self.instruments[track] = instrument
 
     def title(self):
         return self.song.title
 
+    def addQTrackModel(self, track, root):
+        n = track.instrument_name
+        track_item = QStandardItem(LabelText.track + f": {n}")
+        properties_item = QStandardItem(LabelText.properties)
+
+        flags = properties_item.flags() & ~Qt.ItemFlag.ItemIsEditable
+        properties_item.setFlags(flags)
+
+        flags = track_item.flags() & ~Qt.ItemFlag.ItemIsEditable
+        track_item.setFlags(flags)
+
+        # Set the icon and text for the 'Properties' node
+        gear_icon = QIcon.fromTheme("emblem-system")
+        properties_item.setIcon(gear_icon)
+
+        # associate our track model with the tree model
+        # used for visualization
+        properties_item.setData(track)
+
+        track_item.appendRow(properties_item)
+        root.appendRow(track_item)
+
+
     def createQModel(self):
         "generate a tree structure for this song"
-        root = QStandardItem(">> " + self.song.title)
-        for (i, track) in enumerate(self.song.tracks):
-            n = i + 1
-            track_item = QStandardItem(LabelText.track + f" {n}")
-            properties_item = QStandardItem(LabelText.properties)
+        root = QStandardItem(self.song.title)
+        root.setData(self)
 
-            # Set the icon and text for the 'Properties' node
-            gear_icon = QIcon.fromTheme("emblem-system")
-            properties_item.setIcon(gear_icon)
+        for track in self.song.tracks:
+            self.addQTrackModel(track, root)  
 
-            # associate our track model with the tree model
-            # used for visualization
-            properties_item.setData(track)
-
-            track_item.appendRow(properties_item)
-            root.appendRow(track_item)
+        self.q_model = root    
         return root
+    
+    def userAddTrack(self):
+        if not self.q_model:
+            logging.error("userAddTrack called but we have not setup model!")
+            return
+
+        track = self.addTrack('Acoustic Guitar')
+        self.addQTrackModel(track, self.q_model)
+        
 
     def addTrack(self, instr_name):
         # assign synth channel(s) to play the instrument
@@ -67,7 +98,8 @@ class SongController:
         self.song.tracks.append(track)
 
         # map the instrument name to a syn interface
-        self.instruments[instr_name] = instrument
+        self.instruments[track] = instrument
+        return track
 
     def removeTrack(self, instr_name):
         # TODO, must add checkin/checkout capability to the
@@ -97,9 +129,32 @@ def log_model_contents(model: QStandardItemModel):
 class AppController:
     settings_key = __name__+".active_song_titles"
 
+    def on_song_title_changed(self, item):
+        new_text = item.text()
+        s_ctl = item.data()
+        
+        is_song_ctl = False
+        try:
+            if isinstance(s_ctl, SongController):
+                is_song_ctl = True
+        except TypeError:
+            pass
+
+        if is_song_ctl:
+            if new_text == s_ctl.getTitle():
+                pass # no-op we didn't change anything
+            # user has edited the song title, check for collissions
+            elif new_text in self.song_ctrl:
+                QMessageBox.critical(self,
+                    "Error", f"{new_text} already exists!",
+                        QMessageBox.StandardButton.Ok) 
+            else:
+                s_ctl.setTitle(new_text)
+
     def update_navigator(self):
         "construct a QModel for the treeView"
         root = QStandardItemModel()
+        root.itemChanged.connect(self.on_song_title_changed)
         root.setHorizontalHeaderLabels(["Guitar Composer"])
         for title in sorted(self.song_ctrl):
             sc = self.song_ctrl[title]
