@@ -10,7 +10,7 @@ from view.events import Signals, ScaleSelectedEvent, ClearScaleEvent
 from music.instrument import getInstrumentList
 
 
-class FilterableScaleSelector(QWidget):
+class FretboardControls(QWidget):
 
     def on_inst_select(self):
         name = self.instr_combo_box.currentText()
@@ -140,7 +140,7 @@ class FilterableScaleSelector(QWidget):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    window = FilterableScaleSelector()
+    window = FretboardControls()
 
     def msg_handler(obj):
         print(vars(obj))

@@ -47,6 +47,7 @@ class _LabelText:
     scale_selector_group = "Fretboard Overlay"
     clear_scale = "Clear"
     nav_track_properties = "Track properties"
+    add_track = "Add Track"
 
 
 GuitarFretboardStyle = _GuitarFretboardStyle()

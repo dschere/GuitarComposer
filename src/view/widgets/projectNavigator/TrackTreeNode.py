@@ -37,12 +37,14 @@ class TrackTreeDialog(QDialog):
         evt = InstrumentSelectedEvent()
         evt.instrument = self.instruments_combo_box.currentText()
         evt.track = self.track_model
+        self.track_qmodel_item.setText(evt.instrument)
         Signals.instrument_selected.emit(evt)
 
-    def __init__(self, parent, track_model):
+    def __init__(self, parent, track_model, track_qmodel_item):
         super().__init__(parent)
         self.setWindowTitle(LabelText.nav_track_properties)
         self.track_model = track_model
+        self.track_qmodel_item = track_qmodel_item
 
         # filtered drop down menu to select an instrument
         main_layout = QVBoxLayout()

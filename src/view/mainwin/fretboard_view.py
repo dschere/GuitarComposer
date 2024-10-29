@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QGroupBox
 
-from view.widgets.filterableScaleSelector import FilterableScaleSelector
+from view.widgets.fretboardControls import FretboardControls
 from view.widgets.fretboard import GuitarFretboard
 
 from view.config import LabelText
@@ -11,7 +11,7 @@ class fretboard_view(QWidget):
         super().__init__()
 
         fretboard = GuitarFretboard()
-        scale_selector = FilterableScaleSelector()
+        scale_selector = FretboardControls()
 
         layout = QHBoxLayout()
         layout.addWidget(fretboard)

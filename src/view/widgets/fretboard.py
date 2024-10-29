@@ -1,5 +1,4 @@
 import sys
-import logging
 
 from PyQt6.QtWidgets import QApplication, QWidget
 from PyQt6.QtGui import (QPainter, QPen, QColor, QBrush,
@@ -38,7 +37,6 @@ class GuitarFretboard(QWidget):
                 self.cm.add(fret_x_pos, string_y_pos, n)
 
     def _update_active_notes(self, n: Note):
-        logging.debug(str(vars(n)))
         fret_playing = self.string_playing_fret[n.string]
         if fret_playing != -1:
             self.removeDot(fret_playing, n.string)
@@ -57,10 +55,15 @@ class GuitarFretboard(QWidget):
                 n.is_playing = not n.is_playing
                 if n.is_playing:
                     n.rest = False
+                    playing_note = self.string_playing_note[n.string]
+                    if playing_note:
+                        Signals.preview_stop.emit(playing_note)
+                        self.string_playing_note[n.string] = n
                     Signals.preview_play.emit(n)
                 else:
                     n.rest = True
                     Signals.preview_stop.emit(n)
+                    self.string_playing_note[n.string] = None
                 self._update_active_notes(n)
 
     def __init__(self):
@@ -80,6 +83,7 @@ class GuitarFretboard(QWidget):
         ]
         # keep track of strings playing notes, only one allowed per string
         self.string_playing_fret = [-1 for i in range(len(self.tuning))]
+        self.string_playing_note = [None for i in range(len(self.tuning))]
         self.dots = {}
         self.scale = []
         self.scale_seq = None
