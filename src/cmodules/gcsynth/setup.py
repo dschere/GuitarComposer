@@ -18,7 +18,7 @@ glib_libs = subprocess.getoutput(f"pkg-config --libs {PACKAGES}").split()
 # pkg-config libs/inculdes
 _include_dirs += [path[2:] for path in glib_include]  # Removing '-I' prefix
 _libraries += [lib[2:]
-               for lib in glib_libs if lib.startswith('-l')]  # Removing '-l' prefix
+               for lib in glib_libs if lib.startswith('-l')]
 # Removing '-L' prefix
 _library_dirs += [lib[2:] for lib in glib_libs if lib.startswith('-L')]
 

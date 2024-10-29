@@ -30,11 +30,11 @@ class SongController:
         self.q_model = None
 
     def setTitle(self, title):
-        self.song.title = title    
+        self.song.title = title
 
     def getTitle(self):
-        return self.song.title    
-        
+        return self.song.title
+
     def load_model(self, s: Song):
         self.song = s
         for track in self.song.tracks:
@@ -61,11 +61,10 @@ class SongController:
 
         # associate our track model with the tree model
         # used for visualization
-        properties_item.setData(track)
+        properties_item.setData((track, track_item,))
 
         track_item.appendRow(properties_item)
         root.appendRow(track_item)
-
 
     def createQModel(self):
         "generate a tree structure for this song"
@@ -73,11 +72,11 @@ class SongController:
         root.setData(self)
 
         for track in self.song.tracks:
-            self.addQTrackModel(track, root)  
+            self.addQTrackModel(track, root)
 
-        self.q_model = root    
+        self.q_model = root
         return root
-    
+
     def userAddTrack(self):
         if not self.q_model:
             logging.error("userAddTrack called but we have not setup model!")
@@ -85,7 +84,6 @@ class SongController:
 
         track = self.addTrack('Acoustic Guitar')
         self.addQTrackModel(track, self.q_model)
-        
 
     def addTrack(self, instr_name):
         # assign synth channel(s) to play the instrument
@@ -132,7 +130,7 @@ class AppController:
     def on_song_title_changed(self, item):
         new_text = item.text()
         s_ctl = item.data()
-        
+
         is_song_ctl = False
         try:
             if isinstance(s_ctl, SongController):
@@ -142,12 +140,12 @@ class AppController:
 
         if is_song_ctl:
             if new_text == s_ctl.getTitle():
-                pass # no-op we didn't change anything
+                pass  # no-op we didn't change anything
             # user has edited the song title, check for collissions
             elif new_text in self.song_ctrl:
                 QMessageBox.critical(self,
-                    "Error", f"{new_text} already exists!",
-                        QMessageBox.StandardButton.Ok) 
+                                     "Error", f"{new_text} already exists!",
+                                     QMessageBox.StandardButton.Ok)
             else:
                 s_ctl.setTitle(new_text)
 
