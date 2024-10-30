@@ -9,6 +9,7 @@ import sys
 import atexit
 import logging
 import os
+import qdarktheme
 
 
 # setup logging for application
@@ -62,6 +63,9 @@ def main():
     SynthService.start()
 
     app = GuitarComposer(sys.argv)
+    # Apply dark theme
+    app.setStyleSheet(qdarktheme.load_stylesheet())
+    
     window = MainWindow()
     window.show()
 
