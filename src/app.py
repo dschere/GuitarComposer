@@ -3,6 +3,7 @@
 from view.events import Signals
 from view.mainwin.mainwin import MainWindow
 from controllers.appcontroller import AppController
+from controllers.editorcontroller import EditorController
 from PyQt6.QtWidgets import QApplication
 from services.synth.synthservice import synthservice
 import sys
@@ -51,6 +52,8 @@ class GuitarComposer(QApplication):
 
         # setup controllers first
         self.app_controller = AppController(SynthService)
+        self.editor_controller = EditorController()
+
         atexit.register(self.on_shutdown)
 
     def on_shutdown(self):
@@ -64,8 +67,9 @@ def main():
 
     app = GuitarComposer(sys.argv)
     # Apply dark theme
-    app.setStyleSheet(qdarktheme.load_stylesheet())
-    
+    theme = qdarktheme.load_stylesheet('dark')
+    app.setStyleSheet(theme)
+
     window = MainWindow()
     window.show()
 
