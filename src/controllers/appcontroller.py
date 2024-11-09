@@ -49,6 +49,8 @@ class SongController:
         track_item = QStandardItem(LabelText.track + f": {n}")
         properties_item = QStandardItem(LabelText.properties)
 
+        track_item.setData(track)
+
         flags = properties_item.flags() & ~Qt.ItemFlag.ItemIsEditable
         properties_item.setFlags(flags)
 
@@ -199,6 +201,7 @@ class AppController:
 
     def __init__(self, synth_service):
         self.synth_service = synth_service
+        self.editor_ctrl = None
 
         self.projects = ProjectRepo()
         self.active_song_titles = set()

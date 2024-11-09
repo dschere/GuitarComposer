@@ -7,7 +7,12 @@ grouped as associated with a theme.
 The class names here match the class names they provide styling information
 for.
 """
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QKeyEvent
+
 from singleton_decorator import singleton
+from attic.new.GuitarComposer2.guitarcomposer.common.durationtypes import SIXTEENTH, \
+    THIRTYSECOND, SIXTYFORTH
 
 
 @singleton
@@ -30,6 +35,30 @@ class _GuitarFretboardStyle:
     scale_color_rgb = (0, 0, 128)
     # purple
     note_press = (255, 0, 255)
+
+
+@singleton
+class EditorKeyMap:
+    DOT_DURATION = '.'
+    WHOLE_DURATION = 'w'
+    HALF_DURATION = 'h'
+    QUATER_DURATION = 'q'
+    EIGHT_DURATION = 'e'
+    SIXTEENTH_DURATION = 's'
+    TRIPLET_DURATION = 't'
+
+    THIRTYSECOND_DURATION = 'T'
+    SIXTYFORTH_DURATION = 'S'
+    REST = 'r'
+
+    def isEditorInput(self, event: QKeyEvent):
+        result = True
+        if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+            result = False
+        elif event.modifiers() & Qt.KeyboardModifier.AltModifier:
+            result = False
+
+        return result
 
 
 @singleton

@@ -4,13 +4,17 @@ from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QToolBar, QTabWidget,
     QWidget, QSplitter, QStatusBar, QVBoxLayout,
 )
-from PyQt6.QtGui import QAction
+from PyQt6.QtGui import QAction, QKeyEvent
+
 from view.mainwin.fretboard_view import fretboard_view
 
-from view.events import Signals
+from view.events import Signals, EditorEvent
 from view.config import ORAGANIZATION, APP_NAME
+from view.config import EditorKeyMap
+
 
 from view.widgets.projectNavigator.navigator import Navigator
+from view.editor.trackEditor import TrackEditor
 
 
 class MainWindow(QMainWindow):
@@ -76,8 +80,17 @@ class MainWindow(QMainWindow):
         # toolbar.addAction(open_action)
         # toolbar.addAction(save_action)
 
+    def keyPressEvent(self, event: QKeyEvent):
+        editor_keymap = EditorKeyMap()
+        if editor_keymap.isEditorInput(event):
+            e_evt = EditorEvent()
+            e_evt.ev_type = EditorEvent.KEY_EVENT
+            e_evt.key = event.key()
+            Signals.editor_event.emit(e_evt)
+
     def __init__(self):
         super().__init__()
+        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
 
         # Set up the window
         self.setWindowTitle("PyQt6 Splitter Example with Saved State")
@@ -99,7 +112,7 @@ class MainWindow(QMainWindow):
 
         # Create the tab widget for the top-right pane
         self.tab_widget = QTabWidget()
-        self.tab_widget.addTab(QWidget(), "Tab 1")
+        self.tab_widget.addTab(TrackEditor(), "Tab 1")
         # self.tab_widget.addTab(QWidget(), "Tab 2")
 
         # Create a simple QWidget for the bottom-right pane
