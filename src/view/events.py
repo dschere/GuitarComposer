@@ -53,7 +53,7 @@ class EditorEvent:
         self.ev_type = None
         self.model = None
         self.track_editor = None
-        self.key = None
+        self.key = -1
 
 
 @singleton
