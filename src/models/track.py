@@ -96,12 +96,13 @@ class TrackEventSequence:
 class TabCursor:
     BEND_PERIODS = 13
 
-    def __init__(self):
+    def __init__(self, num_gstrings):
         self.beat = 0
         self.string = 5  # current string being edited
-        self.fret = None  # current fret value
+        self.fret = [-1] *  num_gstrings # current fret value
         self.duration = 0.25
         self.pitch_bend_histogram = [0] * self.BEND_PERIODS
+        self.presentation_col = 1
 
 
 class Track:
@@ -119,7 +120,7 @@ class Track:
         # beats from start of track -> [events]
         self.sequence = TrackEventSequence()
 
-        self.tab_cursor = TabCursor()
+        self.tab_cursor = TabCursor(len(self.tuning))
 
     def getTabCursor(self) -> TabCursor:
         return self.tab_cursor

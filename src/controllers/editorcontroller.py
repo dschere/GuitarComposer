@@ -10,7 +10,7 @@ from PyQt6.QtCore import Qt
 
 from view.config import EditorKeyMap
 from view.events import Signals, EditorEvent
-from models.track import Track, StaffEvent
+from models.track import Track, StaffEvent, TabCursor
 from view.editor.trackEditor import TrackEditor
 
 
@@ -27,8 +27,34 @@ class EditorController:
     def _ready(self):
         return self.track_editor and self.track_model
 
+    def _fret_ctl(self, key : int):
+        te = self.track_editor
+        tmodel = self.track_model
+        is_fret_value = False
+        if tmodel and te:
+            tc : TabCursor = tmodel.getTabCursor()
+            if key >= Qt.Key.Key_0 and key <= Qt.Key.Key_9: 
+                if tc.fret[tc.string] == 1:
+                    tc.fret[tc.string] = 10 + key - Qt.Key.Key_0
+                elif tc.fret[tc.string] == 2:
+                    tc.fret[tc.string] = 20 + key - Qt.Key.Key_0
+                    if tc.fret[tc.string] > 24:
+                        tc.fret[tc.string] = 24
+                else:
+                    tc.fret[tc.string] = key - Qt.Key.Key_0
+                is_fret_value = True
+            elif key == Qt.Key.Key_Space:
+                tc.fret[tc.string] = -1
+                is_fret_value = True
+
+            te.setFretValue(tc.presentation_col, tc.string, tc.fret[tc.string])
+            
+        return is_fret_value
+
+
     def _up_key(self, tmodel: Track | None):
-        if tmodel:
+        if tmodel and self.track_editor:
+            te : TrackEditor = self.track_editor 
             tc = tmodel.getTabCursor()
             nstring = len(tmodel.tuning)
             # if fret value, add a note for this chord
@@ -38,12 +64,14 @@ class EditorController:
             tc.string = (tc.string - 1) % nstring
 
             # move the rectangle select box on the tableture
+            te.setSelectRegion(tc.presentation_col, tc.string)
 
             # clear the fret value
-            tc.fret = None
+            #tc.fret = -1
 
     def _down_key(self, tmodel: Track | None):
-        if tmodel:
+        if tmodel and self.track_editor:
+            te : TrackEditor = self.track_editor 
             tc = tmodel.getTabCursor()
             nstring = len(tmodel.tuning)
             # if fret value, add a note for this chord
@@ -53,28 +81,42 @@ class EditorController:
             tc.string = (tc.string + 1) % nstring
 
             # move the rectangle select box on the tableture
+            te.setSelectRegion(tc.presentation_col, tc.string)
 
             # clear the fret value
-            tc.fret = None
+            #tc.fret = None
 
     def update(self, tmodel: Track | None, editor: TrackEditor | None):
         if tmodel and editor:
             # get the current staff value from the model
             seq = tmodel.getSequence()
+            tcur = tmodel.getTabCursor()
+
+            # in the caseof an empty track sequence add a default staff
             staff = StaffEvent()
             evtList = seq.get(0)
             if not evtList:
                 seq.add(0, staff)
             else:
+                # otherwise find the existing staff
                 for tevt in evtList:
                     if isinstance(tevt, StaffEvent):
                         staff = tevt
                         break
+            # set the staff header        
             editor.setHeader(staff)
+            #TODO set the remaining tablature 
+            # ...
+             
+            # set the box that indicates where key events will be
+            # applied on the staff. 
+            editor.setBlankSelectRegion(tcur.presentation_col)
 
     def add_model(self, evt: EditorEvent):
         self.track_model = evt.model
         self.update(self.track_model, self.track_editor)
+        if self.track_editor:
+            self.track_editor.setFocus()
 
     def add_editor(self, evt: EditorEvent):
         self.track_editor = evt.track_editor
@@ -90,6 +132,10 @@ class EditorController:
             pass
         elif key == Qt.Key.Key_Right:
             pass
+        else:
+            self._fret_ctl(key)
+
+        
 
     dispatch = {
         EditorEvent.ADD_MODEL: add_model,

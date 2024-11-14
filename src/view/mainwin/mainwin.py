@@ -111,8 +111,10 @@ class MainWindow(QMainWindow):
         self.tree_view = Navigator()
 
         # Create the tab widget for the top-right pane
-        self.tab_widget = QTabWidget()
-        self.tab_widget.addTab(TrackEditor(), "Tab 1")
+        #self.tab_widget = QTabWidget()
+
+        #self.tab_widget.addTab(TrackEditor(), "Tab 1")
+        self.track_editor = TrackEditor()
         # self.tab_widget.addTab(QWidget(), "Tab 2")
 
         # Create a simple QWidget for the bottom-right pane
@@ -126,7 +128,8 @@ class MainWindow(QMainWindow):
 
         # Create the horizontal splitter for the right pane (top and bottom)
         self.horizontal_splitter = QSplitter(Qt.Orientation.Vertical)
-        self.horizontal_splitter.addWidget(self.tab_widget)
+        self.horizontal_splitter.setHandleWidth(0)
+        self.horizontal_splitter.addWidget(self.track_editor)
         self.horizontal_splitter.addWidget(self.bottom_widget)
         self.horizontal_splitter.setSizes([300, 100])  # Set initial sizes
 
