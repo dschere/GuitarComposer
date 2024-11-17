@@ -63,7 +63,7 @@ class TabletureGlyph(Canvas):
         y = (n * TABLATURE_LINE_SPACE) + int(3 * TABLATURE_LINE_SPACE/10)
 
         #print("painter.drawRect(%d,%d,%d,%d)" % (x, y+4, width, width-4))
-        painter.drawRect(x, y+4, width, width-4)
+        painter.drawRect(x, y, width, width-4)
 
         if self.tab_notes.get(gstring):
             # erase interior to make the numbers or 'x'
