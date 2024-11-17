@@ -1,3 +1,4 @@
+from music.constants import Dynamic
 from models.note import Note
 from typing import List, Optional
 
@@ -97,12 +98,17 @@ class TabCursor:
     BEND_PERIODS = 13
 
     def __init__(self, num_gstrings):
-        self.beat = 0
+        self.beat = 1.0
         self.string = 5  # current string being edited
         self.fret = [-1] *  num_gstrings # current fret value
         self.duration = 0.25
         self.pitch_bend_histogram = [0] * self.BEND_PERIODS
         self.presentation_col = 1
+        self.dotted = False
+        self.double_dotted = False
+        self.dynamic = Dynamic.MP
+        self.triplet = False
+        self.quintuplet = False
 
 
 class Track:

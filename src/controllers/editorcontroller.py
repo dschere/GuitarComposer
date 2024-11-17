@@ -26,6 +26,9 @@ class EditorController:
 
     def _ready(self):
         return self.track_editor and self.track_model
+    
+    def _commit_fret_notes(self):
+        pass
 
     def _fret_ctl(self, key : int):
         te = self.track_editor
@@ -43,9 +46,12 @@ class EditorController:
                 else:
                     tc.fret[tc.string] = key - Qt.Key.Key_0
                 is_fret_value = True
-            elif key == Qt.Key.Key_Space:
+            elif key == Qt.Key.Key_Space or Qt.Key.Key_Delete:
                 tc.fret[tc.string] = -1
                 is_fret_value = True
+            elif key == Qt.Key.Key_Enter:
+                # update staff and create track event
+                self._commit_fret_notes()
 
             te.setFretValue(tc.presentation_col, tc.string, tc.fret[tc.string])
             

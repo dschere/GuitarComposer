@@ -1,10 +1,11 @@
 from PyQt6 import QtGui
 from PyQt6.QtWidgets import QLabel
 
+
 from view.editor.glyphs.common import (FLAT_SIGN,
                                        STAFF_LINE_SPACING, STAFF_ABOVE_LINES, STAFF_NUMBER_OF_LINES,
                                        YPositionMidiTable, SymFontSize, DEFAULT_SYM_FONT_SIZE)
-
+from view.config import GuitarFretboardStyle
 
 class Canvas(QLabel):
     """
@@ -25,7 +26,8 @@ class Canvas(QLabel):
         self.canvas = canvas
 
         self.last_x, self.last_y = None, None
-        self.pen_color = pal.brightText().color()
+        #self.pen_color = pal.brightText().color()
+        self.pen_color = QtGui.QColor(*GuitarFretboardStyle.string_color_rgb)
 
         self.setFixedWidth(width)
         self.setFixedHeight(height)

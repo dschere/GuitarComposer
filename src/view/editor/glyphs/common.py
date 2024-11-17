@@ -38,7 +38,7 @@ THRITYSEC_REST = "𝅀 "
 SIXTYFORTH_REST = "𝅁 "
 
 GHOST_NOTEHEAD = "𝅃 "
-
+DOUBLE_GHOST_NOTEHEAD = "𝅃 𝅃 "
 
 SymFontSize = {
     FLAT_SIGN: 24,

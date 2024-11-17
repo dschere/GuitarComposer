@@ -64,7 +64,9 @@ def unittest():
 
 
 """
-from PyQt6.QtWidgets import QWidget, QGridLayout, QSizePolicy
+from PyQt6.QtWidgets import (QWidget, QGridLayout, 
+                             QSizePolicy, QVBoxLayout, 
+                             QToolBar, QButtonGroup, QPushButton)
 from PyQt6.QtGui import QKeyEvent
 from PyQt6.QtCore import Qt
 
@@ -72,7 +74,11 @@ from view.events import Signals, EditorEvent
 from view.config import EditorKeyMap
 
 from view.editor import glyphs
-from models.track import StaffEvent
+from models.track import StaffEvent, TabCursor
+from view.editor.toolbar import EditorToolbar
+
+
+        
 
 class TrackEditor(QWidget):
     """ 
@@ -120,11 +126,22 @@ class TrackEditor(QWidget):
 
     def _grid_get(self, row, col):
         return self._widget_grid.get((row,col))
+             
 
     def __init__(self):
         super().__init__()
-        #self.setSizePolicy(QSizePolicy.Policy.Expanding,
-        #                   QSizePolicy.Policy.Expanding)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding,
+                           QSizePolicy.Policy.Expanding)
+        
+        # main layout for toolbar and scrolling area 
+        main_layout = QVBoxLayout(self)
+
+        toolbar = EditorToolbar(TabCursor(6))
+        canvas = QWidget() 
+         
+        main_layout.addWidget(toolbar)
+        main_layout.addWidget(canvas) 
+
         #self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         self._grid_layout = QGridLayout()
         self._grid_layout.setHorizontalSpacing(0)
@@ -132,8 +149,10 @@ class TrackEditor(QWidget):
 
         self._widget_grid = {}
 
-        self.setLayout(self._grid_layout)
-        
+        canvas.setLayout(self._grid_layout)
+
+        self.setLayout(main_layout)
+
         # signal controller
         evt = EditorEvent()
         evt.ev_type = EditorEvent.ADD_TRACK_EDITOR

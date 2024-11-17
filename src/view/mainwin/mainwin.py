@@ -73,12 +73,6 @@ class MainWindow(QMainWindow):
         tools_menu.addAction(settings_action)
         tools_menu.addAction(options_action)
 
-        # Create a toolbar and add some actions
-        toolbar = QToolBar("Main Toolbar")
-        self.addToolBar(toolbar)
-        # toolbar.addAction(new_action)
-        # toolbar.addAction(open_action)
-        # toolbar.addAction(save_action)
 
     def keyPressEvent(self, event: QKeyEvent):
         editor_keymap = EditorKeyMap()
