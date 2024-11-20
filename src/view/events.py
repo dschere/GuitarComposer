@@ -7,6 +7,7 @@ from PyQt6.QtCore import Qt
 from singleton_decorator import singleton
 
 from models.note import Note
+from models.track import TabCursor
 
 
 class ScaleSelectedEvent:

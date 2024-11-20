@@ -25,6 +25,7 @@ from PyQt6.QtCore import pyqtSignal, QObject
 
 from music.constants import Dynamic
 from models.track import TabCursor
+from src.view.events import Signals
 
 DOTTED = GHOST_NOTEHEAD
 DOUBLE_DOTTED = DOUBLE_GHOST_NOTEHEAD
@@ -51,6 +52,7 @@ class ToolbarButton(QPushButton):
     def pname(self):
         return self._param
 
+
 # workaround for broken QButtonGroup
 class MutuallyExclusiveButtonGroup(QObject):
     selected = pyqtSignal(ToolbarButton)
@@ -58,6 +60,11 @@ class MutuallyExclusiveButtonGroup(QObject):
     def __init__(self):
         super().__init__()
         self.button_set = set()
+        #TODO
+        # create Signals.trackEditorToolbarKeyUpdate
+        # connect to signal param,value if match then set click
+        # search buttons in group to do this.call 'check_btn'
+        # for param/value match
 
     def on_selected(self, clicked_btn):
         for btn in self.button_set:
@@ -104,6 +111,7 @@ class EditorToolbar(QToolBar):
 
     def _dot_selected(self, btn: ToolbarButton):
         n = btn.pname()
+        #TODO, move these strings to global constants
         if n == "clear-dots":
             self._tab_cursor.dotted = False 
             self._tab_cursor.double_dotted = False 
@@ -152,6 +160,14 @@ class EditorToolbar(QToolBar):
         else:
             no_dot_index = 0
             self._dot_grp.check_btn(self._dot_btns[no_dot_index])
+
+        dyn_list = [Dynamic.FFF,Dynamic.FF,Dynamic.F,Dynamic.MF,
+                    Dynamic.MP,Dynamic.P,Dynamic.PP,Dynamic.PPP]
+        if tab_cursor.dynamic in dyn_list:
+            i = dyn_list.index(tab_cursor.dynamic)
+            btn = self._dyn_btns[i]
+            self._dyn_grp.check_btn(btn)
+
 
     def __init__(self, tab_cursor : TabCursor):
         super().__init__()
@@ -207,6 +223,7 @@ class EditorToolbar(QToolBar):
         self._dyn_grp.selected.connect(self._dyn_selected)    
 
         self.setTabCursor(tab_cursor)
+
 
 
 

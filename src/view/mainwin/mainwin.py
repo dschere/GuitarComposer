@@ -73,14 +73,27 @@ class MainWindow(QMainWindow):
         tools_menu.addAction(settings_action)
         tools_menu.addAction(options_action)
 
+    _shift_key = False
+
+    def keyReleaseEvent(self, a0: QKeyEvent | None) -> None:
+        if Qt.Key.Key_Shift == a0.key():
+            self._shift_key = False
+        return super().keyReleaseEvent(a0)
 
     def keyPressEvent(self, event: QKeyEvent):
         editor_keymap = EditorKeyMap()
         if editor_keymap.isEditorInput(event):
-            e_evt = EditorEvent()
-            e_evt.ev_type = EditorEvent.KEY_EVENT
-            e_evt.key = event.key()
-            Signals.editor_event.emit(e_evt)
+            key = event.key()
+            if key == Qt.Key.Key_Shift:
+                self._shift_key = True
+            else:
+                if not self._shift_key and ord('Z') >= key >= ord('A'):     
+                    key += 32 # make lower case
+
+                e_evt = EditorEvent()
+                e_evt.ev_type = EditorEvent.KEY_EVENT
+                e_evt.key = key
+                Signals.editor_event.emit(e_evt)
 
     def __init__(self):
         super().__init__()

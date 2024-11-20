@@ -120,6 +120,9 @@ class TrackEditor(QWidget):
         if tab:
             tab.set_tab_note(gstring, fret)
 
+    def setToolbar(self, tc: TabCursor):
+        self.toolbar.setTabCursor(tc)
+
     def _grid_add(self, w, row, col):
         self._grid_layout.addWidget(w, row, col, alignment=Qt.AlignmentFlag.AlignLeft)
         self._widget_grid[(row,col)] = w
@@ -136,10 +139,10 @@ class TrackEditor(QWidget):
         # main layout for toolbar and scrolling area 
         main_layout = QVBoxLayout(self)
 
-        toolbar = EditorToolbar(TabCursor(6))
+        self.toolbar = EditorToolbar(TabCursor(6))
         canvas = QWidget() 
          
-        main_layout.addWidget(toolbar)
+        main_layout.addWidget(self.toolbar)
         main_layout.addWidget(canvas) 
 
         #self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)

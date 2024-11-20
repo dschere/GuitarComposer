@@ -39,17 +39,30 @@ class _GuitarFretboardStyle:
 
 @singleton
 class EditorKeyMap:
-    DOT_DURATION = '.'
-    WHOLE_DURATION = 'w'
-    HALF_DURATION = 'h'
-    QUATER_DURATION = 'q'
-    EIGHT_DURATION = 'e'
-    SIXTEENTH_DURATION = 's'
-    TRIPLET_DURATION = 't'
+    WHOLE_NOTE = ord('w')
+    HALF_NOTE = ord('h')
+    QUARTER_NOTE = ord('q')
+    EIGHT_NOTE = ord('e')
+    SIXTEENTH_NOTE = ord('s') 
+    THRITY_SECOND_NOTE = ord('T')
+    SIXTY_FORTH_NOTE = ord('S')
 
-    THIRTYSECOND_DURATION = 'T'
-    SIXTYFORTH_DURATION = 'S'
-    REST = 'r'
+    dur_lookup = {
+        WHOLE_NOTE: 4.0,
+        HALF_NOTE: 2.0,
+        QUARTER_NOTE: 1.0,
+        EIGHT_NOTE: 0.5,
+        SIXTEENTH_NOTE: 0.25,
+        THRITY_SECOND_NOTE: 0.125,
+        SIXTEENTH_NOTE: 0.0625
+    }
+
+    # hittng . or ; twice clears them
+    DOTTED_NOTE = ord('.')
+    DOUBLE_DOTTED_NOTE = ord(';')
+    TRIPLET_NOTES = ord('t')
+    QUINTUPLIT_NOTES = ord('Q')
+    REST = ord('r')
 
     def isEditorInput(self, event: QKeyEvent):
         result = True
