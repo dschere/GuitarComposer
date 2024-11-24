@@ -90,6 +90,8 @@ class _LabelText:
     clear_scale = "Clear"
     nav_track_properties = "Track properties"
     add_track = "Add Track"
+    tuning = "Tuning"
+    
 
 
 GuitarFretboardStyle = _GuitarFretboardStyle()

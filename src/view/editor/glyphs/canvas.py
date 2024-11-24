@@ -7,6 +7,7 @@ from view.editor.glyphs.common import (FLAT_SIGN,
                                        YPositionMidiTable, SymFontSize, DEFAULT_SYM_FONT_SIZE)
 from view.config import GuitarFretboardStyle
 
+
 class Canvas(QLabel):
     """
     Drawing canvas for music symbols, tablature and effects.
@@ -26,15 +27,15 @@ class Canvas(QLabel):
         self.canvas = canvas
 
         self.last_x, self.last_y = None, None
-        #self.pen_color = pal.brightText().color()
+        # self.pen_color = pal.brightText().color()
         self.pen_color = QtGui.QColor(*GuitarFretboardStyle.string_color_rgb)
 
         self.setFixedWidth(width)
         self.setFixedHeight(height)
 
-
     # virtual method to be overloaded by children classes to call various
     # api comamnds below (draw_<operation> methods)
+
     def canvas_paint_event(self, painter):
         pass
 
@@ -54,7 +55,7 @@ class Canvas(QLabel):
         self.canvas_paint_event(painter)
         painter.end()
 
-    def draw_out_of_bounds_line(self, painter, opts):
+    def draw_ledger_line(self, painter, opts):
         x = opts.get('x', 0)
         y = opts.get('y', 0)
         # draw lines above/below staff as needed
@@ -93,7 +94,7 @@ class Canvas(QLabel):
         y = opts.get('y', 0)
         painter.drawText(x, y, sym)
         if opts.get('draw_lines', True):
-            self.draw_out_of_bounds_line(painter, opts)
+            self.draw_ledger_line(painter, opts)
 
     def draw_staff_background(self, painter):
         p = painter.pen()

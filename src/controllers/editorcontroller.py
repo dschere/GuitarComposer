@@ -10,7 +10,7 @@ from PyQt6.QtCore import Qt
 
 from view.config import EditorKeyMap
 from view.events import Signals, EditorEvent
-from models.track import Track, StaffEvent, TabCursor
+from models.track import Track, StaffEvent, TabCursor, TrackEventSequence
 from view.editor.trackEditor import TrackEditor
 from util.keyprocessor import KeyProcessor
 
@@ -72,7 +72,7 @@ class EditorController:
              
             # set the box that indicates where key events will be
             # applied on the staff. 
-            editor.setBlankSelectRegion(tcur.presentation_col)
+            editor.setBlankSelectRegion(tcur, tcur.presentation_col)
 
     def add_model(self, evt: EditorEvent):
         self.track_model = evt.model
@@ -84,6 +84,7 @@ class EditorController:
         self.track_editor = evt.track_editor
 
     def keyboard_event(self, evt: EditorEvent):
+        tedit : TrackEditor | None = self.track_editor
         key = evt.key
         # Check for arrow keys
         if key == Qt.Key.Key_Up:
@@ -94,17 +95,34 @@ class EditorController:
             pass
         elif key == Qt.Key.Key_Right:
             pass
-        else:
-            tc = self.track_model.getTabCursor() # type: ignore
+        elif tedit:
+            tmodel : Track = self.track_model
+            tc : TabCursor = tmodel.getTabCursor()
+            seq : TrackEventSequence = tmodel.getSequence()
+
+            # use the key to update the tablature cursor
             self.key_proc.proc(key, tc) 
-            self.track_editor.setFretValue(tc.presentation_col, tc.string, tc.fret[tc.string])
-            self.track_editor.setToolbar(tc)
+            # render fret number
+            tedit.setFretValue(tc.presentation_col, tc.string, tc.fret[tc.string])
+            # update the toolbar if this was a duration/dynamic change
+            tedit.setToolbar(tc)
+            # update staff notation, get the active staff header
+            # which has the cleff and key (sharps and flats)
+            staff_event = seq.getActiveStaff(self.cursor_beat_pos)
+            if staff_event:
+                # render staff: notes, chords, rests etc.
+                tedit.renderStaffEngraving(staff_event, tmodel, tc.presentation_col)
         
+    def tuning_change(self, evt: EditorEvent):
+        if evt.tuning and self.track_model:
+            self.track_model.tuning = evt.tuning
+
 
     dispatch = {
         EditorEvent.ADD_MODEL: add_model,
         EditorEvent.ADD_TRACK_EDITOR: add_editor,
-        EditorEvent.KEY_EVENT: keyboard_event
+        EditorEvent.KEY_EVENT: keyboard_event,
+        EditorEvent.TUNING_CHANGE: tuning_change
     }
 
     def editor_event(self, evt: EditorEvent):
@@ -122,5 +140,6 @@ class EditorController:
         self.track_editor = None
         # track model -> cursor
         self.key_proc = KeyProcessor()
+        self.cursor_beat_pos = 0
 
         Signals.editor_event.connect(self.editor_event)

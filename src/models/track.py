@@ -34,6 +34,11 @@ class StaffEvent(TrackEvent):
         self.signature = "4/4"
         self.key = "C"
 
+        # workaround for a circular import error.
+        from view.editor.glyphs.common import TREBLE_CLEFF
+
+        self.cleff = TREBLE_CLEFF
+
 
 class ChordEvent(TrackEvent):
     UPSTROKE = 0
@@ -72,14 +77,28 @@ class TrackEventSequence:
 
     def __init__(self):
         self.sequence = {}
-        self.index = []
+        self.beatList = []
+        
+    def getActiveStaff(self, beat) -> StaffEvent | None:
+        if beat in self.beatList:
+            # starting at the current beat walk back
+            # beat by beat till we reach a staff event.
+            i = self.beatList.index(beat)
+            while i > -1:
+                beat = self.beatList[i]
+                evtList = self.sequence[beat]
+                for evt in evtList:
+                    if isinstance(evt, StaffEvent):
+                        return evt
+                i -= 1
+
 
     def add(self, beat: int, evt):
         evtList = self.sequence.get(beat, [])
-        self.index.append(beat)
+        self.beatList.append(beat)
         evtList.append(evt)
         self.sequence[beat] = evtList
-        self.index.sort()
+        self.beatList.sort()
 
     def get(self, beat: int) -> Optional[List[TrackEvent]]:
         return self.sequence.get(beat)
@@ -96,6 +115,20 @@ class TrackEventSequence:
 
 class TabCursor:
     BEND_PERIODS = 13
+
+    REST = 0
+    NOTE = 1
+    CHORD = 2
+
+    def classify(self):
+        result = self.REST
+        for val in self.fret:
+            if val != -1:
+                result += 1
+                if result == self.CHORD:
+                    break
+        return result
+        
 
     def __init__(self, num_gstrings):
         self.beat = 1.0
@@ -128,8 +161,12 @@ class Track:
 
         self.tab_cursor = TabCursor(len(self.tuning))
 
+    def setTuning(self, tuning):
+        self.tuning = tuning    
+
     def getTabCursor(self) -> TabCursor:
         return self.tab_cursor
 
     def getSequence(self) -> TrackEventSequence:
         return self.sequence
+    

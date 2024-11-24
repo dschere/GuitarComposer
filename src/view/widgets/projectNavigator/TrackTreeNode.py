@@ -1,11 +1,13 @@
 from PyQt6.QtWidgets import (QHBoxLayout, QDialogButtonBox,
                              QDialog, QLineEdit, QLabel,
-                             QVBoxLayout, QComboBox)
+                             QVBoxLayout, QComboBox, QGroupBox)
 
 from music.instrument import getInstrumentList
-from view.events import Signals, InstrumentSelectedEvent
+from view.events import EditorEvent, Signals, InstrumentSelectedEvent
 
 from view.config import LabelText
+from util.midi import midi_codes
+
 
 
 """
@@ -39,6 +41,50 @@ class TrackTreeDialog(QDialog):
         evt.track = self.track_model
         self.track_qmodel_item.setText(evt.instrument)
         Signals.instrument_selected.emit(evt)
+
+    def tuning_section(self):
+        """ 
+        <group line>
+        <combo box of common tunings>
+        <string #>   <note name> <octave>
+        """
+        #TODO sync the changes tuning with the keyboard widget 
+        
+        group_box = QGroupBox(LabelText.tuning)
+        layout = QVBoxLayout()
+
+        tuning_preset_cb = QComboBox()
+        tuning_data = [
+            ("standard",["E4","B3","G3","D3","A2","E2"]),
+            ("dadgad",["D4","A3","G3","D3","A2","D2"]),
+            ("drop-d",["E4","B3","G3","D3","A2","D2"])
+        ]
+        tuning_preset_cb.addItems([name for (name,_) in tuning_data])
+        def select_tuning(self, idx):
+            tuning = tuning_data[idx][1]
+            self.track_model.setTuning(tuning)
+
+            evt = EditorEvent()
+            evt.ev_type = EditorEvent.TUNING_CHANGE
+            evt.tuning = tuning
+            Signals.editor_event.emit(evt) 
+
+        tuning_preset_cb.currentIndexChanged.connect(lambda idx: select_tuning(self, idx))
+
+        layout.addWidget(tuning_preset_cb)
+        
+        
+        key_labels = [] 
+        for (sharp,flat) in midi_codes.names:
+            if sharp == flat:
+                key_labels.append(sharp)
+            else:
+                key_labels.append("%s/%s" % (sharp,flat))
+        octive_labels = [str(octave) for octave in range(1,7)]
+
+
+        group_box.setLayout(layout)
+        return group_box
 
     def __init__(self, parent, track_model, track_qmodel_item):
         super().__init__(parent)
@@ -79,9 +125,17 @@ class TrackTreeDialog(QDialog):
         combo_layout.addWidget(combo_label)
         combo_layout.addWidget(self.instruments_combo_box)
 
+        # line 3 tuning
+        tuning_box = self.tuning_section()
+
+
+
+
         # add to main layout
         main_layout.addLayout(filter_layout)
         main_layout.addLayout(combo_layout)
+        main_layout.addWidget(tuning_box)
         main_layout.addWidget(button_box)
+         
 
         self.setLayout(main_layout)

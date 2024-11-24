@@ -1,18 +1,102 @@
 from view.editor.glyphs.common import (STAFF_SYM_WIDTH, STAFF_HEIGHT,
-                                       STAFF_HEADER_WIDTH, STAFF_LINE_SPACING, STAFF_ABOVE_LINES, QUATER_NOTE,
+                                       STAFF_HEADER_WIDTH, STAFF_LINE_SPACING, STAFF_ABOVE_LINES, QUATER_NOTE, TREBLE_CLEFF,
                                        SymFontSize, KeyMidiCodeTable, SHARP_SIGN, FLAT_SIGN, STAFF_NUMBER_OF_LINES,
                                        BARLINE2
                                        )
 
 from view.editor.glyphs.canvas import Canvas
+from models.track import StaffEvent, TabCursor, Track
+from view.editor.glyphs.note_renderer import note_renderer
+from src.util.midi import midi_codes
+
+
 
 
 class StaffGlyph(Canvas):
-    def __init__(self):
+    def __init__(self, tc : TabCursor):
         super().__init__(STAFF_SYM_WIDTH, STAFF_HEIGHT)
+        self.tc = tc
+        self.se = StaffEvent()
+        self.accent = SHARP_SIGN
+        self.tuning = Track().tuning
+
+    def setup(self, se: StaffEvent, tc: TabCursor, tuning):
+        self.tc = tc
+        self.se = se
+        self.tuning = tuning
+
+        if se.key in ['F','Bb','Eb','Ab','Db','Gb']:
+            self.accent = FLAT_SIGN
+        else:
+            self.accent = SHARP_SIGN
+        # schedule a refresh
+        self.update()  
+
+    def _get_renderer(self):
+        tc : TabCursor = self.tc
+        se : StaffEvent = self.se
+        dot_count = int(tc.dotted) + int(tc.double_dotted)
+        cleff = se.cleff
+        return note_renderer(cleff, dot_count)
+
+    def _render_note(self, painter):
+        r : note_renderer = self._get_renderer()
+        tc : TabCursor = self.tc
+        se : StaffEvent = self.se
+
+        # find note
+        for (gstring,fret) in enumerate(tc.fret):
+            if fret != -1:
+                base_midi_code = self.tuning[gstring]
+                midi_code = midi_codes.midi_code(base_midi_code) + fret
+                r.draw_note(painter, midi_code, self.accent, tc.duration)
+                break
+
+    def _render_chord(self, painter):
+        r : note_renderer = self._get_renderer()
+        tc : TabCursor = self.tc
+        se : StaffEvent = self.se
+        # collect and and sort midi codes
+        midi_code_collection = set()
+        for (gstring,fret) in enumerate(tc.fret):
+            if fret != -1:
+                base_midi_code = self.tuning[gstring]
+                midi_code = midi_codes.midi_code(base_midi_code) + fret
+                midi_code_collection.add(midi_code)
+        midi_list = sorted(list(midi_code_collection))
+
+        # draw note heads
+        for midi_code in midi_list:
+            r.draw_notehead(painter, midi_code, self.accent, tc.duration)
+
+        # if duration quarter or smaller draw connecting line.
+        # the greated midi note is drawn as a quarter note with its staff 
+        if tc.duration not in (4.0, 2.0):
+            r.draw_stem_line(painter, midi_list, self.accent)        
+            r.draw_note(painter, midi_list[-1], self.accent, tc.duration)    
+
+
+    def _render_rest(self, painter):
+        r : note_renderer = self._get_renderer()
+        tc : TabCursor = self.tc
+        r.draw_rest(painter, tc.duration)
+        
 
     def canvas_paint_event(self, painter):
         self.draw_staff_background(painter)
+        # analyze cursor and render notes.
+        #r : note_renderer = self._get_renderer()
+        #r.test_pattern(painter) 
+        #return
+
+
+        # determine if this is a note, a chord or a rest.
+        {
+            self.tc.REST: self._render_rest,
+            self.tc.NOTE: self._render_note,
+            self.tc.CHORD: self._render_chord
+        }[self.tc.classify()](painter)
+                 
 
 
 class StaffHeaderGlyph(Canvas):
