@@ -70,12 +70,14 @@ from PyQt6.QtWidgets import (QWidget, QGridLayout,
 from PyQt6.QtGui import QKeyEvent
 from PyQt6.QtCore import Qt
 
+from view.editor.glyphs.staff import StaffGlyph
 from view.events import Signals, EditorEvent
 from view.config import EditorKeyMap
 
 from view.editor import glyphs
-from models.track import StaffEvent, TabCursor
+from models.track import StaffEvent, TabCursor, Track
 from view.editor.toolbar import EditorToolbar
+from pkg_resources._vendor.more_itertools.more import stagger
 
 
         
@@ -88,19 +90,27 @@ class TrackEditor(QWidget):
     TAB_ROW = 1
     EFFECTS_ROW = 2
 
+    """
+    def mousePressEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:  # Check for left mouse button
+            x = event.position().x()
+            y = event.position().y()
+            print(f"Mouse clicked at: x={x}, y={y}")
+    """
+            
     def setHeader(self, se : StaffEvent, col = 0):
-        symbol = glyphs.TREBLE_CLEFF
+        symbol = se.cleff
         row = self.STAFF_ROW
         # todo, determine symbol based on instrument assigned to track.
         g = glyphs.StaffHeaderGlyph(symbol,se.key,se.signature,se.bpm)
         self._grid_layout.addWidget(g, row, col)
 
-    def setBlankSelectRegion(self, col=1, gstring=5):
+    def setBlankSelectRegion(self, tc: TabCursor, col=1, gstring=5):
         """ 
         Sets up an empty region for editing a code/note/rest which includes
         both tablature and staff.
         """
-        staff = glyphs.StaffGlyph()
+        staff = glyphs.StaffGlyph(tc)
         tab = glyphs.TabletureGlyph()
         self._grid_add(staff, self.STAFF_ROW, col)
         self._grid_add(tab, self.TAB_ROW, col)
@@ -120,6 +130,16 @@ class TrackEditor(QWidget):
         if tab:
             tab.set_tab_note(gstring, fret)
 
+    def renderStaffEngraving(self, se: StaffEvent, tmodel: Track, col: int):
+        """ 
+        Performs the work of rendering music notation based on tableture
+        information. The controller will generatr Note|Chord events based
+        on fret information.
+        """
+        staff_glyph = self._grid_get(self.STAFF_ROW, col)
+        if staff_glyph and isinstance(staff_glyph, StaffGlyph):
+            staff_glyph.setup(se, tmodel.getTabCursor(), tmodel.tuning)
+
     def setToolbar(self, tc: TabCursor):
         self.toolbar.setTabCursor(tc)
 
@@ -135,7 +155,7 @@ class TrackEditor(QWidget):
         super().__init__()
         self.setSizePolicy(QSizePolicy.Policy.Expanding,
                            QSizePolicy.Policy.Expanding)
-        
+
         # main layout for toolbar and scrolling area 
         main_layout = QVBoxLayout(self)
 

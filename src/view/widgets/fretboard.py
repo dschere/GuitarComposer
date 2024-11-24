@@ -9,7 +9,7 @@ from view.config import GuitarFretboardStyle
 from util.midi import midi_codes
 from util.coordinateMap import CoordinateMap
 
-from view.events import Signals, ScaleSelectedEvent
+from view.events import EditorEvent, Signals, ScaleSelectedEvent
 
 from models.note import Note
 
@@ -66,6 +66,16 @@ class GuitarFretboard(QWidget):
                     self.string_playing_note[n.string] = None
                 self._update_active_notes(n)
 
+    def editor_event(self, evt: EditorEvent):
+        if evt.ev_type == EditorEvent.ADD_MODEL:
+            if evt.model:
+                self.tuning = evt.model.tuning
+                self.update()
+        elif evt.ev_type == EditorEvent.TUNING_CHANGE:
+            if evt.tuning:
+                self.tuning = evt.tuning
+                self.update()
+
     def __init__(self):
         super().__init__()
 
@@ -91,6 +101,7 @@ class GuitarFretboard(QWidget):
 
         Signals.scale_selected.connect(self.on_scale_selected)
         Signals.clear_scale.connect(self.on_clear_scale_overlay)
+        Signals.editor_event.connect(self.editor_event)
 
     def on_scale_selected(self, evt: ScaleSelectedEvent):
         self.setScale(evt.scale_midi, evt.scale_seq)

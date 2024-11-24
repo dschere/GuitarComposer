@@ -49,12 +49,14 @@ class EditorEvent:
     ADD_MODEL = 0
     ADD_TRACK_EDITOR = 1
     KEY_EVENT = 2
+    TUNING_CHANGE = 3
 
     def __init__(self):
         self.ev_type = None
         self.model = None
         self.track_editor = None
         self.key = -1
+        self.tuning = None
 
 
 @singleton

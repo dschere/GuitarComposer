@@ -8,7 +8,6 @@ from view.editor.glyphs.common import (STAFF_SYM_WIDTH,
 from view.config import GuitarFretboardStyle
 
 
-
 class TabletureGlyph(Canvas):
     CURSOR_COLOR = QColor(*GuitarFretboardStyle.scale_root_color_rgb)
     TEXT_COLOR = QColor(*GuitarFretboardStyle.orament_color_rgb)
@@ -45,7 +44,7 @@ class TabletureGlyph(Canvas):
         offset = 15
         for line_num in range(TABLATURE_NUM_LINES):
             y = line_num * TABLATURE_LINE_SPACE + offset
-            #print(f"0 {y} {self.width} {y}")
+            # print(f"0 {y} {self.width} {y}")
             painter.drawLine(0, y, self.width(), y)
 
     def draw_cursor(self, painter):
@@ -62,7 +61,7 @@ class TabletureGlyph(Canvas):
         n = gstring  # type: ignore
         y = (n * TABLATURE_LINE_SPACE) + int(3 * TABLATURE_LINE_SPACE/10)
 
-        #print("painter.drawRect(%d,%d,%d,%d)" % (x, y+4, width, width-4))
+        # print("painter.drawRect(%d,%d,%d,%d)" % (x, y+4, width, width-4))
         painter.drawRect(x, y, width, width-4)
 
         if self.tab_notes.get(gstring):
@@ -73,7 +72,7 @@ class TabletureGlyph(Canvas):
     def draw_tab_notes(self, painter, gstring, fret, opts):
         x = int(self.c_width/4)
         width = int(self.c_width/2)
-        y = gstring  * TABLATURE_LINE_SPACE
+        y = gstring * TABLATURE_LINE_SPACE
         painter.eraseRect(x+1, y+1, width-1, width-1)
         if fret != -1:
             sym_color = GuitarFretboardStyle.orament_color_rgb
