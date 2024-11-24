@@ -164,6 +164,7 @@ class note_renderer:
             text = self.get_note_head_text(dtype)
         else:
             text = self.get_tail_note_text(dtype)
+        text += '.' * self.dot_count    
         painter.drawText(accent_spacing, y-3, text)
 
         # draw ledger lines above/below staff as needed
@@ -182,7 +183,6 @@ class note_renderer:
             while y > line_y:
                 painter.drawLine(x-3, line_y, x+25, line_y)
                 line_y += STAFF_LINE_SPACING
-
 
     def draw_notehead(self, painter, midi_code, accent, dtype):
         # Note: accent is used because we need to know if we are
