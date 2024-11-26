@@ -83,6 +83,20 @@ class EditorController:
     def add_editor(self, evt: EditorEvent):
         self.track_editor = evt.track_editor
 
+    def update_cursor(self):
+        tedit : TrackEditor | None = self.track_editor
+        if tedit:
+            tmodel : Track = self.track_model
+            tc : TabCursor = tmodel.getTabCursor()
+            seq : TrackEventSequence = tmodel.getSequence()
+            tedit.setFretValue(tc.presentation_col, tc.string, tc.fret[tc.string])
+            # update the toolbar if this was a duration/dynamic change
+            # which has the cleff and key (sharps and flats)
+            staff_event = seq.getActiveStaff(self.cursor_beat_pos)
+            if staff_event:
+                # render staff: notes, chords, rests etc.
+                tedit.renderStaffEngraving(staff_event, tmodel, tc.presentation_col)
+
     def keyboard_event(self, evt: EditorEvent):
         tedit : TrackEditor | None = self.track_editor
         key = evt.key
@@ -116,7 +130,7 @@ class EditorController:
     def tuning_change(self, evt: EditorEvent):
         if evt.tuning and self.track_model:
             self.track_model.tuning = evt.tuning
-
+ 
 
     dispatch = {
         EditorEvent.ADD_MODEL: add_model,

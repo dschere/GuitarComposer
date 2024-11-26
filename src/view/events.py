@@ -58,6 +58,7 @@ class EditorEvent:
         self.key = -1
         self.tuning = None
 
+global _toolbar_button_update
 
 @singleton
 class _Signals(QObject):
@@ -85,6 +86,7 @@ class _Signals(QObject):
     theme_change = pyqtSignal(object)
 
     editor_event = pyqtSignal(EditorEvent)
+
 
 
 Signals = _Signals()

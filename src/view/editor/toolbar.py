@@ -21,11 +21,11 @@ from view.editor.glyphs.common import (
     )
 from PyQt6.QtWidgets import QToolBar, QWidget, QVBoxLayout, QPushButton,\
     QButtonGroup, QSizePolicy, QHBoxLayout
-from PyQt6.QtCore import pyqtSignal, QObject
+from PyQt6.QtCore import pyqtSignal, QObject, QTimer
 
 from music.constants import Dynamic
 from models.track import TabCursor
-from src.view.events import Signals
+from src.view.events import Signals, EditorEvent
 
 DOTTED = GHOST_NOTEHEAD
 DOUBLE_DOTTED = DOUBLE_GHOST_NOTEHEAD
@@ -121,12 +121,16 @@ class EditorToolbar(QToolBar):
         elif n == "double-dotted":
             self._tab_cursor.dotted = False
             self._tab_cursor.double_dotted = True
+        else:
+            # not a dot selected event.
+            return    
         self._compute_beat()
 
     def _on_duration_selected(self, btn: ToolbarButton):
         if btn.pname() == "duration":
             self._tab_cursor.duration = btn.pvalue() # type: ignore
-        self._compute_beat() 
+            self._compute_beat() 
+
 
     def _dyn_selected(self, btn: ToolbarButton):
         if btn.pname() == "dynamic":

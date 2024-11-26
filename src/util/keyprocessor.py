@@ -22,7 +22,7 @@ class KeyProcessor:
                     tc.fret[tc.string] = 24
             else:
                 tc.fret[tc.string] = key - Qt.Key.Key_0
-        elif key == Qt.Key.Key_Space or Qt.Key.Key_Delete:
+        elif key in (Qt.Key.Key_Space, Qt.Key.Key_Delete):
             tc.fret[tc.string] = -1
  
 
