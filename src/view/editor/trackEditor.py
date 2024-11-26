@@ -150,6 +150,10 @@ class TrackEditor(QWidget):
     def _grid_get(self, row, col):
         return self._widget_grid.get((row,col))
              
+    def update_track_editor_content(self):
+        # force an update of the canvas
+        self.canvas.update()
+        self.canvas.setFocus()
 
     def __init__(self):
         super().__init__()
@@ -159,11 +163,11 @@ class TrackEditor(QWidget):
         # main layout for toolbar and scrolling area 
         main_layout = QVBoxLayout(self)
 
-        self.toolbar = EditorToolbar(TabCursor(6))
-        canvas = QWidget() 
+        self.canvas = QWidget() 
+        self.toolbar = EditorToolbar(TabCursor(6), self.update_track_editor_content)
          
         main_layout.addWidget(self.toolbar)
-        main_layout.addWidget(canvas) 
+        main_layout.addWidget(self.canvas) 
 
         #self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         self._grid_layout = QGridLayout()
@@ -172,7 +176,7 @@ class TrackEditor(QWidget):
 
         self._widget_grid = {}
 
-        canvas.setLayout(self._grid_layout)
+        self.canvas.setLayout(self._grid_layout)
 
         self.setLayout(main_layout)
 

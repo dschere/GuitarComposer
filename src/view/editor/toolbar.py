@@ -88,9 +88,6 @@ class MutuallyExclusiveButtonGroup(QObject):
         btn.clicked.connect(selector(self, btn))
 
 
-
-         
-
 class EditorToolbar(QToolBar):
 
     def _compute_beat(self):
@@ -125,17 +122,18 @@ class EditorToolbar(QToolBar):
             # not a dot selected event.
             return    
         self._compute_beat()
+        self.update_staff_and_tab()
 
     def _on_duration_selected(self, btn: ToolbarButton):
         if btn.pname() == "duration":
             self._tab_cursor.duration = btn.pvalue() # type: ignore
             self._compute_beat() 
-
+        self.update_staff_and_tab()
 
     def _dyn_selected(self, btn: ToolbarButton):
         if btn.pname() == "dynamic":
             self._tab_cursor.dynamic = btn.pvalue()
-
+        self.update_staff_and_tab()
 
     def setTabCursor(self, tab_cursor : TabCursor):
         """
@@ -173,10 +171,11 @@ class EditorToolbar(QToolBar):
             self._dyn_grp.check_btn(btn)
 
 
-    def __init__(self, tab_cursor : TabCursor):
+    def __init__(self, tab_cursor : TabCursor, update_staff_and_tab):
         super().__init__()
         self._tab_cursor = tab_cursor
         self._lookup = {}
+        self.update_staff_and_tab = update_staff_and_tab
         self.setFixedHeight(30)
 
         # not duration whole -> 64th  
