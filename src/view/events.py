@@ -15,6 +15,7 @@ class ScaleSelectedEvent:
         self.scale_midi = []
         self.scale_seq = []
         self.key = ""
+        self.degrees = None
 
 
 class ClearScaleEvent:

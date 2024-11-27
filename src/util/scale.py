@@ -3,6 +3,7 @@ import xml.etree.ElementTree as ET
 from singleton_decorator import singleton
 
 from util.midi import midi_codes
+from pip._vendor.pyparsing.core import Optional
 
 SCALE_XML_DB = os.environ['GC_BASE_DIR']+"/data/music_theory/scales.xml"
 
@@ -11,14 +12,26 @@ SCALE_XML_DB = os.environ['GC_BASE_DIR']+"/data/music_theory/scales.xml"
 class MusicScales:
     def __init__(self):
         self.scales = {}
+        self.degrees = {}
         tree = ET.parse(SCALE_XML_DB)
         root = tree.getroot()
         for scale in root:
             n = scale.attrib['name'].lower()
             keys = [int(k) for k in scale.attrib['keys'].split(',')]
             self.scales[n] = keys
+            if 'degrees' in scale.attrib:
+                deg = scale.attrib['degrees'].split(',')
+                self.degrees[n] = deg
 
         self.sorted_names = sorted(self.scales)
+
+    def getDegreeLabels(self, _scale_name: str): # type: ignore
+        degrees = None 
+        scale_name = _scale_name.lower()
+        if scale_name in self.degrees:
+            degrees = self.degrees[scale_name]
+
+        return degrees # type: ignore
 
     def generate_midi_scale_codes(self, _scale_name, key):
         scale_name = _scale_name.lower()

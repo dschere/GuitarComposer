@@ -80,6 +80,7 @@ class GuitarFretboard(QWidget):
         super().__init__()
 
         # Increased width to fit more frets
+        self.scale_note_tooltip = {}
         self.setGeometry(100, 100, 1025, 250)
         self.setFixedHeight(250)
         self.setFixedWidth(1025)
@@ -98,6 +99,7 @@ class GuitarFretboard(QWidget):
         self.scale = []
         self.scale_seq = None
         self.cm = None
+        self.degrees = None
 
         Signals.scale_selected.connect(self.on_scale_selected)
         Signals.clear_scale.connect(self.on_clear_scale_overlay)
@@ -105,6 +107,7 @@ class GuitarFretboard(QWidget):
 
     def on_scale_selected(self, evt: ScaleSelectedEvent):
         self.setScale(evt.scale_midi, evt.scale_seq)
+        self.degrees = evt.degrees
         self.update()
 
     def on_clear_scale_overlay(self):
@@ -125,6 +128,7 @@ class GuitarFretboard(QWidget):
         k = (fret, string)
         if k in self.dots:
             del self.dots[k]
+
 
     def _render_scale(self, painter: QPainter, fret_positions: list):
         if len(self.scale) == 0:
@@ -150,9 +154,24 @@ class GuitarFretboard(QWidget):
                 if midi_code >= start_mc and midi_code <= end_mc:
                     fret = midi_code - start_mc
                     x = fret_positions[fret]
-                    r = 20
+
+                    # enlarge cricles if there is degree text
+                    r = 23
+                    p = 13
+                    if not self.degrees:
+                        r = 20
+                        p = 10
+
                     painter.setBrush(QBrush(color, Qt.BrushStyle.SolidPattern))
-                    painter.drawEllipse(int(x) - 10, int(y) - 10, r, r)
+                    painter.drawEllipse(int(x) - p, int(y) - p, r, r)
+
+                    if self.degrees:
+                        text = self.degrees[i % len(self.degrees)]
+                        x_pos = int(x) - 5
+                        if len(text) > 1:
+                            x_pos -= 3
+                        painter.drawText(x_pos, int(y) + 5, text)
+
 
     def _draw_dots(self, painter: QPainter, fret_positions: list):
         for ((fret, string), qp) in self.dots.items():
@@ -208,6 +227,7 @@ class GuitarFretboard(QWidget):
         painter.drawPolygon(diamond)
 
     def paintEvent(self, event):
+        self.scale_note_tooltip = {}
         painter = QPainter(self)
 
         bg_color = QColor(*GuitarFretboardStyle.background_color_rgb)

@@ -120,12 +120,14 @@ class FretboardControls(QWidget):
         (mc_list, seq) = \
             self.music_scales.generate_midi_scale_codes(
                 scale_name, key)
+        degrees = self.music_scales.getDegreeLabels(scale_name)
 
         # emit message
         msg = ScaleSelectedEvent()
         msg.key = key
         msg.scale_midi = mc_list
         msg.scale_seq = seq
+        msg.degrees = degrees
         Signals.scale_selected.emit(msg)
 
     def filter_items(self):
