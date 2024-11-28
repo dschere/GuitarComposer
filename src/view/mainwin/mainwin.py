@@ -100,7 +100,7 @@ class MainWindow(QMainWindow):
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
 
         # Set up the window
-        self.setWindowTitle("PyQt6 Splitter Example with Saved State")
+        self.setWindowTitle("Guitar Music Composer")
         self.setGeometry(100, 100, 800, 600)
 
         self.create_menubar()
