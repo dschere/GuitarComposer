@@ -54,7 +54,7 @@ class EditorKeyMap:
         EIGHT_NOTE: 0.5,
         SIXTEENTH_NOTE: 0.25,
         THRITY_SECOND_NOTE: 0.125,
-        SIXTEENTH_NOTE: 0.0625
+        SIXTY_FORTH_NOTE: 0.0625
     }
 
     # hittng . or ; twice clears them
