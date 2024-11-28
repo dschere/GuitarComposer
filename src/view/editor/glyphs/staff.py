@@ -71,7 +71,7 @@ class StaffGlyph(Canvas):
 
         # if duration quarter or smaller draw connecting line.
         # the greated midi note is drawn as a quarter note with its staff 
-        if tc.duration not in (4.0, 2.0):
+        if tc.duration != 4.0:
             r.draw_stem_line(painter, midi_list, self.accent)        
             r.draw_note(painter, midi_list[-1], self.accent, tc.duration)    
 
