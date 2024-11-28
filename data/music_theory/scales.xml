@@ -1,20 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <scales>
-	<scale name="Major Scale" keys="1,3,5,6,8,10,12" />
-	<scale name="Pentatonic Major Scale" keys="1,3,5,8,10" />
-	<scale name="Blues Major Scale" keys="1,4,6,7,8,10" />
-	<scale name="Minor Scale" keys="1,3,4,6,8,9,11" />
-	<scale name="Melodic Minor Scale" keys="1,3,4,6,8,10,12" />
-	<scale name="Harmonic Minor Scale" keys="1,3,4,6,8,9,12" />
-	<scale name="Pentatonic Minor Scale" keys="1,4,6,8,11" />
-	<scale name="Blues Minor Scale" keys="1,4,6,7,8,11" />
-	<scale name="Augmented Scale" keys="1,4,5,8,9,12" />
-	<scale name="Be-Bop Scale" keys="1,3,5,6,8,10,11,12" />
+	<scale name="Major Scale" keys="1,3,5,6,8,10,12" degrees="1,2,3,4,5,6,7" />
+	<scale name="Pentatonic Major Scale" keys="1,3,5,8,10" degrees="1,2,3,5,6" />
+	<scale name="Blues Major Scale" keys="1,4,6,7,8,10" degrees="1,2,♭3,3,5,6" />
+	<scale name="Minor Scale" keys="1,3,4,6,8,9,11" degrees="1,2,♭3,4,5,♭6,♭7" />
+	<scale name="Melodic Minor Scale" keys="1,3,4,6,8,10,12" degrees="1,2,♭3,4,5,6,7" />
+	<scale name="Harmonic Minor Scale" keys="1,3,4,6,8,9,12" degrees="1,2,♭3,4,5,♭6,7" />
+	<scale name="Pentatonic Minor Scale" keys="1,4,6,8,11" degrees="1,♭3,4,5,♭7" />
+	<scale name="Blues Minor Scale" keys="1,4,6,7,8,11" degrees="1,♭3,4,♭5,5,♭7" />
+	<scale name="Augmented Scale" keys="1,4,5,8,9,12" degrees="1,2,3,♯4,♯5,6,7" />
+	<scale name="Be-Bop Scale" keys="1,3,5,6,8,10,11,12" degrees="1,2,3,4,5,♭6,6,7" />
 	<scale name="Chromatic Scale" keys="1,2,3,4,5,6,7,8,9,10,11,12" />
 	<scale name="Whole-Half Scale" keys="1,3,4,6,7,9,10,12" />
 	<scale name="Half-Whole Scale" keys="1,2,4,5,7,8,10,11" />
 	<scale name="Whole Tone Scale" keys="1,3,5,7,9,11" />
-	<scale name="Augmented Fifth Scale" keys="1,3,5,6,8,9,10,12" />
+	<scale name="Augmented Fifth Scale" keys="1,3,5,6,8,9,10,12" 
+	                                 degrees="1,2,3,4,5,♯5,6,7"/>
 	<scale name="Algerian Scale" keys="1,3,4,7,8,9,12" />
 	<scale name="Arabian Scale" keys="1,3,5,6,7,9,11" />
 	<scale name="Balinese Scale" keys="1,2,4,8,9" />
@@ -35,25 +36,27 @@
 	<scale name="Jewish Scale" keys="1,2,5,6,8,9,11" />
 	<scale name="Hawaiian Scale" keys="1,3,4,6,8,10,12" />
 	<scale name="Hirajoshi Scale" keys="1,3,4,8,9" />
-	<scale name="Hungarian Minor Scale" keys="1,3,4,7,8,9,12" />
-	<scale name="Hungarian Major Scale" keys="1,4,5,7,8,10,11" />
+	<scale name="Hungarian Minor Scale" keys="1,3,4,7,8,9,12" degrees="1,2,♭3,♯4,5,♭6,7" />
+	<scale name="Hungarian Major Scale" keys="1,4,5,7,8,10,11" degrees="1,♯2,3,♯4,5,6,♭7" />
 	<scale name="Kumoi Scale" keys="1,2,6,8,9" />
 	<scale name="Leading Whole Tone Scale" keys="1,3,5,7,9,11,12" />
 	<scale name="Mohammedan Scale" keys="1,3,4,6,8,9,12" />
 	<scale name="Mongolian Scale" keys="1,3,5,8,10" />
-	<scale name="Neapolitan Minor Scale" keys="1,2,4,6,8,9,12" />
-	<scale name="Neapolitan Major Scale" keys="1,2,4,6,8,10,12" />
+	<scale name="Neapolitan Minor Scale" keys="1,2,4,6,8,9,12"
+								degrees="1,♭2,♭3,4,5,♭6,7"  />
+	<scale name="Neapolitan Major Scale" keys="1,2,4,6,8,10,12" 
+								degrees="1,♭2,♭3,4,5,6,7" />
 	<scale name="Oriental Scale" keys="1,2,5,6,7,10,11" />
 	<scale name="Overtone Scale" keys="1,3,5,7,8,10,11" />
 	<scale name="Pelog Scale" keys="1,2,4,8,11" />
 	<scale name="Persian Scale" keys="1,2,5,6,7,9,12" />
-	<scale name="Ionian Mode" keys="1,3,5,6,8,10,12" />
-	<scale name="Dorian Mode" keys="1,3,4,6,8,10,11" />
-	<scale name="Phrygian Mode" keys="1,2,4,6,8,9,11" />
-	<scale name="Lydian Mode" keys="1,3,5,7,8,10,12" />
-	<scale name="Mixolydian Mode" keys="1,3,5,6,8,10,11" />
-	<scale name="Aeolian Mode" keys="1,3,4,6,8,9,11" />
-	<scale name="Locrian Mode" keys="1,2,4,6,7,9,11" />
+	<scale name="Ionian Mode" keys="1,3,5,6,8,10,12"     degrees="1,2,3,4,5,6,7" />
+	<scale name="Dorian Mode" keys="1,3,4,6,8,10,11"     degrees="1,2,♭3,4,5,6,♭7" />
+	<scale name="Phrygian Mode" keys="1,2,4,6,8,9,11"    degrees="1,♭2,♭3,4,5,♭6,♭7" />
+	<scale name="Lydian Mode" keys="1,3,5,7,8,10,12"     degrees="1,2,3,♯4,5,6,7"/>
+	<scale name="Mixolydian Mode" keys="1,3,5,6,8,10,11" degrees="1,2,3,4,5,6,♭7" />
+	<scale name="Aeolian Mode" keys="1,3,4,6,8,9,11"     degrees="1,2,♭3,4,5,♭6,♭7" />
+	<scale name="Locrian Mode" keys="1,2,4,6,7,9,11"     degrees="1,♭2,♭3,4,♭5,♭6,♭7" />
 	<scale name="Aeolian Harmonic Mode" keys="1,3,4,6,8,9,12" />
 	<scale name="Locrian Sharp 6 Mode" keys="1,2,4,6,7,10,11" />
 	<scale name="Major Sharp 5 Mode" keys="1,3,5,6,9,10,12" />

@@ -17,15 +17,21 @@ from view.editor.glyphs.common import (
     THRITYSEC_NOTE,
     SIXTYFORTH_NOTE,
     GHOST_NOTEHEAD,
-    DOUBLE_GHOST_NOTEHEAD
+    DOUBLE_GHOST_NOTEHEAD,
+    FORTE_SYMBOL,
+    MEZZO_SYMBOL,
+    PIANO_SYMBOL
     )
 from PyQt6.QtWidgets import QToolBar, QWidget, QVBoxLayout, QPushButton,\
     QButtonGroup, QSizePolicy, QHBoxLayout
-from PyQt6.QtCore import pyqtSignal, QObject, QTimer
+from PyQt6.QtCore import pyqtSignal, QObject, QTimer, QSize
+from PyQt6.QtGui import QPixmap, QPainter, QIcon
+from PyQt6.QtSvg import QSvgRenderer
 
 from music.constants import Dynamic
 from models.track import TabCursor
 from src.view.events import Signals, EditorEvent
+import os
 
 DOTTED = GHOST_NOTEHEAD
 DOUBLE_DOTTED = DOUBLE_GHOST_NOTEHEAD
@@ -51,7 +57,7 @@ class ToolbarButton(QPushButton):
 
     def pname(self):
         return self._param
-
+    
 
 # workaround for broken QButtonGroup
 class MutuallyExclusiveButtonGroup(QObject):
@@ -200,7 +206,9 @@ class EditorToolbar(QToolBar):
         self._dot_btns = (
             ToolbarButton(self, " ", "no dot", "clear-dots"),
             ToolbarButton(self, DOTTED, "dotted note", "dotted"),
-            ToolbarButton(self, DOUBLE_DOTTED, "double dotted", "double-dotted")
+            ToolbarButton(self, DOUBLE_DOTTED, "double dotted", "double-dotted"),
+            ToolbarButton(self, "3" + QUATER_NOTE, "triplet", "triplet"),
+            ToolbarButton(self, "5" + QUATER_NOTE, "quintuplet", "quintuplet")
         )
         for btn in self._dot_btns:
             self._dot_grp.addButton(btn)
@@ -211,14 +219,14 @@ class EditorToolbar(QToolBar):
         # set dynamic
         self._dyn_grp = MutuallyExclusiveButtonGroup()
         self._dyn_btns = ( 
-            ToolbarButton(self, "fff", Dynamic.tooltip(Dynamic.FFF), Dynamic.FFF),
-            ToolbarButton(self, "ff", Dynamic.tooltip(Dynamic.FF), Dynamic.FF),
-            ToolbarButton(self, "f", Dynamic.tooltip(Dynamic.F), Dynamic.F),
-            ToolbarButton(self, "mf", Dynamic.tooltip(Dynamic.MF), Dynamic.MF),
-            ToolbarButton(self, "mp", Dynamic.tooltip(Dynamic.MP), Dynamic.MP),
-            ToolbarButton(self, "p", Dynamic.tooltip(Dynamic.P), Dynamic.P),
-            ToolbarButton(self, "pp", Dynamic.tooltip(Dynamic.PP), Dynamic.PP),
-            ToolbarButton(self, "ppp", Dynamic.tooltip(Dynamic.PPP), Dynamic.PPP)
+            ToolbarButton(self, FORTE_SYMBOL * 3, Dynamic.tooltip(Dynamic.FFF), Dynamic.FFF),
+            ToolbarButton(self, FORTE_SYMBOL * 2, Dynamic.tooltip(Dynamic.FF), Dynamic.FF),
+            ToolbarButton(self, FORTE_SYMBOL, Dynamic.tooltip(Dynamic.F), Dynamic.F),
+            ToolbarButton(self, MEZZO_SYMBOL + FORTE_SYMBOL, Dynamic.tooltip(Dynamic.MF), Dynamic.MF),
+            ToolbarButton(self, MEZZO_SYMBOL + PIANO_SYMBOL, Dynamic.tooltip(Dynamic.MP), Dynamic.MP),
+            ToolbarButton(self, PIANO_SYMBOL, Dynamic.tooltip(Dynamic.P), Dynamic.P),
+            ToolbarButton(self, PIANO_SYMBOL * 2, Dynamic.tooltip(Dynamic.PP), Dynamic.PP),
+            ToolbarButton(self, PIANO_SYMBOL * 3, Dynamic.tooltip(Dynamic.PPP), Dynamic.PPP)
         )
         for btn in self._dyn_btns:
             self._dyn_grp.addButton(btn) 

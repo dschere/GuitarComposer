@@ -99,6 +99,7 @@ class EditorController:
 
     def keyboard_event(self, evt: EditorEvent):
         tedit : TrackEditor | None = self.track_editor
+        tmodel : Track | None = self.track_model
         key = evt.key
         # Check for arrow keys
         if key == Qt.Key.Key_Up:
@@ -109,8 +110,7 @@ class EditorController:
             pass
         elif key == Qt.Key.Key_Right:
             pass
-        elif tedit:
-            tmodel : Track = self.track_model
+        elif tedit and tmodel:
             tc : TabCursor = tmodel.getTabCursor()
             seq : TrackEventSequence = tmodel.getSequence()
 
