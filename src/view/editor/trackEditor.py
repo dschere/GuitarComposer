@@ -77,8 +77,8 @@ from view.config import EditorKeyMap
 from view.editor import glyphs
 from models.track import StaffEvent, TabCursor, Track
 from view.editor.toolbar import EditorToolbar
-from pkg_resources._vendor.more_itertools.more import stagger
-
+#from pkg_resources._vendor.more_itertools.more import stagger
+from view.editor.glyphs.ornamental_markings import oramental_markings
 
         
 
@@ -87,8 +87,9 @@ class TrackEditor(QWidget):
     Controls editing of the selected track in the navigator.
     """
     STAFF_ROW = 0
-    TAB_ROW = 1
-    EFFECTS_ROW = 2
+    ORAMENTS_ROW = 1
+    TAB_ROW = 2
+    EFFECTS_ROW = 3
 
     """
     def mousePressEvent(self, event):
@@ -111,8 +112,10 @@ class TrackEditor(QWidget):
         both tablature and staff.
         """
         staff = glyphs.StaffGlyph(tc)
+        orn = oramental_markings(tc)
         tab = glyphs.TabletureGlyph()
         self._grid_add(staff, self.STAFF_ROW, col)
+        self._grid_add(orn, self.ORAMENTS_ROW, col)
         self._grid_add(tab, self.TAB_ROW, col)
         tab.set_cursor(gstring)
 

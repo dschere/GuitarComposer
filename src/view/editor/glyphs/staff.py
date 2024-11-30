@@ -10,8 +10,6 @@ from view.editor.glyphs.note_renderer import note_renderer
 from src.util.midi import midi_codes
 
 
-
-
 class StaffGlyph(Canvas):
     def __init__(self, tc : TabCursor):
         super().__init__(STAFF_SYM_WIDTH, STAFF_HEIGHT)
@@ -96,7 +94,6 @@ class StaffGlyph(Canvas):
             self.tc.NOTE: self._render_note,
             self.tc.CHORD: self._render_chord
         }[self.tc.classify()](painter)
-                 
 
 
 class StaffHeaderGlyph(Canvas):

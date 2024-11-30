@@ -22,16 +22,13 @@ from view.editor.glyphs.common import (
     MEZZO_SYMBOL,
     PIANO_SYMBOL
     )
-from PyQt6.QtWidgets import QToolBar, QWidget, QVBoxLayout, QPushButton,\
-    QButtonGroup, QSizePolicy, QHBoxLayout
-from PyQt6.QtCore import pyqtSignal, QObject, QTimer, QSize
-from PyQt6.QtGui import QPixmap, QPainter, QIcon
-from PyQt6.QtSvg import QSvgRenderer
+from PyQt6.QtWidgets import QToolBar, QPushButton, QSizePolicy
+from PyQt6.QtCore import pyqtSignal, QObject
+from PyQt6.QtCore import QPointF
+from PyQt6.QtGui import QPainter, QPainterPath, QColor
 
 from music.constants import Dynamic
 from models.track import TabCursor
-from src.view.events import Signals, EditorEvent
-import os
 
 DOTTED = GHOST_NOTEHEAD
 DOUBLE_DOTTED = DOUBLE_GHOST_NOTEHEAD
@@ -57,7 +54,47 @@ class ToolbarButton(QPushButton):
 
     def pname(self):
         return self._param
-    
+
+"""
+class BendEffectToolbarButton(QPushButton):
+
+    def __init__(self):
+        super().__init__()
+        self.setToolTip("Bend effect")
+        self.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
+        self.setCheckable(True)
+        self.setFixedWidth(40)
+   
+    def paintEvent(self, event):
+        # Call the base class paintEvent to ensure the button is drawn
+        super().paintEvent(event)
+        
+        # Create a QPainter object
+        painter = QPainter(self)
+        
+        # Set antialiasing for smoother curves
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        
+        # Define a Bézier curve using QPainterPath
+        path = QPainterPath()
+        width, height = self.width(), self.height()
+        start_point = QPointF(0, height)
+        control_point1 = QPointF(width / 3, height / 3)
+        control_point2 = QPointF(2 * width / 3, 2 * height / 3)
+        end_point = QPointF(width, 0)
+        
+        path.moveTo(start_point)
+        path.cubicTo(control_point1, control_point2, end_point)
+        
+        # Set pen color and width
+        pen = painter.pen()
+        pen.setColor(QColor('cyan'))
+        pen.setWidth(2)
+        painter.setPen(pen)
+        
+        # Draw the path
+        painter.drawPath(path)    
+"""    
 
 # workaround for broken QButtonGroup
 class MutuallyExclusiveButtonGroup(QObject):
@@ -232,7 +269,12 @@ class EditorToolbar(QToolBar):
             self._dyn_grp.addButton(btn) 
             self.addWidget(btn) 
         self._dyn_grp.selected.connect(self._dyn_selected)    
+        self.addSeparator()
 
+        
+        #self.bend_effect = BendEffectToolbarButton()
+        #self.addWidget(self.bend_effect)
+        
         self.setTabCursor(tab_cursor)
 
 

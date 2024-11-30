@@ -11,8 +11,8 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QKeyEvent
 
 from singleton_decorator import singleton
-from attic.new.GuitarComposer2.guitarcomposer.common.durationtypes import SIXTEENTH, \
-    THIRTYSECOND, SIXTYFORTH
+#from attic.new.GuitarComposer2.guitarcomposer.common.durationtypes import SIXTEENTH, \
+#    THIRTYSECOND, SIXTYFORTH
 
 
 @singleton

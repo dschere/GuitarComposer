@@ -6,6 +6,7 @@ from view.editor.glyphs.common import (STAFF_SYM_WIDTH,
                                        )
 
 from view.config import GuitarFretboardStyle
+from view.editor.glyphs.ornamental_markings import oramental_markings
 
 
 class TabletureGlyph(Canvas):
@@ -91,3 +92,4 @@ class TabletureGlyph(Canvas):
 
         for (gstring, (fret, opts)) in self.tab_notes.items():
             self.draw_tab_notes(painter, gstring, fret, opts)
+

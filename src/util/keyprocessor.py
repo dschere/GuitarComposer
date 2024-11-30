@@ -3,7 +3,7 @@ from PyQt6.QtCore import Qt
 from models.track import TabCursor
 from view.config import EditorKeyMap
 
-from attic.new.GuitarComposer2.guitarcomposer.common import dynamic
+from music import dynamic
 
 
 
