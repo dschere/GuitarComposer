@@ -17,8 +17,10 @@ SIXTYFORTH_NOTE = "𝅘𝅥𝅱 "
 FLAT_SIGN = "♭ "
 NATURAL_SIGN = "♮ "
 SHARP_SIGN = "♯ "
-UPSTROKE = "\u2191"
+UPSTROKE   = "\u2191"
 DOWNSTROKE = "\u2193"
+STACCATO   = "\u1D17"
+LEGATO     = u'\U0001D066'
 
 BARLINE1 = "𝄀 "
 BARLINE2 = "𝄁 "
@@ -75,6 +77,8 @@ STAFF_CHORD_STEM_X = 29
 STAFF_TEXT_FONT = "DejaVu Sans" # Has music unicode symbols
 
 ORNAMENT_MARKING_HEIGHT = 50
+ORNAMENT_Y = 10
+DYNAMIC_MARKER_Y = 0
 
 
 
