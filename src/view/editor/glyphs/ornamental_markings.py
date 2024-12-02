@@ -12,7 +12,7 @@ from view.editor.glyphs.common import (ORNAMENT_Y,
                                        STAFF_SYM_WIDTH, 
                                        ORNAMENT_MARKING_HEIGHT, 
                                        LEGATO, 
-                                       STACCATO)
+                                       STACCATO, DOWNSTROKE, UPSTROKE)
 from models.track import TabCursor
 from PyQt6.QtGui import QPainter
 import math
@@ -54,24 +54,25 @@ class oramental_markings(Canvas):
         super().__init__(STAFF_SYM_WIDTH,ORNAMENT_MARKING_HEIGHT)
         self.tab_cursor = tab_cursor
 
-    def _draw_downstroke(self, painter: QPainter):
-        """ 
-        Draw a down arrow on the right side of the tab 
-        """
-        x = int(STAFF_SYM_WIDTH/2)
-        start_y = ORNAMENT_Y
-        end_y = ORNAMENT_MARKING_HEIGHT-1
-        painter.drawLine(x, start_y, x, end_y)
-        painter.drawLine(x, end_y, 8, end_y-3)
-        painter.drawLine(x, end_y, 2, end_y-3)
+    
+    # def _draw_downstroke(self, painter: QPainter):
+    #     """ 
+    #     Draw a down arrow on the right side of the tab 
+    #     """
+    #     x = int(STAFF_SYM_WIDTH/2)
+    #     start_y = ORNAMENT_Y
+    #     end_y = ORNAMENT_MARKING_HEIGHT-1
+    #     painter.drawLine(x, start_y, x, end_y)
+    #     painter.drawLine(x, end_y, 8, end_y-3)
+    #     painter.drawLine(x, end_y, 2, end_y-3)
 
-    def _draw_upstroke(self, painter: QPainter):
-        x = int(STAFF_SYM_WIDTH/2)
-        start_y = ORNAMENT_Y
-        end_y = ORNAMENT_MARKING_HEIGHT-1
-        painter.drawLine(x, end_y, x, start_y)
-        painter.drawLine(x, start_y, 8, start_y+3)
-        painter.drawLine(x, start_y, 2, start_y+3)
+    # def _draw_upstroke(self, painter: QPainter):
+    #     x = int(STAFF_SYM_WIDTH/2)
+    #     start_y = ORNAMENT_Y
+    #     end_y = ORNAMENT_MARKING_HEIGHT-1
+    #     painter.drawLine(x, end_y, x, start_y)
+    #     painter.drawLine(x, start_y, 8, start_y+3)
+    #     painter.drawLine(x, start_y, 2, start_y+3)
 
     def _draw_vibrato(self, painter: QPainter):
         draw_sine_wave(painter, 
@@ -129,7 +130,7 @@ class oramental_markings(Canvas):
         if self.tab_cursor.pitch_bend_active:
             self._draw_bend(painter)
         elif self.tab_cursor.downstroke:
-            self._draw_downstroke(painter) 
+            self._draw_marker(painter, DOWNSTROKE) 
         elif self.tab_cursor.upstroke:
-            self._draw_upstroke(painter)
+            self._draw_marker(painter, UPSTROKE)
         
