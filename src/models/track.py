@@ -5,26 +5,24 @@ from music.durationtypes import QUARTER, SIXTEENTH
 
 class TrackEvent:
     def __init__(self):
-        # at what beat in the beat does this event take place?
-        self.beat = None
+        pass
 
+# class NoteEvent(TrackEvent, Note):
+#     def __init__(self):
+#         TrackEvent.__init__(self)
+#         Note.__init__(self)
 
-class NoteEvent(TrackEvent, Note):
-    def __init__(self):
-        TrackEvent.__init__(self)
-        Note.__init__(self)
+#         # hand effects
+#         self.bend = 0          # pitch bend in half steps
+#         self.bend_duration = 0  # bend duration in beats
+#         self.bend_pattern = []  # percentage movement over bend duration time
 
-        # hand effects
-        self.bend = 0          # pitch bend in half steps
-        self.bend_duration = 0  # bend duration in beats
-        self.bend_pattern = []  # percentage movement over bend duration time
+#         # mute percentage
+#         #   controls the weighting of the guitar muted track.
+#         self.mute = 0
 
-        # mute percentage
-        #   controls the weighting of the guitar muted track.
-        self.mute = 0
-
-        # harmonic track percentage
-        self.harmonic = 0
+#         # harmonic track percentage
+#         self.harmonic = 0
 
 
 class StaffEvent(TrackEvent):
@@ -92,8 +90,7 @@ class TrackEventSequence:
                         return evt
                 i -= 1
 
-
-    def add(self, beat: int, evt):
+    def add(self, beat: int, evt : TrackEvent):
         evtList = self.sequence.get(beat, [])
         self.beatList.append(beat)
         evtList.append(evt)
@@ -113,7 +110,7 @@ class TrackEventSequence:
             del self.sequence[beat]
 
 
-class TabCursor:
+class TabEvent:
     BEND_PERIODS = 13
 
     REST = 0
@@ -131,7 +128,7 @@ class TabCursor:
         
 
     def __init__(self, num_gstrings):
-        self.beat = 1.0
+        self.beat = QUARTER
         self.string = 5  # current string being edited
         self.fret = [-1] *  num_gstrings # current fret value
         self.duration = QUARTER
@@ -165,13 +162,13 @@ class Track:
         # beats from start of track -> [events]
         self.sequence = TrackEventSequence()
 
-        self.tab_cursor = TabCursor(len(self.tuning))
+        self.tab_event = TabEvent(len(self.tuning))
 
     def setTuning(self, tuning):
         self.tuning = tuning    
 
-    def getTabCursor(self) -> TabCursor:
-        return self.tab_cursor
+    def getTabEvent(self) -> TabEvent:
+        return self.tab_event
 
     def getSequence(self) -> TrackEventSequence:
         return self.sequence

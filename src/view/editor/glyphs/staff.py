@@ -5,21 +5,21 @@ from view.editor.glyphs.common import (STAFF_SYM_WIDTH, STAFF_HEIGHT,
                                        )
 
 from view.editor.glyphs.canvas import Canvas
-from models.track import StaffEvent, TabCursor, Track
+from models.track import StaffEvent, TabEvent, Track
 from view.editor.glyphs.note_renderer import note_renderer
 from src.util.midi import midi_codes
 
 
 class StaffGlyph(Canvas):
-    def __init__(self, tc : TabCursor):
+    def __init__(self, te : TabEvent):
         super().__init__(STAFF_SYM_WIDTH, STAFF_HEIGHT)
-        self.tc = tc
+        self.te = te
         self.se = StaffEvent()
         self.accent = SHARP_SIGN
         self.tuning = Track().tuning
 
-    def setup(self, se: StaffEvent, tc: TabCursor, tuning):
-        self.tc = tc
+    def setup(self, se: StaffEvent, te: TabEvent, tuning):
+        self.te = te
         self.se = se
         self.tuning = tuning
 
@@ -31,7 +31,7 @@ class StaffGlyph(Canvas):
         self.update()  
 
     def _get_renderer(self):
-        tc : TabCursor = self.tc
+        tc : TabEvent = self.te
         se : StaffEvent = self.se
         dot_count = int(tc.dotted) + int(tc.double_dotted)
         cleff = se.cleff
@@ -39,7 +39,7 @@ class StaffGlyph(Canvas):
 
     def _render_note(self, painter):
         r : note_renderer = self._get_renderer()
-        tc : TabCursor = self.tc
+        tc : TabEvent = self.te
         se : StaffEvent = self.se
 
         # find note
@@ -52,8 +52,7 @@ class StaffGlyph(Canvas):
 
     def _render_chord(self, painter):
         r : note_renderer = self._get_renderer()
-        tc : TabCursor = self.tc
-        se : StaffEvent = self.se
+        tc : TabEvent = self.te
         # collect and and sort midi codes
         midi_code_collection = set()
         for (gstring,fret) in enumerate(tc.fret):
@@ -76,24 +75,19 @@ class StaffGlyph(Canvas):
 
     def _render_rest(self, painter):
         r : note_renderer = self._get_renderer()
-        tc : TabCursor = self.tc
+        tc : TabEvent = self.te
         r.draw_rest(painter, tc.duration)
         
 
     def canvas_paint_event(self, painter):
         self.draw_staff_background(painter)
-        # analyze cursor and render notes.
-        #r : note_renderer = self._get_renderer()
-        #r.test_pattern(painter) 
-        #return
-
 
         # determine if this is a note, a chord or a rest.
         {
-            self.tc.REST: self._render_rest,
-            self.tc.NOTE: self._render_note,
-            self.tc.CHORD: self._render_chord
-        }[self.tc.classify()](painter)
+            self.te.REST: self._render_rest,
+            self.te.NOTE: self._render_note,
+            self.te.CHORD: self._render_chord
+        }[self.te.classify()](painter)
 
 
 class StaffHeaderGlyph(Canvas):

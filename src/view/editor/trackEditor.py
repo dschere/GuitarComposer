@@ -75,7 +75,7 @@ from view.events import Signals, EditorEvent
 from view.config import EditorKeyMap
 
 from view.editor import glyphs
-from models.track import StaffEvent, TabCursor, Track
+from models.track import StaffEvent, TabEvent, Track
 from view.editor.toolbar import EditorToolbar
 #from pkg_resources._vendor.more_itertools.more import stagger
 from view.editor.glyphs.ornamental_markings import oramental_markings
@@ -106,7 +106,7 @@ class TrackEditor(QWidget):
         g = glyphs.StaffHeaderGlyph(symbol,se.key,se.signature,se.bpm)
         self._grid_layout.addWidget(g, row, col)
 
-    def setBlankSelectRegion(self, tc: TabCursor, col=1, gstring=5):
+    def setBlankSelectRegion(self, tc: TabEvent, col=1, gstring=5):
         """ 
         Sets up an empty region for editing a code/note/rest which includes
         both tablature and staff.
@@ -141,9 +141,9 @@ class TrackEditor(QWidget):
         """
         staff_glyph = self._grid_get(self.STAFF_ROW, col)
         if staff_glyph and isinstance(staff_glyph, StaffGlyph):
-            staff_glyph.setup(se, tmodel.getTabCursor(), tmodel.tuning)
+            staff_glyph.setup(se, tmodel.getTabEvent(), tmodel.tuning)
 
-    def setToolbar(self, tc: TabCursor):
+    def setToolbar(self, tc: TabEvent):
         self.toolbar.setTabCursor(tc)
 
     def _grid_add(self, w, row, col):
@@ -168,7 +168,7 @@ class TrackEditor(QWidget):
         main_layout = QVBoxLayout(self)
 
         self.canvas = QWidget() 
-        self.toolbar = EditorToolbar(TabCursor(6), self.update_track_editor_content)
+        self.toolbar = EditorToolbar(TabEvent(6), self.update_track_editor_content)
          
         main_layout.addWidget(self.toolbar)
         main_layout.addWidget(self.canvas) 

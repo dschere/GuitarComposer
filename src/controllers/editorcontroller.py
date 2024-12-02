@@ -10,7 +10,7 @@ from PyQt6.QtCore import Qt
 
 from view.config import EditorKeyMap
 from view.events import Signals, EditorEvent
-from models.track import Track, StaffEvent, TabCursor, TrackEventSequence
+from models.track import Track, StaffEvent, TabEvent, TrackEventSequence
 from view.editor.trackEditor import TrackEditor
 from util.keyprocessor import KeyProcessor
 
@@ -33,7 +33,7 @@ class EditorController:
     def _updown_key(self, tmodel: Track | None, inc: int):
         if tmodel and self.track_editor:
             te : TrackEditor = self.track_editor 
-            tc = tmodel.getTabCursor()
+            tc = tmodel.getTabEvent()
             nstring = len(tmodel.tuning)
             # if fret value, add a note for this chord
             #  ...
@@ -52,7 +52,7 @@ class EditorController:
         if tmodel and editor:
             # get the current staff value from the model
             seq = tmodel.getSequence()
-            tcur = tmodel.getTabCursor()
+            tcur = tmodel.getTabEvent()
 
             # in the caseof an empty track sequence add a default staff
             staff = StaffEvent()
@@ -87,15 +87,15 @@ class EditorController:
         tedit : TrackEditor | None = self.track_editor
         if tedit:
             tmodel : Track = self.track_model
-            tc : TabCursor = tmodel.getTabCursor()
+            te : TabEvent = tmodel.getTabEvent()
             seq : TrackEventSequence = tmodel.getSequence()
-            tedit.setFretValue(tc.presentation_col, tc.string, tc.fret[tc.string])
+            tedit.setFretValue(te.presentation_col, te.string, te.fret[te.string])
             # update the toolbar if this was a duration/dynamic change
             # which has the cleff and key (sharps and flats)
             staff_event = seq.getActiveStaff(self.cursor_beat_pos)
             if staff_event:
                 # render staff: notes, chords, rests etc.
-                tedit.renderStaffEngraving(staff_event, tmodel, tc.presentation_col)
+                tedit.renderStaffEngraving(staff_event, tmodel, te.presentation_col)
 
     def keyboard_event(self, evt: EditorEvent):
         tedit : TrackEditor | None = self.track_editor
@@ -111,21 +111,21 @@ class EditorController:
         elif key == Qt.Key.Key_Right:
             pass
         elif tedit and tmodel:
-            tc : TabCursor = tmodel.getTabCursor()
+            te : TabEvent = tmodel.getTabEvent()
             seq : TrackEventSequence = tmodel.getSequence()
 
             # use the key to update the tablature cursor
-            self.key_proc.proc(key, tc) 
+            self.key_proc.proc(key, te) 
             # render fret number
-            tedit.setFretValue(tc.presentation_col, tc.string, tc.fret[tc.string])
+            tedit.setFretValue(te.presentation_col, te.string, te.fret[te.string])
             # update the toolbar if this was a duration/dynamic change
-            tedit.setToolbar(tc)
+            tedit.setToolbar(te)
             # update staff notation, get the active staff header
             # which has the cleff and key (sharps and flats)
             staff_event = seq.getActiveStaff(self.cursor_beat_pos)
             if staff_event:
                 # render staff: notes, chords, rests etc.
-                tedit.renderStaffEngraving(staff_event, tmodel, tc.presentation_col)
+                tedit.renderStaffEngraving(staff_event, tmodel, te.presentation_col)
         
     def tuning_change(self, evt: EditorEvent):
         if evt.tuning and self.track_model:

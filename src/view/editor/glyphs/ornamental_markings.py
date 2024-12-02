@@ -13,7 +13,7 @@ from view.editor.glyphs.common import (ORNAMENT_Y,
                                        ORNAMENT_MARKING_HEIGHT, 
                                        LEGATO, 
                                        STACCATO, DOWNSTROKE, UPSTROKE)
-from models.track import TabCursor
+from models.track import TabEvent
 from PyQt6.QtGui import QPainter
 import math
 
@@ -50,9 +50,9 @@ class oramental_markings(Canvas):
     These would be slide, bend, stroke and other visual performance 
     queues.     
     """
-    def __init__(self, tab_cursor: TabCursor):
+    def __init__(self, tab_event: TabEvent):
         super().__init__(STAFF_SYM_WIDTH,ORNAMENT_MARKING_HEIGHT)
-        self.tab_cursor = tab_cursor
+        self.tab_event = tab_event
 
     
     # def _draw_downstroke(self, painter: QPainter):
@@ -96,19 +96,19 @@ class oramental_markings(Canvas):
 
         Use the high/low to scale the curve. 
         """
-        high = self.tab_cursor.pitch_bend_histogram[0]
+        high = self.tab_event.pitch_bend_histogram[0]
         low = high
         points = []
 
-        for b in self.tab_cursor.pitch_bend_histogram[1:]:
+        for b in self.tab_event.pitch_bend_histogram[1:]:
             if b > high:
                 high = b
             if b < low:
                 low = b
 
         span = (high - low)
-        n = STAFF_SYM_WIDTH / len(self.tab_cursor.pitch_bend_histogram) 
-        for (i,b) in enumerate(self.tab_cursor.pitch_bend_histogram):
+        n = STAFF_SYM_WIDTH / len(self.tab_event.pitch_bend_histogram) 
+        for (i,b) in enumerate(self.tab_event.pitch_bend_histogram):
             x = int(i * n)
             y = ((high - b) / span) * ORNAMENT_MARKING_HEIGHT
             points.append((x,y))
@@ -122,15 +122,15 @@ class oramental_markings(Canvas):
 
     # override to capture paint event
     def canvas_paint_event(self, painter):
-        if self.tab_cursor.legato == True: 
+        if self.tab_event.legato == True: 
             self._draw_marker(painter, LEGATO)
-        elif self.tab_cursor.staccato:
+        elif self.tab_event.staccato:
             self._draw_marker(painter, STACCATO)
 
-        if self.tab_cursor.pitch_bend_active:
+        if self.tab_event.pitch_bend_active:
             self._draw_bend(painter)
-        elif self.tab_cursor.downstroke:
+        elif self.tab_event.downstroke:
             self._draw_marker(painter, DOWNSTROKE) 
-        elif self.tab_cursor.upstroke:
+        elif self.tab_event.upstroke:
             self._draw_marker(painter, UPSTROKE)
         
