@@ -30,7 +30,7 @@ from PyQt6.QtCore import QPointF
 from PyQt6.QtGui import QPainter, QPainterPath, QColor
 
 from music.constants import Dynamic
-from models.track import TabCursor
+from models.track import TabEvent
 
 DOTTED = GHOST_NOTEHEAD
 DOUBLE_DOTTED = DOUBLE_GHOST_NOTEHEAD
@@ -138,31 +138,31 @@ class EditorToolbar(QToolBar):
     def _compute_beat(self):
         n = 1.0
 
-        if self._tab_cursor.dotted:
+        if self._tab_event.dotted:
             n *= 1.5
-        elif self._tab_cursor.double_dotted:
+        elif self._tab_event.double_dotted:
             n *= 1.75
 
-        if self._tab_cursor.triplet:
+        if self._tab_event.triplet:
             n *= 0.33
-        elif self._tab_cursor.quintuplet:
+        elif self._tab_event.quintuplet:
             n *= 0.2
 
-        self._tab_cursor.beat = n * self._tab_cursor.duration            
+        self._tab_event.beat = n * self._tab_event.duration            
         
 
     def _dot_selected(self, btn: ToolbarButton):
         n = btn.pname()
         #TODO, move these strings to global constants
         if n == "clear-dots":
-            self._tab_cursor.dotted = False 
-            self._tab_cursor.double_dotted = False 
+            self._tab_event.dotted = False 
+            self._tab_event.double_dotted = False 
         elif n == "dotted":
-            self._tab_cursor.dotted = True
-            self._tab_cursor.double_dotted = False
+            self._tab_event.dotted = True
+            self._tab_event.double_dotted = False
         elif n == "double-dotted":
-            self._tab_cursor.dotted = False
-            self._tab_cursor.double_dotted = True
+            self._tab_event.dotted = False
+            self._tab_event.double_dotted = True
         else:
             # not a dot selected event.
             return    
@@ -171,49 +171,49 @@ class EditorToolbar(QToolBar):
 
     def _on_duration_selected(self, btn: ToolbarButton):
         if btn.pname() == "duration":
-            self._tab_cursor.duration = btn.pvalue() # type: ignore
+            self._tab_event.duration = btn.pvalue() # type: ignore
             self._compute_beat() 
         self.update_staff_and_tab()
 
     def _dyn_selected(self, btn: ToolbarButton):
         if btn.pname() == "dynamic":
-            self._tab_cursor.dynamic = btn.pvalue()
+            self._tab_event.dynamic = btn.pvalue()
         self.update_staff_and_tab()
 
     def _articulation_selected(self, btn: ToolbarButton):
         if btn.pname() == "clear-articulation":
-            self._tab_cursor.legato = False
-            self._tab_cursor.staccato = False
+            self._tab_event.legato = False
+            self._tab_event.staccato = False
         elif btn.pname() == "legato":
-            self._tab_cursor.legato = True
-            self._tab_cursor.staccato = False
+            self._tab_event.legato = True
+            self._tab_event.staccato = False
         elif btn.pname() == "staccato":
-            self._tab_cursor.legato = False
-            self._tab_cursor.staccato = True
+            self._tab_event.legato = False
+            self._tab_event.staccato = True
         self.update_staff_and_tab()
 
 
-    def setTabCursor(self, tab_cursor : TabCursor):
+    def setTabCursor(self, tab_event : TabEvent):
         """
         set the tab cursor and react to any changes in data so 
         the toolbar reflects the state. 
         """ 
-        self._tab_cursor = tab_cursor
+        self._tab_event = tab_event
         # select buttons based on tab settings
 
         # set the matching duration
         dlist = [4.0, 2.0, 1.0, 0.5, 0.25, 0.125, 0.0625]
-        if tab_cursor.duration in dlist:
-            i = dlist.index(tab_cursor.duration)
+        if tab_event.duration in dlist:
+            i = dlist.index(tab_event.duration)
             btn = self._dur_btns[i]
             self._dur_grp.check_btn(btn) 
 
         # set dot
-        if tab_cursor.dotted:
+        if tab_event.dotted:
             dotted_index = 1
             btn = self._dot_btns[dotted_index]        
             self._dot_grp.check_btn(btn) 
-        elif tab_cursor.double_dotted:
+        elif tab_event.double_dotted:
             double_dotted_index = 2
             btn = self._dot_btns[double_dotted_index]        
             self._dot_grp.check_btn(btn) 
@@ -223,15 +223,15 @@ class EditorToolbar(QToolBar):
 
         dyn_list = [Dynamic.FFF,Dynamic.FF,Dynamic.F,Dynamic.MF,
                     Dynamic.MP,Dynamic.P,Dynamic.PP,Dynamic.PPP]
-        if tab_cursor.dynamic in dyn_list:
-            i = dyn_list.index(tab_cursor.dynamic)
+        if tab_event.dynamic in dyn_list:
+            i = dyn_list.index(tab_event.dynamic)
             btn = self._dyn_btns[i]
             self._dyn_grp.check_btn(btn)
 
 
-    def __init__(self, tab_cursor : TabCursor, update_staff_and_tab):
+    def __init__(self, tab_event : TabEvent, update_staff_and_tab):
         super().__init__()
-        self._tab_cursor = tab_cursor
+        self._tab_event = tab_event
         self._lookup = {}
         self.update_staff_and_tab = update_staff_and_tab
         self.setFixedHeight(30)
@@ -301,7 +301,7 @@ class EditorToolbar(QToolBar):
         #self.bend_effect = BendEffectToolbarButton()
         #self.addWidget(self.bend_effect)
         
-        self.setTabCursor(tab_cursor)
+        self.setTabCursor(tab_event)
         self.addSeparator()
 
 
@@ -320,7 +320,7 @@ def unittest():
 
     mainwin = QMainWindow()
 
-    tc = TabCursor(6)
+    tc = TabEvent(6)
 
     et = EditorToolbar(tc)
     mainwin.setCentralWidget(et)

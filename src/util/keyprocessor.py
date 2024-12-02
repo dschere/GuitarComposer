@@ -1,6 +1,6 @@
 from PyQt6.QtCore import Qt
 
-from models.track import TabCursor
+from models.track import TabEvent
 from view.config import EditorKeyMap
 
 from music import dynamic
@@ -12,7 +12,7 @@ class KeyProcessor:
         self._buffer = []
         self._buf_maxlen = 3
 
-    def fret_value(self, key, tc: TabCursor):
+    def fret_value(self, key, tc: TabEvent):
         if key >= Qt.Key.Key_0 and key <= Qt.Key.Key_9: 
             if tc.fret[tc.string] == 1:
                 tc.fret[tc.string] = 10 + key - Qt.Key.Key_0
@@ -35,7 +35,7 @@ class KeyProcessor:
     PP  = [ord('p'),ord('p')]
     P   = [ord('p')]
 
-    def proc_dynamic(self, key: int, tc: TabCursor):
+    def proc_dynamic(self, key: int, tc: TabEvent):
         if key not in [ord('f'),ord('m'),ord('p')]:
             self._buffer = []
             return False
@@ -97,7 +97,7 @@ class KeyProcessor:
 
         return True
 
-    def proc(self, key, tc: TabCursor):
+    def proc(self, key, tc: TabEvent):
         km = EditorKeyMap()    
 
         # see if the key srokes form a dynamic setting
