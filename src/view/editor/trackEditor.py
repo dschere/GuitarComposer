@@ -154,8 +154,9 @@ class TrackEditor(QWidget):
         return self._widget_grid.get((row,col))
              
     def update_track_editor_content(self):
-        # force an update of the canvas
+        # force a repaint of widgets canvas
         self.canvas.update()
+        # set the focus of the cursor
         self.canvas.setFocus()
 
     def __init__(self):

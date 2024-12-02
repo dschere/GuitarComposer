@@ -20,7 +20,9 @@ from view.editor.glyphs.common import (
     DOUBLE_GHOST_NOTEHEAD,
     FORTE_SYMBOL,
     MEZZO_SYMBOL,
-    PIANO_SYMBOL
+    PIANO_SYMBOL,
+    STACCATO,
+    LEGATO
     )
 from PyQt6.QtWidgets import QToolBar, QPushButton, QSizePolicy
 from PyQt6.QtCore import pyqtSignal, QObject
@@ -178,6 +180,19 @@ class EditorToolbar(QToolBar):
             self._tab_cursor.dynamic = btn.pvalue()
         self.update_staff_and_tab()
 
+    def _articulation_selected(self, btn: ToolbarButton):
+        if btn.pname() == "clear-articulation":
+            self._tab_cursor.legato = False
+            self._tab_cursor.staccato = False
+        elif btn.pname() == "legato":
+            self._tab_cursor.legato = True
+            self._tab_cursor.staccato = False
+        elif btn.pname() == "staccato":
+            self._tab_cursor.legato = False
+            self._tab_cursor.staccato = True
+        self.update_staff_and_tab()
+
+
     def setTabCursor(self, tab_cursor : TabCursor):
         """
         set the tab cursor and react to any changes in data so 
@@ -272,11 +287,22 @@ class EditorToolbar(QToolBar):
         self.addSeparator()
 
         
+        self._articulation_group = MutuallyExclusiveButtonGroup()
+        self._articulation_btns = (
+            ToolbarButton(self, " ", "no articulation", "clear-articulation"),
+            ToolbarButton(self, LEGATO, "legato", "legato"),
+            ToolbarButton(self, STACCATO, "staccato", "staccato")
+        )
+        for btn in self._articulation_btns:
+            self._articulation_group.addButton(btn) 
+            self.addWidget(btn)
+        self._articulation_group.selected.connect(self._articulation_selected)    
+
         #self.bend_effect = BendEffectToolbarButton()
         #self.addWidget(self.bend_effect)
         
         self.setTabCursor(tab_cursor)
-
+        self.addSeparator()
 
 
 

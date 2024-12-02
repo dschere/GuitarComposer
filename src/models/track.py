@@ -1,7 +1,7 @@
 from music.constants import Dynamic
 from models.note import Note
 from typing import List, Optional
-
+from music.durationtypes import QUARTER, SIXTEENTH
 
 class TrackEvent:
     def __init__(self):
@@ -134,15 +134,21 @@ class TabCursor:
         self.beat = 1.0
         self.string = 5  # current string being edited
         self.fret = [-1] *  num_gstrings # current fret value
-        self.duration = 0.25
+        self.duration = QUARTER
         self.pitch_bend_histogram = [0] * self.BEND_PERIODS
+        self.pitch_bend_active = False
         self.presentation_col = 1
         self.dotted = False
         self.double_dotted = False
         self.dynamic = Dynamic.MP
         self.triplet = False
         self.quintuplet = False
-
+        self.legato = False
+        self.staccato = False
+        self.upstroke = False 
+        self.downstroke = False
+        self.stroke_duration = SIXTEENTH
+        
 
 class Track:
     def __init__(self):
