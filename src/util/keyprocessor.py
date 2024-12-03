@@ -123,6 +123,6 @@ class KeyProcessor:
                 tc.dotted = False
                 tc.double_dotted = True
         elif key in km.dur_lookup:
-            tc.duration = km.dur_lookup[key]
+            tc.note_duration = km.dur_lookup[key]
         else:
             self.fret_value(key, tc)
