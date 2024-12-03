@@ -65,6 +65,44 @@ class AudioClipEvent(TrackEvent):
         self.loop = False
         self.filename = ""
 
+class TabEvent(TrackEvent):
+    BEND_PERIODS = 13
+
+    REST = 0
+    NOTE = 1
+    CHORD = 2
+
+    def classify(self):
+        result = self.REST
+        for val in self.fret:
+            if val != -1:
+                result += 1
+                if result == self.CHORD:
+                    break
+        return result
+        
+
+    def __init__(self, num_gstrings):
+        super().__init__()
+
+        self.duration = QUARTER
+        self.string = 5  # current string being edited
+        self.fret = [-1] *  num_gstrings # current fret value
+        self.note_duration = QUARTER
+        self.pitch_bend_histogram = [0] * self.BEND_PERIODS
+        self.pitch_bend_active = False
+        self.presentation_col = 1
+        self.dotted = False
+        self.double_dotted = False
+        self.dynamic = Dynamic.MP
+        self.triplet = False
+        self.quintuplet = False
+        self.legato = False
+        self.staccato = False
+        self.upstroke = False 
+        self.downstroke = False
+        self.stroke_duration = SIXTEENTH
+        
 
 class TrackEventSequence:
     """ 
@@ -110,42 +148,6 @@ class TrackEventSequence:
             del self.sequence[beat]
 
 
-class TabEvent:
-    BEND_PERIODS = 13
-
-    REST = 0
-    NOTE = 1
-    CHORD = 2
-
-    def classify(self):
-        result = self.REST
-        for val in self.fret:
-            if val != -1:
-                result += 1
-                if result == self.CHORD:
-                    break
-        return result
-        
-
-    def __init__(self, num_gstrings):
-        self.beat = QUARTER
-        self.string = 5  # current string being edited
-        self.fret = [-1] *  num_gstrings # current fret value
-        self.duration = QUARTER
-        self.pitch_bend_histogram = [0] * self.BEND_PERIODS
-        self.pitch_bend_active = False
-        self.presentation_col = 1
-        self.dotted = False
-        self.double_dotted = False
-        self.dynamic = Dynamic.MP
-        self.triplet = False
-        self.quintuplet = False
-        self.legato = False
-        self.staccato = False
-        self.upstroke = False 
-        self.downstroke = False
-        self.stroke_duration = SIXTEENTH
-        
 
 class Track:
     def __init__(self):
@@ -161,14 +163,47 @@ class Track:
         ]
         # beats from start of track -> [events]
         self.sequence = TrackEventSequence()
+        self.active_beat = 0
+        #self.tab_event = TabEvent(len(self.tuning))
+    
+    def createTabEvent(self, inherit = None) -> TrackEvent:
+        te = TabEvent(len(self.tuning))
+        if inherit:
+            te.note_duration = inherit.note_duration
+            te.dynamic = inherit.dynamic 
+            te.legato = inherit.legato
+            te.staccato = inherit.stacatto
+            te.triplet = inherit.triplet
+            te.quintuplet = inherit.quintuplet
+        return te
 
-        self.tab_event = TabEvent(len(self.tuning))
 
     def setTuning(self, tuning):
-        self.tuning = tuning    
+        self.tuning = tuning  
 
-    def getTabEvent(self) -> TabEvent:
-        return self.tab_event
+    def getActiveBeat(self):
+        return self.active_beat
+    
+    def setActiveBeat(self, beat):
+        if self.sequence.get(beat):
+            self.active_beat = beat
+        else:
+            raise ValueError("There is no track event for beat value %d" % beat)
+
+    def getTabEvent(self, beat = None) -> TabEvent:
+        """
+        get the tablature event for a given beat  
+        """
+        if not beat:
+            beat = self.active_beat 
+        teList = self.sequence.get(beat)
+        if teList:
+            for te in teList:
+                if isinstance(te,TabEvent):
+                    return te
+                
+        raise ValueError("No track event for beat value %d" % beat)
+
 
     def getSequence(self) -> TrackEventSequence:
         return self.sequence

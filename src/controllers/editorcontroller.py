@@ -35,8 +35,6 @@ class EditorController:
             te : TrackEditor = self.track_editor 
             tc = tmodel.getTabEvent()
             nstring = len(tmodel.tuning)
-            # if fret value, add a note for this chord
-            #  ...
 
             # change the string we are pointing to
             tc.string = (tc.string - inc) % nstring
@@ -44,21 +42,24 @@ class EditorController:
             # move the rectangle select box on the tableture
             te.setSelectRegion(tc.presentation_col, tc.string)
 
-            # clear the fret value
-            #tc.fret = -1
-
-
     def update(self, tmodel: Track | None, editor: TrackEditor | None):
         if tmodel and editor:
             # get the current staff value from the model
             seq = tmodel.getSequence()
-            tcur = tmodel.getTabEvent()
 
-            # in the caseof an empty track sequence add a default staff
+            # in the case of an empty track sequence add a default staff
+            # and a default TabEvent 
             staff = StaffEvent()
             evtList = seq.get(0)
             if not evtList:
+                # add a default staff 
                 seq.add(0, staff)
+                # create a empty tab event
+                te = tmodel.createTabEvent()
+                seq.add(0, te) 
+                # set the active beat to the beginning
+                tmodel.setActiveBeat(0)
+                
             else:
                 # otherwise find the existing staff
                 for tevt in evtList:
@@ -67,11 +68,13 @@ class EditorController:
                         break
             # set the staff header        
             editor.setHeader(staff)
+
             #TODO set the remaining tablature 
             # ...
              
             # set the box that indicates where key events will be
             # applied on the staff. 
+            tcur = tmodel.getTabEvent()
             editor.setBlankSelectRegion(tcur, tcur.presentation_col)
 
     def add_model(self, evt: EditorEvent):
@@ -113,7 +116,7 @@ class EditorController:
         elif tedit and tmodel:
             te : TabEvent = tmodel.getTabEvent()
             seq : TrackEventSequence = tmodel.getSequence()
-
+ 
             # use the key to update the tablature cursor
             self.key_proc.proc(key, te) 
             # render fret number

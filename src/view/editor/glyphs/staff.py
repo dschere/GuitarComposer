@@ -47,7 +47,7 @@ class StaffGlyph(Canvas):
             if fret != -1:
                 base_midi_code = self.tuning[gstring]
                 midi_code = midi_codes.midi_code(base_midi_code) + fret
-                r.draw_note(painter, midi_code, self.accent, tc.duration)
+                r.draw_note(painter, midi_code, self.accent, tc.note_duration)
                 break
 
     def _render_chord(self, painter):
@@ -64,19 +64,19 @@ class StaffGlyph(Canvas):
 
         # draw note heads
         for midi_code in midi_list:
-            r.draw_notehead(painter, midi_code, self.accent, tc.duration)
+            r.draw_notehead(painter, midi_code, self.accent, tc.note_duration)
 
         # if duration quarter or smaller draw connecting line.
         # the greated midi note is drawn as a quarter note with its staff 
-        if tc.duration != 4.0:
+        if tc.note_duration != 4.0:
             r.draw_stem_line(painter, midi_list, self.accent)        
-            r.draw_note(painter, midi_list[-1], self.accent, tc.duration)    
+            r.draw_note(painter, midi_list[-1], self.accent, tc.note_duration)    
 
 
     def _render_rest(self, painter):
         r : note_renderer = self._get_renderer()
         tc : TabEvent = self.te
-        r.draw_rest(painter, tc.duration)
+        r.draw_rest(painter, tc.note_duration)
         
 
     def canvas_paint_event(self, painter):

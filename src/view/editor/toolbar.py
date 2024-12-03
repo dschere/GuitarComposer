@@ -148,7 +148,7 @@ class EditorToolbar(QToolBar):
         elif self._tab_event.quintuplet:
             n *= 0.2
 
-        self._tab_event.beat = n * self._tab_event.duration            
+        self._tab_event.duration = n * self._tab_event.note_duration            
         
 
     def _dot_selected(self, btn: ToolbarButton):
@@ -171,7 +171,7 @@ class EditorToolbar(QToolBar):
 
     def _on_duration_selected(self, btn: ToolbarButton):
         if btn.pname() == "duration":
-            self._tab_event.duration = btn.pvalue() # type: ignore
+            self._tab_event.note_duration = btn.pvalue() # type: ignore
             self._compute_beat() 
         self.update_staff_and_tab()
 
@@ -203,8 +203,8 @@ class EditorToolbar(QToolBar):
 
         # set the matching duration
         dlist = [4.0, 2.0, 1.0, 0.5, 0.25, 0.125, 0.0625]
-        if tab_event.duration in dlist:
-            i = dlist.index(tab_event.duration)
+        if tab_event.note_duration in dlist:
+            i = dlist.index(tab_event.note_duration)
             btn = self._dur_btns[i]
             self._dur_grp.check_btn(btn) 
 
