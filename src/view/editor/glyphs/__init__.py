@@ -17,5 +17,5 @@
 """
 
 from .common import TREBLE_CLEFF, BASS_CLEFF, DRUM_CLEFF
-from .staff import StaffHeaderGlyph, StaffGlyph
+from .staff import StaffHeaderGlyph, StaffGlyph, StaffMeasureBarlines
 from .tableture import TabletureGlyph

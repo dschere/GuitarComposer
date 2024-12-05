@@ -66,6 +66,7 @@ class AudioClipEvent(TrackEvent):
         self.filename = ""
 
 class TabEvent(TrackEvent):
+    FIRST_NOTE_COLUMN = 2
     BEND_PERIODS = 13
 
     REST = 0
@@ -91,7 +92,7 @@ class TabEvent(TrackEvent):
         self.note_duration = QUARTER
         self.pitch_bend_histogram = [0] * self.BEND_PERIODS
         self.pitch_bend_active = False
-        self.presentation_col = 1
+        self.presentation_col = self.FIRST_NOTE_COLUMN
         self.dotted = False
         self.double_dotted = False
         self.dynamic = Dynamic.MP
@@ -164,9 +165,10 @@ class Track:
         # beats from start of track -> [events]
         self.sequence = TrackEventSequence()
         self.active_beat = 0
-        #self.tab_event = TabEvent(len(self.tuning))
+
+
     
-    def createTabEvent(self, inherit = None) -> TrackEvent:
+    def createTabEvent(self, inherit = None, col=None) -> TabEvent:
         te = TabEvent(len(self.tuning))
         if inherit:
             te.note_duration = inherit.note_duration
@@ -175,8 +177,12 @@ class Track:
             te.staccato = inherit.stacatto
             te.triplet = inherit.triplet
             te.quintuplet = inherit.quintuplet
+        if col:
+            te.presentation_col = col
         return te
 
+    def computeMidiCode(self, te : TabEvent):
+        raise FutureWarning("TODO: compute midi code based on tuning")
 
     def setTuning(self, tuning):
         self.tuning = tuning  

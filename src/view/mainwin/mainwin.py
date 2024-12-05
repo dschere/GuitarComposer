@@ -2,7 +2,8 @@ import sys
 from PyQt6.QtCore import Qt, QSettings
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QToolBar, QTabWidget,
-    QWidget, QSplitter, QStatusBar, QVBoxLayout,
+    QWidget, QSplitter, QStatusBar, QVBoxLayout, 
+    QMenuBar, QMenu
 )
 from PyQt6.QtGui import QAction, QKeyEvent
 
@@ -20,10 +21,12 @@ from view.editor.trackEditor import TrackEditor
 class MainWindow(QMainWindow):
     def create_menubar(self):
         # Create the menu bar
-        menu_bar = self.menuBar()
-
+        menu_bar : QMenuBar | None = self.menuBar()
+        assert(menu_bar)
         # File menu
-        file_menu = menu_bar.addMenu("File")
+        file_menu : QMenu | None = menu_bar.addMenu("File")
+        assert(file_menu)
+
         new_action = QAction("New", self)
         open_action = QAction("Open", self)
         save_action = QAction("Save", self)
@@ -37,7 +40,9 @@ class MainWindow(QMainWindow):
         file_menu.addAction(exit_action)
 
         # Edit menu
-        edit_menu = menu_bar.addMenu("Edit")
+        edit_menu : QMenu | None = menu_bar.addMenu("Edit")
+        assert(edit_menu)
+
         undo_action = QAction("Undo", self)
         redo_action = QAction("Redo", self)
         cut_action = QAction("Cut", self)
@@ -52,7 +57,8 @@ class MainWindow(QMainWindow):
         edit_menu.addAction(paste_action)
 
         # View menu
-        view_menu = menu_bar.addMenu("View")
+        view_menu : QMenu | None = menu_bar.addMenu("View")
+        assert(view_menu)
         fullscreen_action = QAction("Full Screen", self)
         normal_action = QAction("Normal Size", self)
 
@@ -63,7 +69,8 @@ class MainWindow(QMainWindow):
         view_menu.addAction(normal_action)
 
         # Tools menu
-        tools_menu = menu_bar.addMenu("Tools")
+        tools_menu : QMenu | None = menu_bar.addMenu("Tools")
+        assert(tools_menu)
         settings_action = QAction("Settings", self)
         options_action = QAction("Options", self)
 
@@ -75,16 +82,26 @@ class MainWindow(QMainWindow):
 
     _shift_key = False
 
-    def keyReleaseEvent(self, a0: QKeyEvent | None) -> None:
-        if Qt.Key.Key_Shift == a0.key():
+    def keyReleaseEvent(self, event: QKeyEvent) -> None:
+        key = event.key()
+        if Qt.Key.Key_Shift == key:
             self._shift_key = False
-        return super().keyReleaseEvent(a0)
+        # generate key event for right/left arrows on key release
+        elif key in (Qt.Key.Key_Left, Qt.Key.Key_Right):
+            e_evt = EditorEvent()
+            e_evt.ev_type = EditorEvent.KEY_EVENT
+            e_evt.key = key
+            Signals.editor_event.emit(e_evt) 
+
+        return super().keyReleaseEvent(event)
 
     def keyPressEvent(self, event: QKeyEvent):
         editor_keymap = EditorKeyMap()
         if editor_keymap.isEditorInput(event):
             key = event.key()
-            if key == Qt.Key.Key_Shift:
+            if key in (Qt.Key.Key_Left, Qt.Key.Key_Right):
+                pass
+            elif key == Qt.Key.Key_Shift:
                 self._shift_key = True
             else:
                 if not self._shift_key and ord('Z') >= key >= ord('A'):     

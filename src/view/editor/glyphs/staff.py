@@ -1,13 +1,62 @@
 from view.editor.glyphs.common import (STAFF_SYM_WIDTH, STAFF_HEIGHT,
                                        STAFF_HEADER_WIDTH, STAFF_LINE_SPACING, STAFF_ABOVE_LINES, QUATER_NOTE, TREBLE_CLEFF,
                                        SymFontSize, KeyMidiCodeTable, SHARP_SIGN, FLAT_SIGN, STAFF_NUMBER_OF_LINES,
-                                       BARLINE2
+                                       BARLINE2, BARLINE1, START_REPEAT,
+    END_REPEAT
                                        )
 
 from view.editor.glyphs.canvas import Canvas
 from models.track import StaffEvent, TabEvent, Track
 from view.editor.glyphs.note_renderer import note_renderer
 from src.util.midi import midi_codes
+from view.events import Signals, EditorEvent 
+
+class StaffMeasureBarlines(Canvas):
+    START_OF_STAFF = 0
+    END_MEASURE = 1
+    BEGIN_REPEAT = 2
+    END_REPEAT = 3
+
+
+    def __init__(self, measure: int, mtype : int, repeat_count : int = 1):
+        super().__init__(STAFF_SYM_WIDTH, STAFF_HEIGHT)
+        self.measure = measure
+        self.mtype = mtype
+        self.repeat_count = repeat_count
+
+    def mousePressEvent(self, event):
+        e = EditorEvent()
+        e.ev_type = EditorEvent.MEASURE_CLICKED
+        e.measure = self.measure
+        Signals.editor_event.emit(e)
+        
+        
+    def canvas_paint_event(self, painter):
+        self.draw_staff_background(painter)
+        text = BARLINE2
+        repeat_text = None
+
+        if self.mtype == self.END_MEASURE:
+            text = BARLINE1
+        elif self.mtype == self.BEGIN_REPEAT:
+            text = START_REPEAT  
+        elif self.mtype == self.END_REPEAT:
+            text = END_REPEAT
+            repeat_text = str(self.repeat_count)     
+
+        x=7
+        size = ((STAFF_NUMBER_OF_LINES-1) * STAFF_LINE_SPACING)
+        top_line = STAFF_ABOVE_LINES * STAFF_LINE_SPACING
+        bottom_line = top_line + (STAFF_NUMBER_OF_LINES-1) * STAFF_LINE_SPACING
+        self.draw_symbol(painter, str(self.measure), x=5, 
+            y=top_line-10, draw_lines=False, size=12 )         
+        self.draw_symbol(painter, text, x=x, y=bottom_line, size=size)
+
+        if repeat_text:
+            self.draw_symbol(painter, str(self.repeat_count),
+                x=x, y=bottom_line+13, size=12, bold=True, 
+                draw_lines=False)
+        
 
 
 class StaffGlyph(Canvas):
@@ -134,8 +183,8 @@ class StaffHeaderGlyph(Canvas):
 
         # draw the two verticle lines that mark the end of the
         # the staff header
-        x += 7
-        size = ((STAFF_NUMBER_OF_LINES-1) * STAFF_LINE_SPACING)
-        top_line = STAFF_ABOVE_LINES * STAFF_LINE_SPACING
-        bottom_line = top_line + (STAFF_NUMBER_OF_LINES-1) * STAFF_LINE_SPACING
-        self.draw_symbol(painter, BARLINE2, x=x, y=bottom_line, size=size)
+        # x += 7
+        # size = ((STAFF_NUMBER_OF_LINES-1) * STAFF_LINE_SPACING)
+        # top_line = STAFF_ABOVE_LINES * STAFF_LINE_SPACING
+        # bottom_line = top_line + (STAFF_NUMBER_OF_LINES-1) * STAFF_LINE_SPACING
+        # self.draw_symbol(painter, BARLINE2, x=x, y=bottom_line, size=size)

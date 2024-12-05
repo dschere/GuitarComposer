@@ -14,13 +14,6 @@ from models.track import Track, StaffEvent, TabEvent, TrackEventSequence
 from view.editor.trackEditor import TrackEditor
 from util.keyprocessor import KeyProcessor
 
-class Cursor:
-    def __init__(self):
-        self.row = 0
-        self.col = 0
-        self.glyph = None
-        self.text = ""
-
 
 class EditorController:
 
@@ -40,9 +33,13 @@ class EditorController:
             tc.string = (tc.string - inc) % nstring
 
             # move the rectangle select box on the tableture
-            te.setSelectRegion(tc.presentation_col, tc.string)
+            te.drawSelectRegion(tc.presentation_col, tc.string)
 
     def update(self, tmodel: Track | None, editor: TrackEditor | None):
+        """ 
+        Called in response for when a track has been activated to render a score
+        for that track.
+        """
         if tmodel and editor:
             # get the current staff value from the model
             seq = tmodel.getSequence()
@@ -54,8 +51,8 @@ class EditorController:
             if not evtList:
                 # add a default staff 
                 seq.add(0, staff)
-                # create a empty tab event
-                te = tmodel.createTabEvent()
+                # create a empty tab event, set the presentation column to 1
+                te : TabEvent = tmodel.createTabEvent()
                 seq.add(0, te) 
                 # set the active beat to the beginning
                 tmodel.setActiveBeat(0)
@@ -67,15 +64,18 @@ class EditorController:
                         staff = tevt
                         break
             # set the staff header        
-            editor.setHeader(staff)
+            editor.drawHeader(staff)
+            editor.drawFirstMeasure(1,1)
+            te.presentation_col = 2
 
-            #TODO set the remaining tablature 
-            # ...
+            #TODO 
+            # render entire track 
              
+            #-- throw away code. 
             # set the box that indicates where key events will be
             # applied on the staff. 
-            tcur = tmodel.getTabEvent()
-            editor.setBlankSelectRegion(tcur, tcur.presentation_col)
+            te = tmodel.getTabEvent()
+            editor.drawBlankSelectRegion(te, te.presentation_col)
 
     def add_model(self, evt: EditorEvent):
         self.track_model = evt.model
@@ -86,19 +86,16 @@ class EditorController:
     def add_editor(self, evt: EditorEvent):
         self.track_editor = evt.track_editor
 
-    def update_cursor(self):
-        tedit : TrackEditor | None = self.track_editor
-        if tedit:
-            tmodel : Track = self.track_model
-            te : TabEvent = tmodel.getTabEvent()
-            seq : TrackEventSequence = tmodel.getSequence()
-            tedit.setFretValue(te.presentation_col, te.string, te.fret[te.string])
-            # update the toolbar if this was a duration/dynamic change
-            # which has the cleff and key (sharps and flats)
-            staff_event = seq.getActiveStaff(self.cursor_beat_pos)
-            if staff_event:
-                # render staff: notes, chords, rests etc.
-                tedit.renderStaffEngraving(staff_event, tmodel, te.presentation_col)
+    def key_right_handler(self):
+        # get the current tab event
+        # compute the beat pos, determine if we need to draw a new measure
+        # if yes
+        #    insert a measure divider
+        # create a new one inheriting some information from current
+        # compute column -> old column + 1 or 2 if new measure
+        # insert new blank tab, position cursor on new tab.
+        # update beat -> column table for quick lookup.  
+        pass    
 
     def keyboard_event(self, evt: EditorEvent):
         tedit : TrackEditor | None = self.track_editor
@@ -120,7 +117,7 @@ class EditorController:
             # use the key to update the tablature cursor
             self.key_proc.proc(key, te) 
             # render fret number
-            tedit.setFretValue(te.presentation_col, te.string, te.fret[te.string])
+            tedit.drawFretValue(te.presentation_col, te.string, te.fret[te.string])
             # update the toolbar if this was a duration/dynamic change
             tedit.setToolbar(te)
             # update staff notation, get the active staff header
@@ -128,18 +125,21 @@ class EditorController:
             staff_event = seq.getActiveStaff(self.cursor_beat_pos)
             if staff_event:
                 # render staff: notes, chords, rests etc.
-                tedit.renderStaffEngraving(staff_event, tmodel, te.presentation_col)
+                tedit.drawStaffEngraving(staff_event, te, te.presentation_col, tmodel.tuning)
         
     def tuning_change(self, evt: EditorEvent):
         if evt.tuning and self.track_model:
             self.track_model.tuning = evt.tuning
  
+    def measure_clicked(self, evt: EditorEvent):
+        print(evt.measure)
 
     dispatch = {
         EditorEvent.ADD_MODEL: add_model,
         EditorEvent.ADD_TRACK_EDITOR: add_editor,
         EditorEvent.KEY_EVENT: keyboard_event,
-        EditorEvent.TUNING_CHANGE: tuning_change
+        EditorEvent.TUNING_CHANGE: tuning_change,
+        EditorEvent.MEASURE_CLICKED: measure_clicked
     }
 
     def editor_event(self, evt: EditorEvent):
@@ -157,6 +157,10 @@ class EditorController:
         self.track_editor = None
         # track model -> cursor
         self.key_proc = KeyProcessor()
-        self.cursor_beat_pos = 0
 
+        # book keeping for the tab cursor 
+        self.cursor_beat_pos = 0
+        self.cursor_col_pos = TabEvent.FIRST_NOTE_COLUMN
+        self.col_to_beat = {} 
+        
         Signals.editor_event.connect(self.editor_event)
