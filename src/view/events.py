@@ -47,17 +47,20 @@ class InstrumentSelectedEvent:
 
 
 class EditorEvent:
+    UNINITIALIZED = -1
     ADD_MODEL = 0
     ADD_TRACK_EDITOR = 1
     KEY_EVENT = 2
     TUNING_CHANGE = 3
+    MEASURE_CLICKED = 4
 
     def __init__(self):
-        self.ev_type = None
+        self.ev_type = self.UNINITIALIZED
         self.model = None
         self.track_editor = None
         self.key = -1
         self.tuning = None
+        self.measure = 1
 
 global _toolbar_button_update
 

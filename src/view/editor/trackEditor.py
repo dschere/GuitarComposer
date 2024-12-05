@@ -79,6 +79,7 @@ from models.track import StaffEvent, TabEvent, Track
 from view.editor.toolbar import EditorToolbar
 #from pkg_resources._vendor.more_itertools.more import stagger
 from view.editor.glyphs.ornamental_markings import oramental_markings
+from typing import List
 
         
 
@@ -98,15 +99,41 @@ class TrackEditor(QWidget):
             y = event.position().y()
             print(f"Mouse clicked at: x={x}, y={y}")
     """
-            
-    def setHeader(self, se : StaffEvent, col = 0):
+
+    def drawFirstMeasure(self, measure =1, col = 1):
+        g = glyphs.StaffMeasureBarlines(measure,
+                glyphs.StaffMeasureBarlines.START_OF_STAFF)
+        row = self.STAFF_ROW
+        self._grid_layout.addWidget(g, row, col)
+
+    def drawMeasure(self, measure =1, col = 1):
+        g = glyphs.StaffMeasureBarlines(measure,
+                glyphs.StaffMeasureBarlines.END_MEASURE)
+        row = self.STAFF_ROW
+        self._grid_layout.addWidget(g, row, col)
+
+    def drawBeginRepeat(self, measure = 1, col = 1):
+        g = glyphs.StaffMeasureBarlines(measure,
+                glyphs.StaffMeasureBarlines.BEGIN_REPEAT)
+        row = self.STAFF_ROW
+        self._grid_layout.addWidget(g, row, col)
+
+    def drawEndRepeat(self, measure = 1, col = 1, count = 1):
+        g = glyphs.StaffMeasureBarlines(measure,
+                glyphs.StaffMeasureBarlines.END_REPEAT, 
+                repeat_count=count)
+        row = self.STAFF_ROW
+        self._grid_layout.addWidget(g, row, col)
+
+
+    def drawHeader(self, se : StaffEvent, col = 0):
         symbol = se.cleff
         row = self.STAFF_ROW
         # todo, determine symbol based on instrument assigned to track.
         g = glyphs.StaffHeaderGlyph(symbol,se.key,se.signature,se.bpm)
         self._grid_layout.addWidget(g, row, col)
 
-    def setBlankSelectRegion(self, tc: TabEvent, col=1, gstring=5):
+    def drawBlankSelectRegion(self, tc: TabEvent, col=2, gstring=5):
         """ 
         Sets up an empty region for editing a code/note/rest which includes
         both tablature and staff.
@@ -119,7 +146,7 @@ class TrackEditor(QWidget):
         self._grid_add(tab, self.TAB_ROW, col)
         tab.set_cursor(gstring)
 
-    def setSelectRegion(self, col : int , gstring : int):
+    def drawSelectRegion(self, col : int , gstring : int):
         """ 
         Move editing region on tableture, do auto scrolling if nessessary if
         edit region is no longer visible.
@@ -128,12 +155,12 @@ class TrackEditor(QWidget):
         if tab:
             tab.set_cursor(gstring)
 
-    def setFretValue(self, col : int, gstring : int, fret : int):
+    def drawFretValue(self, col : int, gstring : int, fret : int):
         tab = self._grid_get(self.TAB_ROW, col)
         if tab:
             tab.set_tab_note(gstring, fret)
 
-    def renderStaffEngraving(self, se: StaffEvent, tmodel: Track, col: int):
+    def drawStaffEngraving(self, se: StaffEvent, te: TabEvent, col: int, tuning: List[str]):
         """ 
         Performs the work of rendering music notation based on tableture
         information. The controller will generatr Note|Chord events based
@@ -141,7 +168,7 @@ class TrackEditor(QWidget):
         """
         staff_glyph = self._grid_get(self.STAFF_ROW, col)
         if staff_glyph and isinstance(staff_glyph, StaffGlyph):
-            staff_glyph.setup(se, tmodel.getTabEvent(), tmodel.tuning)
+            staff_glyph.setup(se, te, tuning)
 
     def setToolbar(self, tc: TabEvent):
         self.toolbar.setTabCursor(tc)
