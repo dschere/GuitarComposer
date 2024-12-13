@@ -7,7 +7,7 @@ from PyQt6.QtCore import Qt
 from singleton_decorator import singleton
 
 from models.note import Note
-from models.track import TabEvent
+from models.track import Track
 
 
 class ScaleSelectedEvent:
@@ -90,6 +90,7 @@ class _Signals(QObject):
     theme_change = pyqtSignal(object)
 
     editor_event = pyqtSignal(EditorEvent)
+    track_update = pyqtSignal(Track)
 
 
 
