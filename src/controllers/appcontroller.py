@@ -7,7 +7,7 @@ import uuid
 import logging
 
 from PyQt6.QtGui import QStandardItemModel, QStandardItem, QIcon
-from PyQt6.QtCore import QSettings
+from PyQt6.QtCore import QSettings, pyqtSignal
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QMessageBox
 
@@ -23,11 +23,28 @@ FRETBOARD_CHANNEL = 0
 
 
 class SongController:
+
+    def on_track_change(self, track: Track):
+        """
+        Ensure that the same number of measures and beats exists
+        for all tracks after a track has has a new element added
+        or removed from it.
+
+        If poly ythm tracks is enabled there is no synthchronization.
+        different tracks may have independent time signatures. 
+        
+        """
+        if not self.song.poly_rythm_tracks:
+            pass
+
     def __init__(self, title):
         self.song = Song()
         self.song.title = title
         self.instruments = {}
         self.q_model = None
+
+        Signals.track_update.connect(self.on_track_change)
+
 
     def setTitle(self, title):
         self.song.title = title

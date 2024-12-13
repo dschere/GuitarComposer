@@ -6,3 +6,4 @@ class Song:
         self.tracks = []
         self.title = "noname"
         self.author = ""
+        self.poly_rythm_tracks = False
