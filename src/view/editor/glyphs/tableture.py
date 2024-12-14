@@ -1,13 +1,59 @@
 
 from PyQt6.QtGui import QColor
 from view.editor.glyphs.canvas import Canvas
-from view.editor.glyphs.common import (STAFF_SYM_WIDTH,
+from view.editor.glyphs.common import (STAFF_HEADER_WIDTH, STAFF_SYM_WIDTH,
                                        STAFF_HEIGHT, TABLATURE_LINE_SPACE, TABLATURE_NUM_LINES
                                        )
 
 from view.config import GuitarFretboardStyle
 from view.editor.glyphs.ornamental_markings import oramental_markings
 
+
+class TabletureMeasure(Canvas):
+    def __init__(self):
+        super().__init__(STAFF_SYM_WIDTH, STAFF_HEIGHT+15)
+
+    def draw_tableture_backround(self, painter):
+        p = painter.pen()
+        p.setWidth(1)
+        p.setColor(self.pen_color)
+        painter.setPen(p)
+
+        offset = 15
+        for line_num in range(TABLATURE_NUM_LINES):
+            y = line_num * TABLATURE_LINE_SPACE + offset
+            # print(f"0 {y} {self.width} {y}")
+            painter.drawLine(0, y, self.width(), y)
+
+    def canvas_paint_event(self, painter):
+        self.draw_tableture_backround(painter)
+        painter.drawLine(
+            int(self.width()/2),
+            15,
+            int(self.width()/2),
+            15 * TABLATURE_NUM_LINES
+        )
+
+
+class TabletureHeader(Canvas):
+    def __init__(self):
+        super().__init__(STAFF_HEADER_WIDTH, STAFF_HEIGHT+15)
+
+    def draw_tableture_backround(self, painter):
+        p = painter.pen()
+        p.setWidth(1)
+        p.setColor(self.pen_color)
+        painter.setPen(p)
+
+        offset = 15
+        for line_num in range(TABLATURE_NUM_LINES):
+            y = line_num * TABLATURE_LINE_SPACE + offset
+            # print(f"0 {y} {self.width} {y}")
+            painter.drawLine(0, y, self.width(), y)
+
+    def canvas_paint_event(self, painter):
+        self.draw_tableture_backround(painter)
+        
 
 class TabletureGlyph(Canvas):
     CURSOR_COLOR = QColor(*GuitarFretboardStyle.scale_root_color_rgb)
@@ -49,14 +95,17 @@ class TabletureGlyph(Canvas):
             painter.drawLine(0, y, self.width(), y)
 
     def draw_cursor(self, painter):
+        gstring = self._cursor
+        if type(gstring) == type(None):
+            return
+
         p = painter.pen()
         p.setWidth(2)
         p.setColor(self.CURSOR_COLOR)
         painter.setPen(p)
 
         # Must be called before draw_tab_notes
-        gstring = self._cursor
-        assert gstring != None
+        
         x = int(self.c_width * 0.22)
         width = int(2*self.c_width/3)
         n = gstring  # type: ignore

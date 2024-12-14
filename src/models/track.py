@@ -1,3 +1,4 @@
+import logging
 from music.constants import Dynamic
 from typing import List, Optional
 from music.durationtypes import (WHOLE, 
@@ -45,6 +46,7 @@ class MeasureEvent(TrackEvent):
         self.start_repeat = False
         self.end_repeat = False
         self.repeat_count = 1
+        self.measure_number = 1
 
 
 class ChordEvent(TrackEvent):
@@ -134,7 +136,14 @@ class TabEvent(TrackEvent):
          r.quintuplet, 
          r.duration) = DurationTable.nearest(t) 
         return r
-
+    
+    def clone(self):
+        r = copy.deepcopy(self)
+        r.fret = [-1] * self.num_gstrings  # current fret value
+        r.tied_notes = [-1] * self.num_gstrings
+        r.pitch_bend_histogram = [0] * self.BEND_PERIODS
+        r.pitch_bend_active = False
+        return r 
 
     def __init__(self, num_gstrings):
         super().__init__()
@@ -156,6 +165,8 @@ class TabEvent(TrackEvent):
         self.upstroke = False
         self.downstroke = False
         self.stroke_duration = SIXTEENTH
+
+        self.num_gstrings = num_gstrings
 
     def beats(self, beat_note_dur: float):
         # If 6/8 time, then beat_note_dur is 0.5 so 
@@ -201,22 +212,28 @@ class TrackEventSequence:
         # moment -> list of events
         self.data = OrderedDict()
 
+    def isEmpty(self):
+        return len(self.data) == 0    
+
     def search(self, moment: int, direction: int, event_type: int):
-        "search beat list for a specific event type, return (beat,evt)"
+        "search beat list for a specific event type, return (moment,evt)"
         assert (event_type in self._lookup)
         assert (direction in (self.FORWARD, self.BACKWARD))
+        
         if moment in self.data:
             klass = self._lookup[event_type]
             keys = list(self.data.keys())
             if direction == self.FORWARD:
                 mlist = keys[moment:]
             else:
-                mlist = keys[:moment]
+                mlist = keys[:moment+1]
                 mlist.reverse()
+            logging.debug(f"klass = {klass}, mlist = {mlist}, data = {self.data}")
             for m in mlist:
                 for evt in self.data[m]:
                     if isinstance(evt, klass):
                         return (m, evt)
+
         return (None, None)
 
     def getActiveStaff(self, moment) -> StaffEvent | None:
@@ -237,6 +254,13 @@ class TrackEventSequence:
         for evt in self.data.get(moment,[]):
             if isinstance(evt, klass):
                 return evt
+            
+    def getBeats(self, moment: int, beat_note_dur: float):
+        beats = 0
+        te = self.getEvent(moment, self.TAB_EVENT)
+        if te:
+            beats = te.beats(beat_note_dur) 
+        return beats
 
     def remove(self, moment: int, evt=None):
         if evt:
@@ -273,6 +297,7 @@ class Track:
         self.active_moment = 0
         # for visual placement 
         self.presentation_column = self.FIRST_NOTE_COLUMN
+        
 
     def getPresCol(self) -> int:
         return self.presentation_column
@@ -297,15 +322,11 @@ class Track:
     def setTuning(self, tuning):
         self.tuning = tuning
 
-    def getActiveMoment(self):
+    def getMoment(self):
         return self.active_moment
 
-    def setActiveMoment(self, moment):
-        if self.sequence.get(moment):
-            self.active_moment = moment
-        else:
-            raise ValueError(
-                "There is no track event for moment value %d" % moment)
+    def setMoment(self, moment):
+        self.active_moment = moment
 
     def getTabEvent(self, moment=None) -> TabEvent:
         """

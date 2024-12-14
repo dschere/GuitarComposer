@@ -1,5 +1,5 @@
 from PyQt6 import QtGui
-from PyQt6.QtWidgets import QLabel
+from PyQt6.QtWidgets import QLabel, QSizePolicy
 
 
 from view.editor.glyphs.common import (FLAT_SIGN,
@@ -33,9 +33,9 @@ class Canvas(QLabel):
         self.setFixedWidth(width)
         self.setFixedHeight(height)
 
+
     # virtual method to be overloaded by children classes to call various
     # api comamnds below (draw_<operation> methods)
-
     def canvas_paint_event(self, painter):
         pass
 
