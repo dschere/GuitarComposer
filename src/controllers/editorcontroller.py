@@ -8,6 +8,7 @@ for track events to be rendered.
 import logging
 from PyQt6.QtCore import Qt
 
+from view.editor.sequenceRenderer import SequenceRenderer
 from view.config import EditorKeyMap
 from view.events import Signals, EditorEvent
 from models.track import Track, StaffEvent, TabEvent, TrackEventSequence
@@ -28,7 +29,7 @@ class EditorController:
             te : TrackEditor = self.track_editor 
             tc = tmodel.getTabEvent()
             nstring = len(tmodel.tuning)
-
+            print(f"nstring = {nstring}")
             # change the string we are pointing to
             tc.string = (tc.string - inc) % nstring
 
@@ -41,104 +42,49 @@ class EditorController:
         for that track.
         """
         if tmodel and editor:
-            # get the current staff value from the model
-            seq = tmodel.getSequence()
-
-            # in the case of an empty track sequence add a default staff
-            # and a default TabEvent 
-            staff = StaffEvent()
-            evtList = seq.get(0)
-            if not evtList:
-                # add a default staff 
-                seq.add(0, staff)
-                # create a empty tab event, set the presentation column to 1
-                te : TabEvent = tmodel.createTabEvent()
-                seq.add(0, te) 
-                # set the active moment to the beginning
-                tmodel.setActiveMoment(0)
-                
-            else:
-                # otherwise find the existing staff
-                for tevt in evtList:
-                    if isinstance(tevt, StaffEvent):
-                        staff = tevt
-                        break
-            # set the staff header        
-            editor.drawHeader(staff)
-            editor.drawFirstMeasure(1,1)
-            tmodel.setPresCol(2)
-
-            #TODO 
-            # render entire track 
-             
-            #-- throw away code. 
-            # set the box that indicates where key events will be
-            # applied on the staff. 
-            te = tmodel.getTabEvent()
-            editor.drawBlankSelectRegion(te, tmodel.getPresCol())
-
+            self.sequence_renderer = SequenceRenderer(tmodel, editor)
+            self.sequence_renderer.initialize()
+            
     def add_model(self, evt: EditorEvent):
         self.track_model = evt.model
         self.update(self.track_model, self.track_editor)
-        if self.track_editor:
+        if self.track_editor and self.track_model:
             self.track_editor.setFocus()
 
     def add_editor(self, evt: EditorEvent):
         self.track_editor = evt.track_editor
 
     def key_right_handler(self):
-        tmodel : Track | None = self.track_model
-        if not tmodel:
-            logging.error("tmodel is null")
-            return
-        staff_event : StaffEvent | None = \
-            tmodel.getSequence().getActiveStaff(tmodel.getMoment())
-        if not staff_event:
-            logging.error("can't find staff_event")
-            return
-        
-        
-
-        # compute the beat pos, determine if we need to draw a new measure
-        # if yes
-        #    insert a measure divider
-        # create a new one inheriting some information from current
-        # compute column -> old column + 1 or 2 if new measure
-        # insert new blank tab, position cursor on new tab.
-        # update beat -> column table for quick lookup.  
-        pass    
+        if self.sequence_renderer:
+            self.sequence_renderer.append_tab_event() 
+            
 
     def keyboard_event(self, evt: EditorEvent):
         tedit : TrackEditor | None = self.track_editor
         tmodel : Track | None = self.track_model
+        tm : SequenceRenderer | None = self.sequence_renderer
         key = evt.key
+
+        if not tm:
+            return 
+
         # Check for arrow keys
         if key == Qt.Key.Key_Up:
-            self._updown_key(self.track_model, 1)
+            tm.updown_cursor(1)
+            #self._updown_key(self.track_model, 1)
         elif key == Qt.Key.Key_Down:
-            self._updown_key(self.track_model, -1)
+            tm.updown_cursor(-1)
+            #self._updown_key(self.track_model, -1)
         elif key == Qt.Key.Key_Left:
             pass
         elif key == Qt.Key.Key_Right:
-            pass
+            self.key_right_handler()
         elif tedit and tmodel:
             # get the tab event at the current moment
             te : TabEvent = tmodel.getTabEvent()
-            seq : TrackEventSequence = tmodel.getSequence()
- 
             # use the key to update the tablature cursor
             self.key_proc.proc(key, te) 
-            # render fret number
-            tedit.drawFretValue(tmodel.getPresCol(), te.string, te.fret[te.string])
-            # update the toolbar if this was a duration/dynamic change
-            tedit.setToolbar(te)
-            # update staff notation, get the active staff header
-            # which has the cleff and key (sharps and flats)
-            staff_event = seq.getActiveStaff(tmodel.getActiveMoment())
-            if staff_event:
-                # render staff: notes, chords, rests etc.
-                tedit.drawStaffEngraving(staff_event, 
-                    te, tmodel.getPresCol(), tmodel.tuning)
+            self.sequence_renderer.render_update_tab(te)
         
     def tuning_change(self, evt: EditorEvent):
         if evt.tuning and self.track_model:
@@ -170,10 +116,6 @@ class EditorController:
         self.track_editor = None
         # track model -> cursor
         self.key_proc = KeyProcessor()
-
-        # book keeping for the tab cursor 
-        self.cursor_pos = 0
-        #self.cursor_col_pos = TabEvent.FIRST_NOTE_COLUMN
-        #self.col_to_beat = {} 
+        self.sequence_renderer = None
         
         Signals.editor_event.connect(self.editor_event)

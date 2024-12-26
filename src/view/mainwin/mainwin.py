@@ -5,7 +5,7 @@ from PyQt6.QtWidgets import (
     QWidget, QSplitter, QStatusBar, QVBoxLayout, 
     QMenuBar, QMenu
 )
-from PyQt6.QtGui import QAction, QKeyEvent
+from PyQt6.QtGui import QAction, QKeyEvent, QMouseEvent
 
 from view.mainwin.fretboard_view import fretboard_view
 
@@ -16,6 +16,7 @@ from view.config import EditorKeyMap
 
 from view.widgets.projectNavigator.navigator import Navigator
 from view.editor.trackEditor import TrackEditor
+import logging
 
 
 class MainWindow(QMainWindow):
@@ -81,13 +82,14 @@ class MainWindow(QMainWindow):
         tools_menu.addAction(options_action)
 
     _shift_key = False
+    _arrow_keys = (Qt.Key.Key_Left, Qt.Key.Key_Right, Qt.Key.Key_Up, Qt.Key.Key_Down)
 
     def keyReleaseEvent(self, event: QKeyEvent) -> None:
         key = event.key()
         if Qt.Key.Key_Shift == key:
             self._shift_key = False
         # generate key event for right/left arrows on key release
-        elif key in (Qt.Key.Key_Left, Qt.Key.Key_Right):
+        elif key in self._arrow_keys:
             e_evt = EditorEvent()
             e_evt.ev_type = EditorEvent.KEY_EVENT
             e_evt.key = key
@@ -99,7 +101,7 @@ class MainWindow(QMainWindow):
         editor_keymap = EditorKeyMap()
         if editor_keymap.isEditorInput(event):
             key = event.key()
-            if key in (Qt.Key.Key_Left, Qt.Key.Key_Right):
+            if key in self._arrow_keys:
                 pass
             elif key == Qt.Key.Key_Shift:
                 self._shift_key = True
@@ -153,6 +155,7 @@ class MainWindow(QMainWindow):
         # Create the horizontal splitter for the right pane (top and bottom)
         self.horizontal_splitter = QSplitter(Qt.Orientation.Vertical)
         self.horizontal_splitter.setHandleWidth(0)
+        
         self.horizontal_splitter.addWidget(self.track_editor)
         self.horizontal_splitter.addWidget(self.bottom_widget)
         self.horizontal_splitter.setSizes([300, 100])  # Set initial sizes

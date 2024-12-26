@@ -66,22 +66,25 @@ def unittest():
 """
 from PyQt6.QtWidgets import (QWidget, QGridLayout, 
                              QSizePolicy, QVBoxLayout, 
-                             QToolBar, QButtonGroup, QPushButton)
+                             QToolBar, QButtonGroup, QPushButton, QScrollArea)
 from PyQt6.QtGui import QKeyEvent
 from PyQt6.QtCore import Qt
 
+from view.editor.glyphs.canvas import Canvas
 from view.editor.glyphs.staff import StaffGlyph
 from view.events import Signals, EditorEvent
 from view.config import EditorKeyMap
 
 from view.editor import glyphs
-from models.track import StaffEvent, TabEvent, Track
+from models.track import MeasureEvent, StaffEvent, TabEvent, Track
 from view.editor.toolbar import EditorToolbar
 #from pkg_resources._vendor.more_itertools.more import stagger
 from view.editor.glyphs.ornamental_markings import oramental_markings
 from typing import List
+from src.view.editor.glyphs.tableture import TabletureGlyph
 
-        
+
+
 
 class TrackEditor(QWidget):
     """ 
@@ -106,11 +109,17 @@ class TrackEditor(QWidget):
         row = self.STAFF_ROW
         self._grid_layout.addWidget(g, row, col)
 
+        tm = glyphs.TabletureMeasure()
+        self._grid_layout.addWidget(tm, self.TAB_ROW, col)
+
     def drawMeasure(self, measure =1, col = 1):
         g = glyphs.StaffMeasureBarlines(measure,
                 glyphs.StaffMeasureBarlines.END_MEASURE)
         row = self.STAFF_ROW
         self._grid_layout.addWidget(g, row, col)
+
+        tm = glyphs.TabletureMeasure()
+        self._grid_layout.addWidget(tm, self.TAB_ROW, col)
 
     def drawBeginRepeat(self, measure = 1, col = 1):
         g = glyphs.StaffMeasureBarlines(measure,
@@ -133,11 +142,16 @@ class TrackEditor(QWidget):
         g = glyphs.StaffHeaderGlyph(symbol,se.key,se.signature,se.bpm)
         self._grid_layout.addWidget(g, row, col)
 
+        th = glyphs.TabletureHeader()
+        self._grid_layout.addWidget(th, self.TAB_ROW, col)
+        
+    _current_cursor_col = -1
     def drawBlankSelectRegion(self, tc: TabEvent, col=2, gstring=5):
         """ 
         Sets up an empty region for editing a code/note/rest which includes
         both tablature and staff.
         """
+        self.clearCursor()
         staff = glyphs.StaffGlyph(tc)
         orn = oramental_markings(tc)
         tab = glyphs.TabletureGlyph()
@@ -145,20 +159,31 @@ class TrackEditor(QWidget):
         self._grid_add(orn, self.ORAMENTS_ROW, col)
         self._grid_add(tab, self.TAB_ROW, col)
         tab.set_cursor(gstring)
+        self._current_cursor_col = col
 
     def drawSelectRegion(self, col : int , gstring : int):
         """ 
         Move editing region on tableture, do auto scrolling if nessessary if
         edit region is no longer visible.
         """
+        self.clearCursor()
         tab = self._grid_get(self.TAB_ROW, col)
         if tab:
-            tab.set_cursor(gstring)
+            tab.set_cursor(gstring) # type: ignore
+            self._current_cursor_col = col
 
+    def clearCursor(self):
+        if self._current_cursor_col != -1:
+            col = self._current_cursor_col
+            tab = self._grid_get(self.TAB_ROW, col)
+            if tab:
+                tab.clear_cursor() # type: ignore
+                
+    
     def drawFretValue(self, col : int, gstring : int, fret : int):
         tab = self._grid_get(self.TAB_ROW, col)
         if tab:
-            tab.set_tab_note(gstring, fret)
+            tab.set_tab_note(gstring, fret) # type: ignore
 
     def drawStaffEngraving(self, se: StaffEvent, te: TabEvent, col: int, tuning: List[str]):
         """ 
@@ -174,11 +199,31 @@ class TrackEditor(QWidget):
         self.toolbar.setTabCursor(tc)
 
     def _grid_add(self, w, row, col):
+        item = self._grid_layout.itemAtPosition(row, col)
+        if item:
+            self._grid_layout.removeItem(item)
+
         self._grid_layout.addWidget(w, row, col, alignment=Qt.AlignmentFlag.AlignLeft)
-        self._widget_grid[(row,col)] = w
+        #self._widget_grid[(row,col)] = w
+        
+        # THIS IS A WORKAROUND
+        # The setSpacing is not working for the grid so I change the max width
+        # to computed width of all widgets.
+        num_cols = self._grid_layout.columnCount()
+        total_width = 0
+        for c in range(0,num_cols):
+            item = self._grid_layout.itemAtPosition(0, c)
+            if item:
+                ww : QWidget | None = item.widget()
+                if ww:
+                    total_width += ww.width()                     
+        self.canvas.setMaximumWidth(total_width)
 
     def _grid_get(self, row, col):
-        return self._widget_grid.get((row,col))
+        item = self._grid_layout.itemAtPosition(row, col)
+        if item:
+            return item.widget()
+        #return self._widget_grid.get((row,col))
              
     def update_track_editor_content(self):
         # force a repaint of widgets canvas
@@ -193,17 +238,24 @@ class TrackEditor(QWidget):
 
         # main layout for toolbar and scrolling area 
         main_layout = QVBoxLayout(self)
-
+        
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True) 
+        
         self.canvas = QWidget() 
         self.toolbar = EditorToolbar(TabEvent(6), self.update_track_editor_content)
          
         main_layout.addWidget(self.toolbar)
-        main_layout.addWidget(self.canvas) 
+        scroll_area.setWidget(self.canvas)
+
+        main_layout.addWidget(scroll_area) 
 
         #self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         self._grid_layout = QGridLayout()
         self._grid_layout.setHorizontalSpacing(0)
         self._grid_layout.setContentsMargins(0, 0, 0, 0)
+        self._grid_layout.setSpacing(0)
+        
 
         self._widget_grid = {}
 
@@ -211,8 +263,18 @@ class TrackEditor(QWidget):
 
         self.setLayout(main_layout)
 
+        # test adding 10 blank widgets
+        # print("test test test")
+        # for col in range(0,8,2):
+        #     se = StaffEvent() 
+            
+        #     self.drawHeader(se, col)
+        #     self.drawMeasure(col, col+1) 
+        #     #te = TabEvent(6)
+        #     #self.drawBlankSelectRegion(te, col)  
+
         # signal controller
         evt = EditorEvent()
         evt.ev_type = EditorEvent.ADD_TRACK_EDITOR
-        evt.track_editor = self
+        evt.track_editor = self # type: ignore
         Signals.editor_event.emit(evt)
