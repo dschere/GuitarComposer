@@ -8,7 +8,7 @@ for track events to be rendered.
 import logging
 from PyQt6.QtCore import Qt
 
-from util.trackManager import TrackManager
+from view.editor.sequenceRenderer import SequenceRenderer
 from view.config import EditorKeyMap
 from view.events import Signals, EditorEvent
 from models.track import Track, StaffEvent, TabEvent, TrackEventSequence
@@ -42,8 +42,8 @@ class EditorController:
         for that track.
         """
         if tmodel and editor:
-            self.track_manager = TrackManager(tmodel, editor)
-            self.track_manager.initialize()
+            self.sequence_renderer = SequenceRenderer(tmodel, editor)
+            self.sequence_renderer.initialize()
             
     def add_model(self, evt: EditorEvent):
         self.track_model = evt.model
@@ -55,14 +55,14 @@ class EditorController:
         self.track_editor = evt.track_editor
 
     def key_right_handler(self):
-        if self.track_manager:
-            self.track_manager.append_tab_event() 
+        if self.sequence_renderer:
+            self.sequence_renderer.append_tab_event() 
             
 
     def keyboard_event(self, evt: EditorEvent):
         tedit : TrackEditor | None = self.track_editor
         tmodel : Track | None = self.track_model
-        tm : TrackManager | None = self.track_manager
+        tm : SequenceRenderer | None = self.sequence_renderer
         key = evt.key
 
         if not tm:
@@ -84,7 +84,7 @@ class EditorController:
             te : TabEvent = tmodel.getTabEvent()
             # use the key to update the tablature cursor
             self.key_proc.proc(key, te) 
-            self.track_manager.render_update_tab(te)
+            self.sequence_renderer.render_update_tab(te)
         
     def tuning_change(self, evt: EditorEvent):
         if evt.tuning and self.track_model:
@@ -116,6 +116,6 @@ class EditorController:
         self.track_editor = None
         # track model -> cursor
         self.key_proc = KeyProcessor()
-        self.track_manager = None
+        self.sequence_renderer = None
         
         Signals.editor_event.connect(self.editor_event)

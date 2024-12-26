@@ -7,8 +7,14 @@ from collections import OrderedDict
 import copy
 from singleton_decorator.decorator import singleton
 from bisect import bisect_left
+import json
 
 class TrackEvent:
+    def pretty_print(self):
+        v = vars(self)
+        t = json.dumps(v, skipkeys=True, sort_keys=True, indent=4)
+        print(self.__class__.__name__ + " " + t) 
+
     def __init__(self):
         pass
 
@@ -129,12 +135,13 @@ class TabEvent(TrackEvent):
     
     def clone_from_beats(self, beat: float, beat_note_dur: float):
         t = beat * beat_note_dur
-        r = copy.deepcopy(self)
+        r : TabEvent = copy.deepcopy(self)
         (_, r.dotted, 
          r.double_dotted, 
          r.triplet, 
          r.quintuplet, 
-         r.duration) = DurationTable.nearest(t) 
+         r.duration) = DurationTable.nearest(t)
+        r.note_duration = t
         return r
     
     def clone(self):
@@ -143,7 +150,8 @@ class TabEvent(TrackEvent):
         r.tied_notes = [-1] * self.num_gstrings
         r.pitch_bend_histogram = [0] * self.BEND_PERIODS
         r.pitch_bend_active = False
-        return r 
+        return r
+
 
     def __init__(self, num_gstrings):
         super().__init__()
@@ -208,9 +216,19 @@ class TrackEventSequence:
     FORWARD = 1
     BACKWARD = -1
 
+    def pretty_print(self):
+        print("track sequence:")
+        for moment, evtList in self.data.items():
+            print(f"moment = {moment}")
+            for evt in evtList:
+                evt.pretty_print()
+
     def __init__(self):
         # moment -> list of events
         self.data = OrderedDict()
+
+    def getData(self) -> OrderedDict:
+        return self.data
 
     def isEmpty(self):
         return len(self.data) == 0    
@@ -241,10 +259,15 @@ class TrackEventSequence:
         return evt
 
     def add(self, moment: int, evt: TrackEvent):
+        """
+        add a new track event to a list of events for a given moment. 
+        """
         evtList = self.data.get(moment, [])
         evtList.append(evt)
         self.data[moment] = evtList
         # self.momentList.sort()
+
+       
 
     def get(self, moment: int) -> Optional[List[TrackEvent]]:
         return self.data.get(moment)
@@ -254,6 +277,13 @@ class TrackEventSequence:
         for evt in self.data.get(moment,[]):
             if isinstance(evt, klass):
                 return evt
+
+    def apply(self, start: int, func):
+        moment = start
+        while moment < len(self.data):
+            evtList = self.data[moment]
+            func(moment, evtList)
+            moment += 1
             
     def getBeats(self, moment: int, beat_note_dur: float):
         beats = 0
@@ -339,7 +369,7 @@ class Track:
             for te in teList:
                 if isinstance(te, TabEvent):
                     return te
-
+        
         raise ValueError("No track event for beat value %d" % moment)
 
     def getSequence(self) -> TrackEventSequence:

@@ -199,6 +199,10 @@ class TrackEditor(QWidget):
         self.toolbar.setTabCursor(tc)
 
     def _grid_add(self, w, row, col):
+        item = self._grid_layout.itemAtPosition(row, col)
+        if item:
+            self._grid_layout.removeItem(item)
+
         self._grid_layout.addWidget(w, row, col, alignment=Qt.AlignmentFlag.AlignLeft)
         #self._widget_grid[(row,col)] = w
         
