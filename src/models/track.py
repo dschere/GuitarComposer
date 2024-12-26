@@ -352,6 +352,9 @@ class Track:
     def setTuning(self, tuning):
         self.tuning = tuning
 
+    def isTheActivateMomentTheLastMoment(self):
+        return self.active_moment == self.sequence.lastMoment()    
+
     def getMoment(self):
         return self.active_moment
 
