@@ -7,6 +7,30 @@ class SequenceRenderer:
     def __init__(self, tmodel: Track, teditor: TrackEditor):
         self.model = tmodel
         self.editor = teditor
+        # what column in the grid is presenting tab event data for 
+        # a given moment in the staff.
+        self.moment_pres_column = {}
+
+    def move_cursor_to_next_momement(self):
+        moment = self.model.getMoment()
+        if moment >= 0:
+            moment += 1
+            assert(moment in self.moment_pres_column)
+            col = self.moment_pres_column[moment]
+            self.editor.move_cursor(col)
+            self.model.setPresCol(col)
+            self.model.setMoment(moment)
+
+    def move_cursor_to_prior_tab(self):
+        moment = self.model.getMoment()
+        if moment > 0:
+            moment -= 1
+            assert(moment in self.moment_pres_column)
+            col = self.moment_pres_column[moment]
+            self.editor.move_cursor(col)
+            self.model.setPresCol(col)
+            self.model.setMoment(moment)
+            
 
     def render_update_tab(self, te: TabEvent):
         seq = self.model.getSequence()
@@ -63,7 +87,9 @@ class SequenceRenderer:
             moment = current_moment + 1
             col = self.model.getPresCol() + 1
             seq.add(moment, new_te)
+
             self.editor.drawBlankSelectRegion(new_te, col, new_te.string)
+            self.moment_pres_column[moment] = col
 
             self.model.setPresCol(col)
             self.model.setMoment(moment)
@@ -77,7 +103,10 @@ class SequenceRenderer:
             seq.add(moment, new_te)
 
             col = self.model.getPresCol() + 1
+
+            self.moment_pres_column[moment] = col
             self.editor.drawBlankSelectRegion(new_te, col, new_te.string)
+
             col += 1
             self.editor.drawMeasure(new_measure.measure_number, col)
             col += 1
@@ -111,13 +140,17 @@ class SequenceRenderer:
             seq.add(moment+1, right_te)  
 
             col = self.model.getPresCol() + 1
+
+            self.moment_pres_column[moment] = col
             self.editor.drawBlankSelectRegion(left_te, col, left_te.string)
             col += 1
+
             self.editor.drawMeasure(new_measure.measure_number, col)
             col += 1
+
+            self.moment_pres_column[moment+1] = col
             self.editor.drawBlankSelectRegion(right_te, col, right_te.string)
             
-
             self.model.setPresCol(col)
             self.model.setMoment(moment+1)
              
@@ -154,6 +187,8 @@ class SequenceRenderer:
             self.editor.drawHeader(staff, 0)
             self.editor.drawFirstMeasure(me.measure_number, 1)
             self.model.setPresCol(2)
+            
+            self.moment_pres_column[0] = 2
             num_str = len(self.model.tuning)-1
             self.editor.drawBlankSelectRegion(
                 te, self.model.getPresCol(), num_str)

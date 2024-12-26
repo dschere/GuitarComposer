@@ -144,6 +144,14 @@ class TrackEditor(QWidget):
 
         th = glyphs.TabletureHeader()
         self._grid_layout.addWidget(th, self.TAB_ROW, col)
+
+    def move_cursor(self, col : int):
+        self.clearCursor()
+        tab = self._grid_get(self.TAB_ROW,col)
+        assert(tab != None)
+        tab.set_cursor(5) # type: ignore
+        tab.update()
+        self._current_cursor_col = col
         
     _current_cursor_col = -1
     def drawBlankSelectRegion(self, tc: TabEvent, col=2, gstring=5):

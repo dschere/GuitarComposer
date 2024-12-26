@@ -55,9 +55,15 @@ class EditorController:
         self.track_editor = evt.track_editor
 
     def key_right_handler(self):
+        if self.sequence_renderer and self.track_model:
+            if self.track_model.isTheActivateMomentTheLastMoment():
+                self.sequence_renderer.append_tab_event() 
+            else:
+                self.sequence_renderer.move_cursor_to_next_momement()
+
+    def key_left_handler(self):
         if self.sequence_renderer:
-            self.sequence_renderer.append_tab_event() 
-            
+            self.sequence_renderer.move_cursor_to_prior_tab()
 
     def keyboard_event(self, evt: EditorEvent):
         tedit : TrackEditor | None = self.track_editor
@@ -76,7 +82,7 @@ class EditorController:
             tm.updown_cursor(-1)
             #self._updown_key(self.track_model, -1)
         elif key == Qt.Key.Key_Left:
-            pass
+            self.key_left_handler()
         elif key == Qt.Key.Key_Right:
             self.key_right_handler()
         elif tedit and tmodel:
