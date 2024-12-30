@@ -1,4 +1,4 @@
-from models.track import StaffEvent, TabEvent, Track, MeasureEvent
+from models.track import StaffEvent, TabEvent, Track, MeasureEvent, TrackEventSequence
 from view.editor.trackEditor import TrackEditor
 import logging
 
@@ -13,16 +13,32 @@ class SequenceRenderer:
 
     def move_cursor_to_next_momement(self):
         moment = self.model.getMoment()
-        if moment >= 0:
-            moment += 1
+        seq : TrackEventSequence = self.model.getSequence()
+        try:
+            (moment,_) = seq.search(moment+1,seq.BACKWARD,seq.TAB_EVENT)
             assert(moment in self.moment_pres_column)
             col = self.moment_pres_column[moment]
             self.editor.move_cursor(col)
             self.model.setPresCol(col)
             self.model.setMoment(moment)
+        except:
+            pass     
 
     def move_cursor_to_prior_tab(self):
         moment = self.model.getMoment()
+        seq : TrackEventSequence = self.model.getSequence()
+        try:
+            (moment,_) = seq.search(moment-1,seq.BACKWARD,seq.TAB_EVENT)
+            assert(moment in self.moment_pres_column)
+            col = self.moment_pres_column[moment]
+            self.editor.move_cursor(col)
+            self.model.setPresCol(col)
+            self.model.setMoment(moment)
+        except:
+            pass     
+
+        """
+        logging.debug(f"moving cursor backward from moment {moment}")
         if moment > 0:
             moment -= 1
             assert(moment in self.moment_pres_column)
@@ -30,7 +46,7 @@ class SequenceRenderer:
             self.editor.move_cursor(col)
             self.model.setPresCol(col)
             self.model.setMoment(moment)
-            
+        """    
 
     def render_update_tab(self, te: TabEvent):
         seq = self.model.getSequence()
@@ -63,24 +79,32 @@ class SequenceRenderer:
             seq.search(self.model.getMoment(), seq.BACKWARD, seq.MEASURE_EVENT)
         current_moment = self.model.getMoment()
 
-        logging.debug(f"current_moment = {current_moment}")
-        logging.debug(f"measure_moment = {measure_moment}")
-
-        assert (type(measure_moment) != type(None))
-        assert (type(staff_event) != type(None))
-
         ts = staff_event.compute_timespec()  # type: ignore
+        beats_in_measure = ts.beats_per_measure * ts.beat_duration
 
         te = self.model.getTabEvent()
         new_te = te.clone()
 
-        # compute how many beats exist from the start of the measure including
-        # the new tab event that will be added.
-        beat_total = new_te.beats(ts.beat_duration)
+        # compute how many beats exist from the start of the measure 
+        beat_total = 0
         for moment in range(measure_moment, current_moment+1):
             beat_total += seq.getBeats(moment, ts.beat_duration)
+
+        # are we at the end of this measure?
+        if beat_total == beats_in_measure:
+            moment = current_moment + 1
+            col = self.model.getPresCol() + 2 # skip over measure
+            seq.add(moment, new_te)
+
+            self.editor.drawBlankSelectRegion(new_te, col, new_te.string)
+            self.moment_pres_column[moment] = col
+
+            self.model.setPresCol(col)
+            self.model.setMoment(moment)
+            return
+
+        beat_total += new_te.beats(ts.beat_duration)    
         beat_total_before_current = beat_total
-        beats_in_measure = ts.beats_per_measure * ts.beat_duration
 
         if beat_total < beats_in_measure:
             # simple case we have enough beats to simply draw a new moment
@@ -93,6 +117,7 @@ class SequenceRenderer:
 
             self.model.setPresCol(col)
             self.model.setMoment(moment)
+
         elif beat_total == beats_in_measure:
             # simple case we have enough beats to simply draw a new moment
             moment = current_moment + 1
@@ -122,7 +147,6 @@ class SequenceRenderer:
             left_te = new_te.clone_from_beats(left_b, ts.beat_duration) 
             right_te = new_te.clone_from_beats(right_b, ts.beat_duration)
 
-            print(f"beats for two new tab evt {left_te.duration} {right_te.duration}") 
             new_measure = MeasureEvent()
             new_measure.measure_number = measure_event.measure_number + 1
 
