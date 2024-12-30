@@ -234,10 +234,28 @@ class TrackEventSequence:
         return len(self.data) == 0    
 
     def search(self, moment: int, direction: int, event_type: int):
-        "search beat list for a specific event type, return (moment,evt)"
+        "search event list for a specific event type, return (moment,evt)"
         assert (event_type in self._lookup)
         assert (direction in (self.FORWARD, self.BACKWARD))
         
+        klass = self._lookup[event_type]
+            
+        if direction == self.BACKWARD:
+            m = moment
+            while m > -1:
+                for evt in self.data[m]:
+                    if isinstance(evt, klass):
+                        return (m, evt)
+                m -= 1
+        else:
+            m = moment
+            while m < len(self.data):
+                for evt in self.data[m]:
+                    if isinstance(evt, klass):
+                        return (m, evt)
+                m += 1
+
+        """
         if moment in self.data:
             klass = self._lookup[event_type]
             keys = list(self.data.keys())
@@ -246,13 +264,13 @@ class TrackEventSequence:
             else:
                 mlist = keys[:moment+1]
                 mlist.reverse()
-            logging.debug(f"klass = {klass}, mlist = {mlist}, data = {self.data}")
             for m in mlist:
                 for evt in self.data[m]:
                     if isinstance(evt, klass):
                         return (m, evt)
-
-        return (None, None)
+        """
+                        
+        raise ValueError(f"unable to find {event_type} in sequence")
 
     def getActiveStaff(self, moment) -> StaffEvent | None:
         (_, evt) = self.search(moment, self.BACKWARD, self.STAFF_EVENT)
@@ -303,9 +321,9 @@ class TrackEventSequence:
         elif moment in self.data:
             del self.data[moment]
 
-    def lastMoment(self):
-        return list(self.data.keys())[-1]
-
+    def lastTabEventMoment(self):
+        (moment,_) = self.search(len(self.data)-1,self.BACKWARD,self.TAB_EVENT)
+        return moment
 
 class Track:
     FIRST_NOTE_COLUMN = 2
@@ -353,8 +371,21 @@ class Track:
         self.tuning = tuning
 
     def isTheActivateMomentTheLastMoment(self):
-        return self.active_moment == self.sequence.lastMoment()    
+        s : TrackEventSequence = self.sequence
+        m = self.active_moment
+        # look ahaed to the next moment
+        evtList = s.data.get(m+1)
+        if not evtList:
+            return True
+        # there is an edge case where the only thing that is there is a measure
+        for evt in evtList:
+            if isinstance(evt, TabEvent):
+                return False
+        # we made it here and althrough there was on more moment there
+        # was no new tab. therefore we are actually at the end 
+        return True 
 
+        
     def getMoment(self):
         return self.active_moment
 

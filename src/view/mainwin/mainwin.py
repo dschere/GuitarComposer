@@ -173,6 +173,8 @@ class MainWindow(QMainWindow):
         # Restore saved state (window size, splitter sizes)
         self.load_settings()
 
+        
+
     def closeEvent(self, event):
         # Save window and splitter state before closing
         self.save_settings()
