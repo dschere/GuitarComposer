@@ -6,9 +6,10 @@ from view.editor.glyphs.common import (STAFF_SYM_WIDTH, STAFF_HEIGHT,
                                        )
 
 from view.editor.glyphs.canvas import Canvas
-from models.track import StaffEvent, TabEvent, Track
+from models.track import TabEvent, Track
+from models.measure import Measure, TimeSig
 from view.editor.glyphs.note_renderer import note_renderer
-from src.util.midi import midi_codes
+from util.midi import midi_codes
 from view.events import Signals, EditorEvent 
 
 class StaffMeasureBarlines(Canvas):
@@ -16,6 +17,7 @@ class StaffMeasureBarlines(Canvas):
     END_MEASURE = 1
     BEGIN_REPEAT = 2
     END_REPEAT = 3
+    END_BEGIN_NEW_REPEAT = 4
 
 
     def __init__(self, measure: int, mtype : int, repeat_count : int = 1):
@@ -24,35 +26,34 @@ class StaffMeasureBarlines(Canvas):
         self.mtype = mtype
         self.repeat_count = repeat_count
 
-    def mousePressEvent(self, event):
-        e = EditorEvent()
-        e.ev_type = EditorEvent.MEASURE_CLICKED
-        e.measure = self.measure
-        Signals.editor_event.emit(e)
-        
+    def mousePressEvent(self, _):
+        if self.measure != -1:
+            e = EditorEvent()
+            e.ev_type = EditorEvent.MEASURE_CLICKED
+            e.measure = self.measure
+            Signals.editor_event.emit(e)
         
     def canvas_paint_event(self, painter):
         self.draw_staff_background(painter)
         text = BARLINE2
-        repeat_text = None
-
+        
         if self.mtype == self.END_MEASURE:
             text = BARLINE1
         elif self.mtype == self.BEGIN_REPEAT:
             text = START_REPEAT  
         elif self.mtype == self.END_REPEAT:
-            text = END_REPEAT
-            repeat_text = str(self.repeat_count)     
+            text = END_REPEAT     
 
         x=7
         size = ((STAFF_NUMBER_OF_LINES-1) * STAFF_LINE_SPACING)
         top_line = STAFF_ABOVE_LINES * STAFF_LINE_SPACING
         bottom_line = top_line + (STAFF_NUMBER_OF_LINES-1) * STAFF_LINE_SPACING
-        self.draw_symbol(painter, str(self.measure), x=5, 
-            y=top_line-10, draw_lines=False, size=12 )         
+        if self.measure != -1:
+            self.draw_symbol(painter, str(self.measure), x=5, 
+                y=top_line-10, draw_lines=False, size=12 )         
         self.draw_symbol(painter, text, x=x, y=bottom_line, size=size)
 
-        if repeat_text:
+        if self.repeat_count != -1:
             self.draw_symbol(painter, str(self.repeat_count),
                 x=x, y=bottom_line+13, size=12, bold=True, 
                 draw_lines=False)
@@ -60,36 +61,43 @@ class StaffMeasureBarlines(Canvas):
 
 
 class StaffGlyph(Canvas):
-    def __init__(self, te : TabEvent):
+    def __init__(self, te : TabEvent, m: Measure, track: Track):
         super().__init__(STAFF_SYM_WIDTH, STAFF_HEIGHT)
         self.te = te
-        self.se = StaffEvent()
-        self.accent = SHARP_SIGN
-        self.tuning = Track().tuning
+        self.m = m
+        self.track_model = track
+        if m.key in ['F','Bb','Eb','Ab','Db','Gb']:
+            self.accent = FLAT_SIGN
+        else:
+            self.accent = SHARP_SIGN
+        (ts, bpm, key, cleff) = track.getMeasureParams(m)
+        self.cleff = cleff
 
-    def setup(self, se: StaffEvent, te: TabEvent, tuning):
+        
+    """
+    def setup(self, m: Measure, te: TabEvent, tuning):
         self.te = te
-        self.se = se
+        self.m = m
         self.tuning = tuning
 
-        if se.key in ['F','Bb','Eb','Ab','Db','Gb']:
+        if m.key in ['F','Bb','Eb','Ab','Db','Gb']:
             self.accent = FLAT_SIGN
         else:
             self.accent = SHARP_SIGN
         # schedule a refresh
         self.update()  
-
+    """
+        
     def _get_renderer(self):
         tc : TabEvent = self.te
-        se : StaffEvent = self.se
+        m : Measure = self.m
         dot_count = int(tc.dotted) + int(tc.double_dotted)
-        cleff = se.cleff
-        return note_renderer(cleff, dot_count)
+        
+        return note_renderer(self.cleff, dot_count)
 
     def _render_note(self, painter):
         r : note_renderer = self._get_renderer()
         tc : TabEvent = self.te
-        se : StaffEvent = self.se
 
         # find note
         for (gstring,fret) in enumerate(tc.fret):
@@ -113,19 +121,19 @@ class StaffGlyph(Canvas):
 
         # draw note heads
         for midi_code in midi_list:
-            r.draw_notehead(painter, midi_code, self.accent, tc.note_duration)
+            r.draw_notehead(painter, midi_code, self.accent, tc.duration)
 
         # if duration quarter or smaller draw connecting line.
         # the greated midi note is drawn as a quarter note with its staff 
-        if tc.note_duration != 4.0:
+        if tc.duration != 4.0:
             r.draw_stem_line(painter, midi_list, self.accent)        
-            r.draw_note(painter, midi_list[-1], self.accent, tc.note_duration)    
+            r.draw_note(painter, midi_list[-1], self.accent, tc.duration)    
 
 
     def _render_rest(self, painter):
         r : note_renderer = self._get_renderer()
         tc : TabEvent = self.te
-        r.draw_rest(painter, tc.note_duration)
+        r.draw_rest(painter, tc.duration)
         
 
     def canvas_paint_event(self, painter):
@@ -154,37 +162,36 @@ class StaffHeaderGlyph(Canvas):
 
         # draw beats per minute
         y = (STAFF_LINE_SPACING * STAFF_ABOVE_LINES) - STAFF_LINE_SPACING
-        bpm = self.staff_bpm
-        self.draw_symbol(painter, f"{QUATER_NOTE} = {bpm}",
-                         size=12, draw_lines=False, x=0, y=y)
+        if self.staff_bpm:
+            bpm = self.staff_bpm
+            self.draw_symbol(painter, f"{QUATER_NOTE} = {bpm}",
+                size=12, draw_lines=False, x=0, y=y)
 
         # draw staff
-        cleff_y_pos = STAFF_LINE_SPACING * \
-            STAFF_ABOVE_LINES+SymFontSize[self.staff_symbol]
-        self.draw_symbol(painter, self.staff_symbol, y=cleff_y_pos)
+        if self.staff_symbol:
+            cleff_y_pos = STAFF_LINE_SPACING * \
+                STAFF_ABOVE_LINES+SymFontSize[self.staff_symbol]
+            self.draw_symbol(painter, self.staff_symbol, y=cleff_y_pos)
 
         # draw time signature
-        ts = self.staff_timesig.split('/')
-        num_y = (STAFF_ABOVE_LINES * STAFF_LINE_SPACING) + 24
-        den_y = num_y + (STAFF_LINE_SPACING * 2) + 8
-        self.draw_symbol(painter, ts[0], x=60, y=num_y)
-        self.draw_symbol(painter, ts[1], x=60, y=den_y)
+        if self.staff_timesig:
+            x : TimeSig = self.staff_timesig
+            ts = [f'{x.beats_per_measure}',f'{x.beat_note_id}']
+            
+            num_y = (STAFF_ABOVE_LINES * STAFF_LINE_SPACING) + 24
+            den_y = num_y + (STAFF_LINE_SPACING * 2) + 8
+            self.draw_symbol(painter, ts[0], x=60, y=num_y)
+            self.draw_symbol(painter, ts[1], x=60, y=den_y)
 
         # draw accents (sharps and flat) based on the key
-        x = 100
-        key_codes = KeyMidiCodeTable.get(self.staff_key, [])
+        if self.staff_key:
+            x = 100 # type: ignore
+            key_codes = KeyMidiCodeTable.get(self.staff_key, [])
 
-        sign = SHARP_SIGN
-        if 'b' in self.staff_key or self.staff_key == 'F':
-            sign = FLAT_SIGN
-        for midi_code in key_codes:
-            self.draw_sign(painter, sign, x, midi_code)
-            x += 10
+            sign = SHARP_SIGN
+            if 'b' in self.staff_key or self.staff_key == 'F':
+                sign = FLAT_SIGN
+            for midi_code in key_codes:
+                self.draw_sign(painter, sign, x, midi_code)
+                x += 10 # type: ignore
 
-        # draw the two verticle lines that mark the end of the
-        # the staff header
-        # x += 7
-        # size = ((STAFF_NUMBER_OF_LINES-1) * STAFF_LINE_SPACING)
-        # top_line = STAFF_ABOVE_LINES * STAFF_LINE_SPACING
-        # bottom_line = top_line + (STAFF_NUMBER_OF_LINES-1) * STAFF_LINE_SPACING
-        # self.draw_symbol(painter, BARLINE2, x=x, y=bottom_line, size=size)

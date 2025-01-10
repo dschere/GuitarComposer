@@ -6,7 +6,7 @@ from view.editor.glyphs.common import (STAFF_HEADER_WIDTH, STAFF_SYM_WIDTH,
                                        )
 
 from view.config import GuitarFretboardStyle
-from view.editor.glyphs.ornamental_markings import oramental_markings
+from models.measure import TabEvent
 
 
 class TabletureMeasure(Canvas):
@@ -28,9 +28,9 @@ class TabletureMeasure(Canvas):
     def canvas_paint_event(self, painter):
         self.draw_tableture_backround(painter)
         painter.drawLine(
-            int(self.width()/2),
+            int(self.width()/4),
             15,
-            int(self.width()/2),
+            int(self.width()/4),
             15 * TABLATURE_NUM_LINES
         )
 
@@ -59,13 +59,15 @@ class TabletureGlyph(Canvas):
     CURSOR_COLOR = QColor(*GuitarFretboardStyle.scale_root_color_rgb)
     TEXT_COLOR = QColor(*GuitarFretboardStyle.orament_color_rgb)
 
-    def __init__(self):
+    def __init__(self, tab_event : TabEvent):
         super().__init__(STAFF_SYM_WIDTH, STAFF_HEIGHT+15)
         # Note: gstring is from 1-6
         self._cursor = None  # type: ignore # None | gstring
         # (gstring) -> (fret, **options)
         self.tab_notes = {}
+        self.tab_event = tab_event
 
+    
     def clear_cursor(self):
         self._cursor = None  # type: ignore
         self.update()
@@ -136,6 +138,9 @@ class TabletureGlyph(Canvas):
                              color=sym_color)
 
     def canvas_paint_event(self, painter):
+        for (gstring,fret) in enumerate(self.tab_event.fret):
+            self.tab_notes[gstring] = (fret, {})
+
         self.draw_tableture_backround(painter)
         self.draw_cursor(painter)
 

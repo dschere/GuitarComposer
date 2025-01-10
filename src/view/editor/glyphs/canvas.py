@@ -2,10 +2,39 @@ from PyQt6 import QtGui
 from PyQt6.QtWidgets import QLabel, QSizePolicy
 
 
-from view.editor.glyphs.common import (FLAT_SIGN,
+from view.editor.glyphs.common import (FLAT_SIGN, 
                                        STAFF_LINE_SPACING, STAFF_ABOVE_LINES, STAFF_NUMBER_OF_LINES,
-                                       YPositionMidiTable, SymFontSize, DEFAULT_SYM_FONT_SIZE)
+                                       YPositionMidiTable, SymFontSize, DEFAULT_SYM_FONT_SIZE,
+                                       BEAT_ERROR_COLOR, BEAT_ERROR_FONT_SIZE, 
+                                       BEAT_OVERFLOW_CHAR, BEAT_UNDERFLOW_CHAR
+                                       )
 from view.config import GuitarFretboardStyle
+from singleton_decorator import singleton
+from PyQt6.QtGui import QPainter
+
+@singleton
+class BeatErrorPresenter:
+    def __init__(self):
+        font = QtGui.QFont("DejaVu Sans", BEAT_ERROR_FONT_SIZE)
+        font_metrics = QtGui.QFontMetrics(font)
+        self.overflow_char_width = font_metrics.horizontalAdvance(BEAT_OVERFLOW_CHAR)
+        self.text_height = int(font_metrics.height())
+        self.underflow_char_width = font_metrics.horizontalAdvance(BEAT_UNDERFLOW_CHAR)
+        self.font = font
+        self.color = QtGui.QColor(*GuitarFretboardStyle.error)
+            
+
+    def draw(self, painter : QPainter, canvas):
+        etext = canvas.beat_error
+        char_width = {
+            BEAT_OVERFLOW_CHAR: self.overflow_char_width,
+            BEAT_UNDERFLOW_CHAR: self.underflow_char_width
+        }[etext]
+        count = int(canvas.width()/char_width)
+        painter.setFont(self.font)
+        painter.setPen(self.color)
+        h = canvas.height() - self.text_height
+        painter.drawText(0, h, canvas.beat_error * count)
 
 
 class Canvas(QLabel):
@@ -32,7 +61,20 @@ class Canvas(QLabel):
 
         self.setFixedWidth(width)
         self.setFixedHeight(height)
+        self.beat_error = ""
 
+    def beat_overflow_error(self):
+        self.beat_error = BEAT_OVERFLOW_CHAR
+
+    def beat_underflow_error(self):
+        self.beat_error = BEAT_UNDERFLOW_CHAR
+
+    def clear_beat_error(self):
+        self.beat_error = ""    
+
+    def draw_beat_error(self, painter):
+        if len(self.beat_error) != 0:
+            BeatErrorPresenter().draw(painter, self)
 
     # virtual method to be overloaded by children classes to call various
     # api comamnds below (draw_<operation> methods)
@@ -53,6 +95,7 @@ class Canvas(QLabel):
         painter.begin(self)
         painter.eraseRect(0, 0, self.c_width, self.c_height)
         self.canvas_paint_event(painter)
+        self.draw_beat_error(painter)
         painter.end()
 
     def draw_ledger_line(self, painter, opts):
