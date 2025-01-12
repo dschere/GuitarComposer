@@ -1,13 +1,16 @@
+from PyQt6.QtWidgets import (QWidget, QHBoxLayout, QScrollArea)
+from PyQt6.QtCore import Qt
+
 from view.editor.measurePresenter import MeasurePresenter
 from view.editor.tabEventPresenter import TabEventPresenter
 
 
-from PyQt6.QtWidgets import (QWidget, QHBoxLayout)
 from models.measure import Measure, TabEvent
 from models.track import Track
 
+import copy
 
-class TrackPresenter(QWidget):
+class TrackPresenter(QScrollArea):
 
     def setup(self):
         "precalculate variables needed for operations"
@@ -18,11 +21,59 @@ class TrackPresenter(QWidget):
         self.current_tep : TabEventPresenter = \
             self.current_mp.tab_map[self.current_tab_event]
         self.current_tep.cursor_on()
+        self.current_tep.update() 
+
+    def current_tab_event_updated(self):
+        self.setup()
+        self.current_tep.update()
+
+    def set_fret(self, n : int):
+        self.current_tep.set_fret(n)
+        self.setup() 
+
+    def set_duration(self, d: float):
+        self.current_tab_event.duration = d
+        self.setup() 
+
+    def set_dotted(self, state: bool):
+        self.current_tab_event.dotted = state
+        self.current_tab_event.double_dotted = not state
+
+        self.setup() 
+        
+    def set_double_dotted(self, state: bool):
+        self.current_tab_event.dotted = not state
+        self.current_tab_event.double_dotted = state
+
+        self.setup() 
+
+
+    def insert_tab_copy(self):
+        # create a copy of the current tab and insert
+        # a neew tab event after the current one in the measure.
+        new_tab = copy.deepcopy(self.current_tab_event)
+        self.current_measure.insert_after_current(new_tab)
+        #self.current_measure.tab_events
+        self.current_mp.reset_presentation()
+        self.setup()
+
+    def delete_tab(self):
+        self.current_measure.remove_current()
+        self.current_mp.reset_presentation()
+        self.setup()
+
+    def tab_event_changed(self):
+        self.current_mp.reset_presentation()
+        self.setup()
 
     def __init__(self, track_model: Track):
         super().__init__()
+        self.setWidgetResizable(True)
         self.measure_layout = QHBoxLayout(self)
         self.measure_layout.setSpacing(0)
+        self.measure_layout.setContentsMargins(0, 0, 0, 0)
+        self.measure_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        
         self.track_model = track_model
         self.mp_map = {}
 
@@ -34,9 +85,13 @@ class TrackPresenter(QWidget):
         self.setup()
 
     def cursor_up(self):
+        te : TabEvent = self.current_tab_event
+        te.string = (te.string-1) % len(te.fret) 
         self.current_tep.cursor_up()
 
     def cursor_down(self):
+        te : TabEvent = self.current_tab_event
+        te.string = (te.string+1) % len(te.fret) 
         self.current_tep.cursor_down()
 
     def prev_moment(self):
@@ -57,7 +112,6 @@ class TrackPresenter(QWidget):
         # show indicator in measure.
         self.current_mp.beat_error_check()
         self.update()
-
 
     def next_moment(self):
         """
@@ -133,10 +187,22 @@ if __name__ == '__main__':
     QTimer.singleShot(1500, lambda *args: window.prev_moment())
     QTimer.singleShot(1600, lambda *args: window.prev_moment())
 
-    te = TabEvent(6)
-    te.duration = 2.0
+    QTimer.singleShot(1800, lambda *args: window.insert_tab_copy())
 
-    QTimer.singleShot(2000, lambda *args: window.update_tab(te) )
+    QTimer.singleShot(2100, lambda *args: window.delete_tab())
+    
+    # te = TabEvent(6)
+    # te.duration = 2.0
+
+    def test(*args):
+
+        te, m = t.current_moment()
+        te.duration = 2.0
+        window.tab_event_changed()
+
+    QTimer.singleShot(2300, test)
+
+    # QTimer.singleShot(2000, lambda *args: window.update_tab(te) )
 
    
     window.show()

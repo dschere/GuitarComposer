@@ -43,7 +43,7 @@ class SaveSongEvent:
 class InstrumentSelectedEvent:
     def __init__(self):
         self.track = None
-        self.instrument = None
+        self.instrument = ""
 
 
 class EditorEvent:
@@ -91,7 +91,5 @@ class _Signals(QObject):
 
     editor_event = pyqtSignal(EditorEvent)
     track_update = pyqtSignal(Track)
-
-
 
 Signals = _Signals()

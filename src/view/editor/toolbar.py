@@ -148,7 +148,7 @@ class EditorToolbar(QToolBar):
         elif self._tab_event.quintuplet:
             n *= 0.2
 
-        self._tab_event.duration = n * self._tab_event.note_duration            
+        self._tab_event.duration = n * self._tab_event.duration            
         
 
     def _dot_selected(self, btn: ToolbarButton):
@@ -193,7 +193,7 @@ class EditorToolbar(QToolBar):
         self.update_staff_and_tab()
 
 
-    def setTabCursor(self, tab_event : TabEvent):
+    def setTabEvent(self, tab_event : TabEvent):
         """
         set the tab cursor and react to any changes in data so 
         the toolbar reflects the state. 
@@ -203,8 +203,8 @@ class EditorToolbar(QToolBar):
 
         # set the matching duration
         dlist = [4.0, 2.0, 1.0, 0.5, 0.25, 0.125, 0.0625]
-        if tab_event.note_duration in dlist:
-            i = dlist.index(tab_event.note_duration)
+        if tab_event.duration in dlist:
+            i = dlist.index(tab_event.duration)
             btn = self._dur_btns[i]
             self._dur_grp.check_btn(btn) 
 
@@ -229,9 +229,10 @@ class EditorToolbar(QToolBar):
             self._dyn_grp.check_btn(btn)
 
 
-    def __init__(self, tab_event : TabEvent, update_staff_and_tab):
+    def __init__(self, tab_event: TabEvent, update_staff_and_tab):
         super().__init__()
-        self._tab_event = tab_event
+        self._tab_event = tab_event 
+                                         
         self._lookup = {}
         self.update_staff_and_tab = update_staff_and_tab
         self.setFixedHeight(30)
@@ -297,38 +298,9 @@ class EditorToolbar(QToolBar):
             self._articulation_group.addButton(btn) 
             self.addWidget(btn)
         self._articulation_group.selected.connect(self._articulation_selected)    
-
-        #self.bend_effect = BendEffectToolbarButton()
-        #self.addWidget(self.bend_effect)
         
-        self.setTabCursor(tab_event)
+        self.setTabEvent(self._tab_event)
         self.addSeparator()
-
-
-
-
-def unittest():
-    import sys
-    import qdarktheme
-
-    from PyQt6.QtWidgets import QApplication, QMainWindow
-    app = QApplication([])
-
-    theme = qdarktheme.load_stylesheet('dark')
-    app.setStyleSheet(theme)
-
-
-    mainwin = QMainWindow()
-
-    tc = TabEvent(6)
-
-    et = EditorToolbar(tc)
-    mainwin.setCentralWidget(et)
-    mainwin.show()
-
-    sys.exit(app.exec())  # <- main event loop
-if __name__ == '__main__':
-    unittest()
 
 
 

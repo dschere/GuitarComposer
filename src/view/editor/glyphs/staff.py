@@ -97,14 +97,15 @@ class StaffGlyph(Canvas):
 
     def _render_note(self, painter):
         r : note_renderer = self._get_renderer()
-        tc : TabEvent = self.te
+        te : TabEvent = self.te
 
         # find note
-        for (gstring,fret) in enumerate(tc.fret):
+        for (gstring,fret) in enumerate(te.fret):
             if fret != -1:
-                base_midi_code = self.tuning[gstring]
+                tuning = self.track_model.tuning
+                base_midi_code = tuning[gstring]
                 midi_code = midi_codes.midi_code(base_midi_code) + fret
-                r.draw_note(painter, midi_code, self.accent, tc.note_duration)
+                r.draw_note(painter, midi_code, self.accent, te.duration)
                 break
 
     def _render_chord(self, painter):
@@ -114,7 +115,8 @@ class StaffGlyph(Canvas):
         midi_code_collection = set()
         for (gstring,fret) in enumerate(tc.fret):
             if fret != -1:
-                base_midi_code = self.tuning[gstring]
+                tuning = self.track_model.tuning
+                base_midi_code = tuning[gstring]
                 midi_code = midi_codes.midi_code(base_midi_code) + fret
                 midi_code_collection.add(midi_code)
         midi_list = sorted(list(midi_code_collection))

@@ -2,7 +2,7 @@ from PyQt6.QtWidgets import QVBoxLayout, QTreeView, QWidget, QMenu
 from PyQt6.QtGui import QStandardItemModel, QAction
 
 from view.widgets.projectNavigator.TrackTreeNode import TrackTreeDialog
-from view.events import _Signals, EditorEvent
+from view.events import Signals, EditorEvent
 from controllers.appcontroller import SongController
 from view.config import LabelText
 
@@ -17,19 +17,20 @@ class Navigator(QWidget):
 
     def on_tree_clicked(self, index: QModelIndex):
         # Get the clicked item
-        clicked_item = index.model().itemFromIndex(index)
+        assert(index.model())
+        clicked_item = index.model().itemFromIndex(index) # type: ignore
 
         if clicked_item.text() == 'properties':
-            item = index.model().itemFromIndex(index)
+            item = index.model().itemFromIndex(index) # type: ignore
             (track_model, track_qmodel_item) = item.data()
             dialog = TrackTreeDialog(self, track_model, track_qmodel_item)
             dialog.show()
         elif clicked_item.text().startswith("track"):
             evt = EditorEvent()
-            item = index.model().itemFromIndex(index)
+            item = index.model().itemFromIndex(index) # type: ignore
             evt.ev_type = EditorEvent.ADD_MODEL  # type: ignore
             evt.model = item.data()
-            _Signals().editor_event.emit(evt)
+            Signals.editor_event.emit(evt)
 
     def add_track(self, song_controller: SongController):
         song_controller.userAddTrack()
@@ -38,8 +39,8 @@ class Navigator(QWidget):
     def showContextMenu(self, point):
         "right click "
         index = self.tree_view.indexAt(point)
-        if index.isValid():
-            right_clicked_item = index.model().itemFromIndex(index)
+        if index.isValid() and index.model():
+            right_clicked_item = index.model().itemFromIndex(index) # type: ignore
             obj = right_clicked_item.data()
             if isinstance(obj, SongController):
                 menu = QMenu()
@@ -67,4 +68,4 @@ class Navigator(QWidget):
         layout.addWidget(self.tree_view)
         self.setLayout(layout)
 
-        _Signals().update_navigator.connect(self.update_tree_model)
+        Signals.update_navigator.connect(self.update_tree_model)

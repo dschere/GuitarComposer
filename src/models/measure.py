@@ -95,11 +95,18 @@ class Measure:
         self.measure_number = kwargs.get('measure_number',1)
         self.beat_error_msg = ""
         
+    def insert_after_current(self, tab_event : TabEvent):
+        i = self.current_tab_event
+        self.insert(tab_event, i)
 
     def insert(self, tab_event : TabEvent, i : int):
         if i >= 0 and i < len(self.tab_events):
             n = self.tab_events[:i] + [tab_event] + self.tab_events[i:]
             self.tab_events = n
+
+    def remove_current(self):
+        del self.tab_events[self.current_tab_event]
+        self.current_tab_event = self.current_tab_event % len(self.tab_events)        
 
     def append(self, tab_event : TabEvent):
         self.tab_events.append(tab_event)        

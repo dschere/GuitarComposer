@@ -8,6 +8,7 @@ Also display an error indicator if there are too few or too
 many beats in the measure. 
 
 """
+import copy
 
 from PyQt6.QtWidgets import (QWidget, QHBoxLayout, QVBoxLayout)
 from models.measure import Measure, TabEvent
@@ -16,6 +17,8 @@ from view.editor import glyphs
 from view.editor.tabEventPresenter import TabEventPresenter 
 from models.track import Track
 from typing import Dict, List
+
+from util.layoutGapWorkaround import adjust_size_to_fit
 
 
 class StaffHeader(QWidget):
@@ -126,6 +129,38 @@ class MeasurePresenter(QWidget):
         else:
             self.clear_beat_error()
 
+    def reset_presentation(self):
+        "purge all widgets in layout and rebuild presentation"
+        while self.measure_layout.count() > 0:
+            w = self.measure_layout.itemAt(0)
+            assert(w)
+            self.measure_layout.removeWidget(w.widget())
+                 
+        self.tab_map : Dict[TabEvent, TabEventPresenter] = {}
+        
+        self.create_staff_if_needed()
+        # If start of staff draw a special measure line.
+        if self.measure.measure_number == 1:
+            start_track_measure_glyph = MeasureLine(
+                self.measure, self.track_model, True)
+            self.measure_layout.addWidget(start_track_measure_glyph)
+            self.start_track_measure_glyph = start_track_measure_glyph
+                         
+        for tab_event in self.measure.tab_events:
+            tp = TabEventPresenter(tab_event, self.measure, self.track_model)
+            self.measure_layout.addWidget(tp)
+            self.tab_map[tab_event] = tp
+
+        self.end_measure_glyph = MeasureLine(self.measure, self.track_model, False)
+        self.measure_layout.addWidget(self.end_measure_glyph)
+
+        # test for beat errors
+        self.beat_error_check()
+
+        adjust_size_to_fit(self.measure_layout, self)
+        self.update()
+
+
     def __init__(self, measure: Measure, track_model: Track):
         super().__init__()
         self.measure_layout = QHBoxLayout(self)
@@ -134,6 +169,10 @@ class MeasurePresenter(QWidget):
 
         self.measure = measure
         self.track_model = track_model
+        self.staff_header = None
+        self.start_track_measure_glyph = None
+        self.end_measure_glyph = None
+
         # associate a tab_presenter widget with
         # a TabEvent
         self.tab_map : Dict[TabEvent, TabEventPresenter] = {}
@@ -144,22 +183,17 @@ class MeasurePresenter(QWidget):
             start_track_measure_glyph = MeasureLine(
                 measure, track_model, True)
             self.measure_layout.addWidget(start_track_measure_glyph)
-                
-        prev : TabEventPresenter | None = None
+                         
         for tab_event in self.measure.tab_events:
             tp = TabEventPresenter(tab_event, measure, track_model)
             self.measure_layout.addWidget(tp)
-
             self.tab_map[tab_event] = tp
 
-            # setup a linked list to make navigation easier.
-            tp.prev = prev
-            if prev:
-                prev.next = tp
-            prev = tp
 
         self.end_measure_glyph = MeasureLine(measure, track_model, False)
         self.measure_layout.addWidget(self.end_measure_glyph)
+
+        adjust_size_to_fit(self.measure_layout, self)
 
 if __name__ == '__main__':
     from PyQt6.QtWidgets import (

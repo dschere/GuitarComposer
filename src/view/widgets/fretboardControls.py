@@ -19,9 +19,9 @@ class FretboardControls(QWidget):
     def __init__(self):
         super().__init__()
 
-        self.scale_widget_name = __class__.__name__ + ".scale"
-        self.key_widget_name = __class__.__name__ + ".key"
-        self.filter_widget_name = __class__.__name__ + ".filter"
+        self.scale_widget_name = self.__class__.__name__ + ".scale"
+        self.key_widget_name = self.__class__.__name__ + ".key"
+        self.filter_widget_name = self.__class__.__name__ + ".filter"
 
         self.music_scales = MusicScales()
 

@@ -110,7 +110,7 @@ class SongController:
 
         # build data structure
         track = Track()
-        track.uuid = str(uuid.uuid4())
+        #track.uuid = str(uuid.uuid4())
         track.instrument_name = instr_name
         self.song.tracks.append(track)
 
@@ -162,7 +162,7 @@ class AppController:
                 pass  # no-op we didn't change anything
             # user has edited the song title, check for collissions
             elif new_text in self.song_ctrl:
-                QMessageBox.critical(self,
+                QMessageBox.critical(None,
                                      "Error", f"{new_text} already exists!",
                                      QMessageBox.StandardButton.Ok)
             else:

@@ -70,7 +70,7 @@ def main():
     theme = qdarktheme.load_stylesheet('dark')
     app.setStyleSheet(theme)
 
-    window = MainWindow()
+    window = MainWindow(app.editor_controller)
     window.show()
 
     # broadcast ready event

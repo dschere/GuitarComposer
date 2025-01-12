@@ -83,6 +83,7 @@ class TabEventPresenter(QWidget):
 
 
 
+
 if __name__ == '__main__':
     from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QToolBar, QTabWidget,

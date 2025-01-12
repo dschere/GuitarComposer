@@ -15,8 +15,9 @@ from view.config import EditorKeyMap
 
 
 from view.widgets.projectNavigator.navigator import Navigator
-from view.editor.trackEditor import TrackEditor
+from view.editor.trackEditorView import TrackEditorView
 import logging
+from controllers.editorcontroller import EditorController
 
 
 class MainWindow(QMainWindow):
@@ -114,7 +115,7 @@ class MainWindow(QMainWindow):
                 e_evt.key = key
                 Signals.editor_event.emit(e_evt)
 
-    def __init__(self):
+    def __init__(self, ec: EditorController ):
         super().__init__()
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
 
@@ -140,7 +141,8 @@ class MainWindow(QMainWindow):
         #self.tab_widget = QTabWidget()
 
         #self.tab_widget.addTab(TrackEditor(), "Tab 1")
-        self.track_editor = TrackEditor()
+        self.track_editor = TrackEditorView()
+        ec.set_editor(self.track_editor)
         # self.tab_widget.addTab(QWidget(), "Tab 2")
 
         # Create a simple QWidget for the bottom-right pane
