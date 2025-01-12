@@ -66,6 +66,11 @@ SymFontSize = {
 }
 DEFAULT_SYM_FONT_SIZE = 32
 
+BEAT_ERROR_FONT_SIZE = 8
+BEAT_ERROR_COLOR = "red"
+BEAT_OVERFLOW_CHAR = ">"
+BEAT_UNDERFLOW_CHAR = "<"
+
 STAFF_ABOVE_LINES = 7  # needed lines above staff
 STAFF_BELOW_LINES = 7  # needed lines below staff
 STAFF_LINE_SPACING = 16

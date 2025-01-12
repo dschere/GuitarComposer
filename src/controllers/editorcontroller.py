@@ -8,93 +8,77 @@ for track events to be rendered.
 import logging
 from PyQt6.QtCore import Qt
 
-from view.editor.sequenceRenderer import SequenceRenderer
 from view.config import EditorKeyMap
 from view.events import Signals, EditorEvent
-from models.track import Track, StaffEvent, TabEvent, TrackEventSequence
-from view.editor.trackEditor import TrackEditor
+from models.track import Track
+from view.editor.trackEditorView import TrackEditorView
 from util.keyprocessor import KeyProcessor
+
 
 
 class EditorController:
 
     def _ready(self):
-        return self.track_editor and self.track_model
+        return self.track_editor_view and self.track_model
     
-    def _commit_fret_notes(self):
-        pass
 
-    def _updown_key(self, tmodel: Track | None, inc: int):
-        if tmodel and self.track_editor:
-            te : TrackEditor = self.track_editor 
-            tc = tmodel.getTabEvent()
-            nstring = len(tmodel.tuning)
-            print(f"nstring = {nstring}")
-            # change the string we are pointing to
-            tc.string = (tc.string - inc) % nstring
-
-            # move the rectangle select box on the tableture
-            te.drawSelectRegion(tmodel.getPresCol(), tc.string)
-
-    def update(self, tmodel: Track | None, editor: TrackEditor | None):
+    def update(self, tmodel: Track | None, editor: TrackEditorView | None):
         """ 
         Called in response for when a track has been activated to render a score
         for that track.
         """
         if tmodel and editor:
-            self.sequence_renderer = SequenceRenderer(tmodel, editor)
-            self.sequence_renderer.initialize()
+            editor.set_track_model(tmodel)
             
     def add_model(self, evt: EditorEvent):
         self.track_model = evt.model
-        self.update(self.track_model, self.track_editor)
-        if self.track_editor and self.track_model:
-            self.track_editor.setFocus()
+        self.update(self.track_model, self.track_editor_view)
+        if self.track_editor_view and self.track_model:
+            self.track_editor_view.setFocus()
 
     def add_editor(self, evt: EditorEvent):
-        self.track_editor = evt.track_editor
+        self.track_editor_view = evt.track_editor
 
-    def key_right_handler(self):
-        if self.sequence_renderer and self.track_model:
-            if self.track_model.isTheActivateMomentTheLastMoment():
-                self.sequence_renderer.append_tab_event() 
-            else:
-                self.sequence_renderer.move_cursor_to_next_momement()
+    def set_editor(self, tev: TrackEditorView):
+        self.track_editor_view = tev    
 
-    def key_left_handler(self):
-        if self.sequence_renderer:
-            self.sequence_renderer.move_cursor_to_prior_tab()
 
     def keyboard_event(self, evt: EditorEvent):
-        tedit : TrackEditor | None = self.track_editor
+
+        tedit : TrackEditorView | None = self.track_editor_view
         tmodel : Track | None = self.track_model
-        tm : SequenceRenderer | None = self.sequence_renderer
         key = evt.key
 
-        if not tm:
-            return 
+        if not tedit: return
+        if not tmodel: return   
 
         # Check for arrow keys
         if key == Qt.Key.Key_Up:
-            tm.updown_cursor(1)
-            #self._updown_key(self.track_model, 1)
+            tedit.arrow_up_key()
         elif key == Qt.Key.Key_Down:
-            tm.updown_cursor(-1)
+            tedit.arrow_down_key()
             #self._updown_key(self.track_model, -1)
         elif key == Qt.Key.Key_Left:
-            self.key_left_handler()
+            tedit.arrow_left_key()
         elif key == Qt.Key.Key_Right:
-            self.key_right_handler()
-        elif tedit and tmodel:
+            tedit.arrow_right_key()
+        else:
             # get the tab event at the current moment
-            te : TabEvent = tmodel.getTabEvent()
+            #te : TabEvent = tmodel.getTabEvent()
+            (tab_event, _) = tmodel.current_moment()
+
             # use the key to update the tablature cursor
-            self.key_proc.proc(key, te) 
-            self.sequence_renderer.render_update_tab(te)
+            self.key_proc.proc(key, tab_event) 
+
+            # render the updated tab event model.
+            tedit.current_tab_event_updated()
+            
         
     def tuning_change(self, evt: EditorEvent):
-        if evt.tuning and self.track_model:
-            self.track_model.tuning = evt.tuning
+        tedit : TrackEditorView | None = self.track_editor_view
+        if evt.tuning and self.track_model and tedit:
+            self.track_model.tuning = evt.tuning 
+            tedit.update()
  
     def measure_clicked(self, evt: EditorEvent):
         print(evt.measure)
@@ -119,7 +103,7 @@ class EditorController:
     def __init__(self):
         self.keymap = EditorKeyMap()
         self.track_model = None
-        self.track_editor = None
+        self.track_editor_view = None
         # track model -> cursor
         self.key_proc = KeyProcessor()
         self.sequence_renderer = None

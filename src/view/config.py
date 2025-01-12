@@ -35,6 +35,8 @@ class _GuitarFretboardStyle:
     scale_color_rgb = (0, 0, 128)
     # purple
     note_press = (255, 0, 255)
+    # bright red
+    error = (255, 0, 0)
 
 
 @singleton

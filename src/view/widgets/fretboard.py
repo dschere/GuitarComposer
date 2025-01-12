@@ -31,25 +31,26 @@ class GuitarFretboard(QWidget):
             for (fret, fret_x_pos) in enumerate(fret_positions):
                 n = Note()
                 n.midi_code = start_midi + fret
-                n.fret = fret
-                n.string = string
-                n.velocity = 80
+                n.fret = fret # type: ignore
+                n.string = string # type: ignore
+                n.velocity = 80 # type: ignore
                 self.cm.add(fret_x_pos, string_y_pos, n)
 
     def _update_active_notes(self, n: Note):
+        assert(n.string)
         fret_playing = self.string_playing_fret[n.string]
         if fret_playing != -1:
             self.removeDot(fret_playing, n.string)
         if n.is_playing:
             self.addDot(n.fret, n.string, GuitarFretboardStyle.note_press)
-            self.string_playing_fret[n.string] = n.fret
+            self.string_playing_fret[n.string] = n.fret # type: ignore
         self.update()
 
     def mousePressEvent(self, event: QMouseEvent):
         if event.button() == Qt.MouseButton.LeftButton:
             x = event.position().x()
             y = event.position().y()
-            n = self.cm.match(x, y)
+            n = self.cm.match(x, y) # type: ignore
             if n:
                 # Toggle state
                 n.is_playing = not n.is_playing
@@ -144,7 +145,7 @@ class GuitarFretboard(QWidget):
         def_scale_color = QColor(*GuitarFretboardStyle.scale_color_rgb)
         root_color = QColor(*GuitarFretboardStyle.scale_root_color_rgb)
         for (i, midi_code) in enumerate(self.scale):
-            steps = self.scale_seq[i % len(self.scale_seq)]
+            steps = self.scale_seq[i % len(self.scale_seq)] # type: ignore
             if steps == 1:
                 color = root_color
             else:
