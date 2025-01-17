@@ -1,68 +1,88 @@
 """
-Representation of a parameter
+
+spec sample -> 
+{'c_index': 4, 'has_default': True, 
+'default_value': 0.0, 'upper_bound': 20.0, 
+'lower_bound': -20.0, 'name': 'drivegain', 
+'is_bounded_above': True, 'is_bounded_below': True, 
+'is_integer': False, 'is_logarithmic': False, 
+'is_toggled': False}
+
 """
 
 
-class Parameter:
-    def __init__(self, **kwargs):
-        defval = kwargs.get('defval')
-        assert (defval != None)
-        name = kwargs.get('name')
-        assert (name != None)
+class EffectParamBase:
+    def __init__(self, spec: dict):
+        self.spec = spec
+        if spec['has_default']:
+            self.defval = spec['default_value']
+            self.val = self.defval
+            self.required = False 
+        else:
+            self.val = None
+            self.required = True
+            self.defval = None
 
-        self.dtype = type(defval)
-        self.defval = defval
-        self.value = kwargs.get('value', defval)
-        self.name = name
-        self.label = kwargs.get('label', name)
+    def get_default_value(self):
+        return self.defval
 
-        self.required = kwargs.get('required', False)
-        self.version = 1
+    def has_lower_bound(self):
+        return self.spec['is_bounded_below']
+    
+    def has_upper_bound(self):
+        return self.spec['is_bounded_above']
+    
+    def lower_bound(self):
+        return self.spec['lower_bound']
+    
+    def upper_bound(self):
+        return self.spec['upper_bound']
+    
+    def is_logarithmic(self):
+        return self.spec['is_logarithmic']
+        
+    def is_required(self):
+        return self.required 
 
-    def isRequired(self):
-        return self.required
+    def name(self):
+        return self.spec['name']    
 
-    def changed(self):
-        return self.value != self.defval
+    def setValue(self, value):
+        self.val = value
 
-    def asFFmpegParam(self):
-        if self.dtype == type(True):
-            if self.value:
-                return "1"
-            return "0"
-        return str(self.value)
+    def getValue(self):
+        return self.val    
 
-    def setValue(self, data):
-        self.value = data
+    def isRequiredParam(self):
+        return self.required    
 
+class BooleanEffectParam(EffectParamBase):
+    def __init__(self, spec: dict):
+        super().__init__(spec)
 
-class BoolParam(Parameter):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        assert (self.dtype == type(True))
+    def getValue(self) -> bool:
+        return self.val != 0.0
+    
 
-
-class IntParam(Parameter):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
-        assert (self.dtype == type(0))
-
-        self.minval = kwargs.get('minval')
-        assert (self.minval != None)
-
-        self.maxval = kwargs.get('maxval')
-        assert (self.maxval != None)
+class IntegerEffectParam(EffectParamBase):
+    def __init__(self, spec: dict):
+        super().__init__(spec)
 
 
-class FloatParam(Parameter):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
 
-        assert (self.dtype == type(0.0))
+class FloatingEffectParam(EffectParamBase):
+    def __init__(self, spec: dict):
+        super().__init__(spec)
 
-        self.minval = kwargs.get('minval')
-        assert (self.minval != None)
 
-        self.maxval = kwargs.get('maxval')
-        assert (self.maxval != None)
+def ParameterFactory(spec: dict):
+    if spec['is_toggled']:
+        return BooleanEffectParam(spec)
+    elif spec['is_integer']:
+        return IntegerEffectParam(spec) 
+    else:
+        return FloatingEffectParam(spec)
+
+
+        
+

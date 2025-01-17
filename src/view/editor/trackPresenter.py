@@ -25,7 +25,7 @@ class TrackPresenter(QScrollArea):
 
     def current_tab_event_updated(self):
         self.setup()
-        self.current_tep.update()
+        self.current_mp.beat_error_check()
 
     def set_fret(self, n : int):
         self.current_tep.set_fret(n)
@@ -38,13 +38,11 @@ class TrackPresenter(QScrollArea):
     def set_dotted(self, state: bool):
         self.current_tab_event.dotted = state
         self.current_tab_event.double_dotted = not state
-
         self.setup() 
         
     def set_double_dotted(self, state: bool):
         self.current_tab_event.dotted = not state
         self.current_tab_event.double_dotted = state
-
         self.setup() 
 
 

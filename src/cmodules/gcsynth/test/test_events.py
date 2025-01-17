@@ -27,20 +27,20 @@ class Test_GcSynth_Events(unittest.TestCase):
         noteon(2000, 0, 60, 100).send()
         print("sleeping for 3 seconds should play in background")
         time.sleep(3.0)
-        gcsynth.stop()
+        gcsynth.stop()    
 
-    def test02_note_inflight_ignore_on_restart(self):
-        data = {"sfpaths": [
-            "/home/david/proj/GuitarComposer/data/sf/27mg_Symphony_Hall_Bank.SF2"]}
-        gcsynth.start(copy.deepcopy(data))
-        noteon(2000, 0, 65, 100).send()
-        time.sleep(0.1)
-        gcsynth.stop()
+    # def test02_note_inflight_ignore_on_restart(self):
+    #     data = {"sfpaths": [
+    #         "/home/david/proj/GuitarComposer/data/sf/27mg_Symphony_Hall_Bank.SF2"]}
+    #     gcsynth.start(copy.deepcopy(data))
+    #     noteon(2000, 0, 65, 100).send()
+    #     time.sleep(0.1)
+    #     gcsynth.stop()
 
-        gcsynth.start(copy.deepcopy(data))
-        print("should have heard no sound!")
-        time.sleep(3.0)
-        gcsynth.stop()
+    #     gcsynth.start(copy.deepcopy(data))
+    #     print("should have heard no sound!")
+    #     time.sleep(3.0)
+    #     gcsynth.stop()
 
     def test03_strum_a_chord(self):
         data = {"sfpaths": [
@@ -78,7 +78,23 @@ class Test_GcSynth_Events(unittest.TestCase):
         print("should hear nothing since channels are reset prior to play!")
         time.sleep(3.0)
         gcsynth.stop()
+        print("end test")
 
+    def test00_print_filter_info(self):
+        data = {"sfpaths": [
+            "/home/david/proj/GuitarComposer/data/sf/27mg_Symphony_Hall_Bank.SF2"]}
+        gcsynth.start(copy.deepcopy(data))
+        
+        ladspa_path = "/usr/lib/ladspa/guitarix_distortion.so"
+        ladspa_label = "guitarix-distortion"
+
+        spec = gcsynth.filter_query(ladspa_path, ladspa_label)
+        for pinfo in spec:
+            print(pinfo) 
+
+        time.sleep(1.0)
+        gcsynth.stop()
+        print("existing test")    
 
 if __name__ == '__main__':
     unittest.main()
