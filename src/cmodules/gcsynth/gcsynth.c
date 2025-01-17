@@ -163,7 +163,8 @@ static PyObject* py_query_filter(PyObject* self, PyObject* args) {
             "is_logarithmic", PyBool_FromLong(c->is_logarithmic));
         PyDict_SetItemString2(item,
             "is_toggled", PyBool_FromLong(c->is_toggled));
-      
+
+        Py_INCREF(item);
         PyList_SetItem(control_info_list, i, item);
     }
 

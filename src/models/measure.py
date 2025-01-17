@@ -3,6 +3,7 @@ from music.constants import Dynamic
 from typing import List
 from music.durationtypes import (WHOLE, 
         HALF, QUARTER, SIXTEENTH, THIRTYSECOND, SIXTYFORTH)
+from models.effect import (Reverb,Distortion,ChorusFlanger,EffectModule) 
 
 class TimeSig:
     def __init__(self):
@@ -50,8 +51,14 @@ class TabEvent:
         self.upstroke = False
         self.downstroke = False
         self.stroke_duration = SIXTEENTH
-
+        self.effects : List[EffectModule] = []
         self.num_gstrings = num_gstrings
+
+    def getEffects(self) -> List[EffectModule]:
+        return self.effects
+
+    def setEffects(self, el : List[EffectModule]):
+        self.effects = el
 
     def update(self, other):
         for k,v in vars(other).items():
