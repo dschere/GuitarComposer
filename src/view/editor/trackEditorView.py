@@ -12,6 +12,9 @@ from src.view.events import EditorEvent, Signals
 class TrackEditorView(QWidget):
 
     def _update_track_editor_content(self):
+        # check for error
+        if self.track_presenter.current_mp: 
+            self.track_presenter.current_mp.beat_error_check()
         # force a repaint of widgets canvas
         self.track_presenter.update()
         # set the focus of the cursor
@@ -44,13 +47,19 @@ class TrackEditorView(QWidget):
     def current_tab_event_updated(self):
         self.track_presenter.current_tab_event_updated()
 
+    def update_toolbar_track_event(self):
+        (te,_) = self.track_model.current_moment()
+        self.toolbar.setTabEvent(te)
+
     def arrow_left_key(self):
         "-> move cursor to next moment, append to track if its the end."
         self.track_presenter.prev_moment()
+        self.update_toolbar_track_event()
 
     def arrow_right_key(self):
         "<- move cursor to prev moment"
         self.track_presenter.next_moment()
+        self.update_toolbar_track_event()
 
     def arrow_up_key(self):
         "^ move cursor up or loop if its the top fret"
@@ -58,13 +67,15 @@ class TrackEditorView(QWidget):
 
     def arrow_down_key(self):
         "\/ move cursor down or loop if its the bottom fret"
-        self.track_presenter.cursor_up()
+        self.track_presenter.cursor_down()
 
     def delete_key(self):
         self.track_presenter.delete_tab()
+        self.update_toolbar_track_event()
 
     def insert_key(self):
         self.track_presenter.insert_tab_copy()
+        self.update_toolbar_track_event() 
 
     def set_fret_value(self, n : int):
         self.track_presenter.set_fret(n)

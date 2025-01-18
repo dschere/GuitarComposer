@@ -94,13 +94,20 @@ class Track:
         find the current time signature. The first measure always
         has a time signature.
         """
-        i = self.current_measure
-        while i >= 0:
+        for i in range(self.current_measure,-1,-1):
             if self.measures[i].timesig:
                 return self.measures[i].timesig # type: ignore
-            i -= -1
+            
         raise RuntimeError("At least the first measure should have a timesig")
 
+    def remove_measure(self):
+        if len(self.measures) > 0:
+            del self.measures[self.current_measure]
+            if self.current_measure >= len(self.measures):
+                self.current_measure = len(self.measures) - 1
+            for (mn, m) in enumerate(self.measures):
+                m.measure_number = mn + 1        
+            
     def current_moment(self) -> Tuple[TabEvent, Measure]:
         m = self.measures[self.current_measure] 
         return (m.tab_events[m.current_tab_event], m)

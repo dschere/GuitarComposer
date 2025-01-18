@@ -4,6 +4,8 @@ from typing import List
 from music.durationtypes import (WHOLE, 
         HALF, QUARTER, SIXTEENTH, THIRTYSECOND, SIXTYFORTH)
 from models.effect import (Reverb,Distortion,ChorusFlanger,EffectModule) 
+import logging
+import math
 
 class TimeSig:
     def __init__(self):
@@ -74,10 +76,13 @@ class TabEvent:
             if self.double_dotted:
                 beats *= 1.75
             if self.triplet:
-                beats *= 0.66
+                beats *= 0.66666
             if self.quintuplet:
                 beats *= 0.2
         return beats
+
+
+
 
 
 class Measure:
@@ -133,6 +138,12 @@ class Measure:
         for e in self.tab_events:
             beats += e.beats(ts.beat_duration())
 
+        # beats rounded to the nearest 1/100
+        # In the case of a triplet then I have to handle the case 
+        # of beats being a repeating decimal like 3.999 ...
+        beats = math.ceil(beats * 100) / 100
+        
+        logging.debug(f"beats = {beats}")
         if ts.beats_per_measure == beats:
             self.beat_error_msg = ""
         elif beats > ts.beats_per_measure:

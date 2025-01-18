@@ -135,20 +135,20 @@ class MutuallyExclusiveButtonGroup(QObject):
 
 class EditorToolbar(QToolBar):
 
-    def _compute_beat(self):
-        n = 1.0
+    # def _compute_beat(self):
+    #     n = 1.0
 
-        if self._tab_event.dotted:
-            n *= 1.5
-        elif self._tab_event.double_dotted:
-            n *= 1.75
+    #     if self._tab_event.dotted:
+    #         n *= 1.5
+    #     elif self._tab_event.double_dotted:
+    #         n *= 1.75
 
-        if self._tab_event.triplet:
-            n *= 0.33
-        elif self._tab_event.quintuplet:
-            n *= 0.2
+    #     if self._tab_event.triplet:
+    #         n *= 0.33
+    #     elif self._tab_event.quintuplet:
+    #         n *= 0.2
 
-        self._tab_event.duration = n * self._tab_event.duration            
+    #     self._tab_event.duration = n * self._tab_event.duration            
         
 
     def _dot_selected(self, btn: ToolbarButton):
@@ -166,13 +166,13 @@ class EditorToolbar(QToolBar):
         else:
             # not a dot selected event.
             return    
-        self._compute_beat()
+        #self._compute_beat()
         self.update_staff_and_tab()
 
     def _on_duration_selected(self, btn: ToolbarButton):
         if btn.pname() == "duration":
             self._tab_event.note_duration = btn.pvalue() # type: ignore
-            self._compute_beat() 
+            #self._compute_beat() 
         self.update_staff_and_tab()
 
     def _dyn_selected(self, btn: ToolbarButton):
