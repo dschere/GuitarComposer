@@ -62,6 +62,10 @@ class EditorController:
             tedit.arrow_left_key()
         elif key == Qt.Key.Key_Right:
             tedit.arrow_right_key()
+        elif key == Qt.Key.Key_Insert:
+            tedit.insert_key()   
+        elif key == Qt.Key.Key_Delete:
+            tedit.delete_key()
         else:
             # get the tab event at the current moment
             #te : TabEvent = tmodel.getTabEvent()

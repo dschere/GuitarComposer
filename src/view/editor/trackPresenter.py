@@ -45,7 +45,6 @@ class TrackPresenter(QScrollArea):
         self.current_tab_event.double_dotted = state
         self.setup() 
 
-
     def insert_tab_copy(self):
         # create a copy of the current tab and insert
         # a neew tab event after the current one in the measure.
@@ -55,9 +54,23 @@ class TrackPresenter(QScrollArea):
         self.current_mp.reset_presentation()
         self.setup()
 
+    def delete_current_measure(self):
+        "Delete current measure unless its the first measure, then ignore"
+        # remove view
+        if self.current_measure.measure_number != 1:
+            self.measure_layout.removeWidget(self.current_mp)
+            del self.mp_map[self.current_measure]  
+            self.track_model.remove_measure()
+            for mp in self.mp_map.values():
+                mp.reset_presentation()
+
     def delete_tab(self):
-        self.current_measure.remove_current()
-        self.current_mp.reset_presentation()
+        if len(self.current_measure.tab_events) == 1:
+            # delete measure
+            self.delete_current_measure()
+        else:  
+            self.current_measure.remove_current()
+            self.current_mp.reset_presentation()
         self.setup()
 
     def tab_event_changed(self):
