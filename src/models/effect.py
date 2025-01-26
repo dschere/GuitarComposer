@@ -1,59 +1,10 @@
-from models.param import (ParameterFactory,
-                          EffectParamBase, 
-                          BooleanEffectParam, 
-                          IntegerEffectParam, 
-                          FloatingEffectParam)
+from models.param import EffectParameter
 
 # import from native C library. 
 from gcsynth import filter_query as effect_param_specifcation # type: ignore
 from collections import OrderedDict
 import os 
 
-
-
-class PresentationBase:
-    def __init__(self, p : EffectParamBase):
-        self.p = p
-
-    def getValue(self):
-        return self.p.getValue() 
-    
-    def setValue(self, v):
-        self.p.setValue(v)
-
-class CheckboxPresentation(PresentationBase):
-    def __init__(self, p : BooleanEffectParam ):
-        super().__init__(p)
-
-
-class SliderPresentation(PresentationBase):
-    def __init__(self, p : EffectParamBase ):
-        super().__init__(p)
-
-    def choices(self):
-        "return an array of value choices that the user will be able to select from"
-        if isinstance(self.p, IntegerEffectParam):
-            low = int(self.p.lower_bound()) 
-            high = int(self.p.upper_bound())
-            return range(low, high+1)
-        else:
-            r = []
-            low = self.p.lower_bound() 
-            high = self.p.upper_bound()
-            prev = None 
-            dv = self.p.get_default_value() 
-            assert(dv)
-            for i in range(0,100):
-                d = (high-low)
-                v = ((d * i)/100) + low
-                if prev:
-                    if prev < dv <= v:
-                        # subsitute with default value.
-                        v = dv
-                r.append(v)        
-                prev = v
-            assert(dv in r)    
-            return r
 
 class EffectModule:
     """
@@ -70,35 +21,31 @@ class EffectModule:
         self.path = ladspa_path 
         # plugin within library (there can be multiple)
         self.plugin = ladspa_plugin
-        self.initialized = False
         self.params = OrderedDict()
         self.enabled = False
+
+        specList = effect_param_specifcation(self.path, self.plugin)
+        for spec in specList:
+            ep = EffectParameter(spec) 
+            self.params[ep.name] = ep
         
     def enable(self):
-        self.bootstrap()
         self.enabled = True 
 
     def disable(self):
         self.enabled = False        
 
-    def load_factory_defaults(self):
-        specList = effect_param_specifcation(self.path, self.plugin)
-        for spec in specList:
-            ep = ParameterFactory(spec)
-            if isinstance(ep, BooleanEffectParam):
-                pres = CheckboxPresentation(ep)
-                self.params[ep.name()] = pres
-            elif ep.has_lower_bound() and ep.has_upper_bound():
-                # bounded values are represented as sliders
-                pres = SliderPresentation(ep)
-                self.params[ep.name()] = pres
-                    
+    def is_enabled(self):
+        return self.enabled    
 
-    def bootstrap(self):
-        "if not initialized then load parameters using the gcsynth method"
-        if not self.initialized:
-            self.load_factory_defaults()
-            self.initialized = True
+    def name(self):
+        return ""        
+    
+    def plugin_path(self):
+        return self.path 
+    
+    def plugin_label(self):
+        return self.plugin
 
 
 class Distortion(EffectModule):
@@ -107,11 +54,18 @@ class Distortion(EffectModule):
         self.label = "guitarix-distortion"
         super().__init__(filename, self.label) 
 
+    def name(self):
+        return "distortion"
+
 class Reverb(EffectModule):
     def __init__(self):
         filename = "tap_reverb.so"
         self.label = "tap_reverb"
         super().__init__(filename, self.label) 
+
+    def name(self):
+        return "reverb"
+
 
 class ChorusFlanger(EffectModule):
     def __init__(self):
@@ -119,6 +73,8 @@ class ChorusFlanger(EffectModule):
         self.label = "tap_chorusflanger"
         super().__init__(filename, self.label) 
 
+    def name(self):
+        return "chorus-flanger"
 
 
 class Effects:
@@ -126,4 +82,36 @@ class Effects:
         self.distortion = Distortion()
         self.reverb = Reverb() 
         self.chorus_flanger = ChorusFlanger()
+
+    def enable_all(self):
+        self.distortion.enable()
+        self.reverb.enable() 
+        self.chorus_flanger.enable() 
+
+
+
+def unittest():
+    import gcsynth
+    import copy 
+
+    data = {"sfpaths": [
+        "/home/david/proj/GuitarComposer/data/sf/27mg_Symphony_Hall_Bank.SF2"]}
+    gcsynth.start(copy.deepcopy(data))
+    
+    e = Effects() 
+
+    e.distortion.enable() 
+    e.reverb.enable() 
+    e.chorus_flanger.enable() 
+
+    print(e.distortion.params)
+    print(e.reverb.params)
+    print(e.chorus_flanger.params)
+
+
+    gcsynth.stop()
+
+
+if __name__ == '__main__':
+    unittest()        
         

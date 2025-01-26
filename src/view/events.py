@@ -8,6 +8,8 @@ from singleton_decorator import singleton
 
 from models.note import Note
 from models.track import Track
+from models.effect import Effects
+from view.widgets.effectsControlDialog.effectsControls import EffectChanges, EffectPreview
 
 
 class ScaleSelectedEvent:
@@ -62,6 +64,7 @@ class EditorEvent:
         self.tuning = None
         self.measure = 1
 
+
 global _toolbar_button_update
 
 @singleton
@@ -91,5 +94,8 @@ class _Signals(QObject):
 
     editor_event = pyqtSignal(EditorEvent)
     track_update = pyqtSignal(Track)
+    
+    # route EffectChanges to synth channel(s)
+    preview_effect = pyqtSignal(EffectPreview)
 
 Signals = _Signals()

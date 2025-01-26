@@ -18,6 +18,8 @@ from view.events import Signals
 from util.projectRepo import ProjectRepo
 from music.instrument import Instrument
 from view.config import LabelText
+from view.widgets.effectsControlDialog.effectsControls import EffectPreview,\
+    EffectChanges
 
 FRETBOARD_CHANNEL = 0
 
@@ -231,6 +233,7 @@ class AppController:
 
         Signals.preview_play.connect(self.handle_preview_play)
         Signals.preview_stop.connect(self.handle_preview_stop)
+        Signals.preview_effect.connect(self.handle_effects_preview)
 
         Signals.load_settings.connect(self.on_load_settings)
         Signals.save_settings.connect(self.on_load_settings)
@@ -240,6 +243,17 @@ class AppController:
     def handle_preview_play(self, n: Note):
         self.preview_instr.note_event(n)
         # self.synth_service.noteon(FRETBOARD_CHANNEL, n.midi_code, n.velocity)
+
+    def handle_effects_preview(self, evt: EffectPreview):
+        self.preview_instr.effects_change(evt.changes)
+        # send an arbitrary note to hear what applying the effect sounds like.
+        n = Note()
+        n.string = 4
+        n.fret = 0
+        n.velocity = 100
+        n.duration = 2000
+        self.preview_instr.note_event(n)
+        
 
     def handle_preview_stop(self, n: Note):
         self.preview_instr.note_event(n)

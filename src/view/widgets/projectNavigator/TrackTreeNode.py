@@ -1,13 +1,15 @@
 from PyQt6.QtWidgets import (QHBoxLayout, QDialogButtonBox,
                              QDialog, QLineEdit, QLabel,
-                             QVBoxLayout, QComboBox, QGroupBox)
+                             QVBoxLayout, QComboBox, QGroupBox, QPushButton)
 
 from music.instrument import getInstrumentList
 from view.events import EditorEvent, Signals, InstrumentSelectedEvent
 
 from view.config import LabelText
 from util.midi import midi_codes
+from models.track import Track
 
+from view.widgets.effectsControlDialog.effectsControls import EffectPreview, EffectsDialog
 
 
 """
@@ -85,8 +87,18 @@ class TrackTreeDialog(QDialog):
 
         group_box.setLayout(layout)
         return group_box
+    
 
-    def __init__(self, parent, track_model, track_qmodel_item):
+    def launch_effects(self):
+        dialog = EffectsDialog(self, self.track_model.effects)
+
+        def on_preview(evt : EffectPreview):
+            Signals.preview_effect.emit(evt)
+
+        dialog.effect_preview.connect(on_preview)
+        dialog.show()
+
+    def __init__(self, parent, track_model : Track, track_qmodel_item):
         super().__init__(parent)
         self.setWindowTitle(LabelText.nav_track_properties)
         self.track_model = track_model
@@ -128,13 +140,15 @@ class TrackTreeDialog(QDialog):
         # line 3 tuning
         tuning_box = self.tuning_section()
 
-
-
+        effects_btn = QPushButton() 
+        effects_btn.setText("Audio Effects")
+        effects_btn.clicked.connect(self.launch_effects)
 
         # add to main layout
         main_layout.addLayout(filter_layout)
         main_layout.addLayout(combo_layout)
         main_layout.addWidget(tuning_box)
+        main_layout.addWidget(effects_btn)
         main_layout.addWidget(button_box)
          
 

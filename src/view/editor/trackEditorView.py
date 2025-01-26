@@ -7,7 +7,7 @@ from PyQt6.QtCore import Qt
 from view.editor.trackPresenter import TrackPresenter
 from view.editor.toolbar import EditorToolbar
 from models.track import Track
-from src.view.events import EditorEvent, Signals
+from view.events import EditorEvent, Signals
 
 class TrackEditorView(QWidget):
 

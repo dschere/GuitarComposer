@@ -6,8 +6,11 @@ import os
 from singleton_decorator import singleton
 from services.synth.instrument_info import instrument_info
 from services.synth.sequencer import sequencer
-from multiprocessing import Process, SimpleQueue
+from multiprocessing import Process, Queue, SimpleQueue
+import traceback
 
+
+import sys, signal
 
 def gcsynth_proc(q, r):
     (reader, writer) = os.pipe()
@@ -15,31 +18,44 @@ def gcsynth_proc(q, r):
     r_error = os.fdopen(reader, "r")
     faulthandler.enable(file=w_error)
 
+    # Optional: Write a custom signal handler for SIGSEGV
+    def cmoderror_handler(signum, frame):
+        print("Segmentation fault (SIGSEGV) detected!")
+        faulthandler.dump_traceback()  # Print the stack trace
+        sys.exit(1)
+
+    # Set the custom SIGSEGV handler
+    signal.signal(signal.SIGSEGV, cmoderror_handler)
+    signal.signal(signal.SIGBUS, cmoderror_handler)
+
     while True:
         msg = q.get()
         if not msg:
             break
+        
         try:
             (funcname, args) = msg
-            f = getattr(gcsynth, funcname)
+            if hasattr(gcsynth, funcname):
+                f = getattr(gcsynth, funcname)
 
-            # sys.stdout.write("%s(%s)" % (funcname,str(args)))
-            # sys.stdout.flush()
-            # -- execute gcsynth function
-            result = (False, f(*args))
+                #sys.stdout.write("%s%s\n" % (funcname,str(args)))
+                #sys.stdout.flush()
+                # -- execute gcsynth function
+                result = (False, f(*args))
 
-            # sys.stdout.write(" -> %s\n"  % str(result))
-            # sys.stdout.flush()
+                #sys.stdout.write(" -> %s\n"  % str(result))
+                #sys.stdout.flush()
+            else:
+                result = (True,"Unknown method name " + funcname)
 
-        except gcsynth.GcsynthException as e_obj:
+        except gcsynth.GcsynthException:
             logging.error("gcsynth.%s( %s ) -> caused exception!" %
                           (funcname, str(args)))
-            result = (True, str(e_obj))
-        except Exception:
-            logging.error("gcsynth.%s( %s ) -> caused exception!" %
+            result = (True, traceback.format_exc())
+        except:
+            logging.error("gcsynth.%s%s -> caused exception!" %
                           (funcname, str(args)))
-            logging.error(r_error.read())
-            result = (True, "c exception")
+            result = (True, traceback.format_exc())
 
         r.put(result)
 
@@ -128,9 +144,13 @@ class synthservice:
             raise RuntimeError("gcsynth parent process is no longer running!")
 
         msg = (funcname, args)
+        print(f"transact {msg}")
         self.send_q.put(msg)
+        
+        print("sent waiting for reply")
 
         (error, result) = self.recv_q.get()
+        print(f"reply received {result}")
         if error:
             raise RuntimeError(error)
         return result

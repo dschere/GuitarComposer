@@ -7,8 +7,10 @@ from services.synth import sequencer as SeqEvt
 
 from models.note import Note
 from models.track import Track
+from models.effect import Effects
 from util.midi import midi_codes
 
+from view.widgets.effectsControlDialog.effectsControls import EffectChanges
 
 @singleton
 class CustomInstruments:
@@ -43,12 +45,45 @@ DADGADTuning = [
 
 
 class InstrumentBaseImp:
-    def note_event(self, n: Note):
-        "play either a note or a rest"
+    def __init__(self):
+        self.effect_enabled_state = set()
 
+    def note_event(self, n: Note):
+        "play either a note or a rest"    
+
+    def update_effect_changes(self, synth, chan, ec: EffectChanges ):
+        # see EffectsDialog.delta for details on EffectChanges
+        for e in ec:
+            path = e.plugin_path() 
+            label = e.plugin_label() 
+
+            if e.is_enabled():
+                if chan not in self.effect_enabled_state:
+                    print(f"add filter {label}")
+                    synth.filter_add(chan, path, label)
+                    print(f"enable filter {label}")
+                    synth.filter_enable(chan, label)
+                    self.effect_enabled_state.add(chan)
+
+                # change/set parameters
+                for (pname,param) in ec[e]:
+                    print(f"set {pname} to {param.current_value}")
+                    synth.filter_set_control_by_name(
+                        chan,
+                        label,
+                        pname,
+                        param.current_value
+                    )
+                    
+            elif chan in self.effect_enabled_state:
+                synth.filter_disable(chan, label)
+                synth.filter_remove(chan, label)
+                self.effect_enabled_state.remove(chan)
+            
 
 class MultiInstrumentImp(InstrumentBaseImp):
     def __init__(self, instr, multi_instr_spec):
+        super().__init__()
         self.instr = instr
 
         # collect all the unique instrument names first
@@ -82,6 +117,10 @@ class MultiInstrumentImp(InstrumentBaseImp):
         for chan in self.channels_used:
             self.instr.synth.dealloc(chan)
 
+    def effects_change(self, ec: EffectChanges):
+        for chan in self.channels_used:
+            self.update_effect_changes(self.instr.synth, chan, ec)
+
     def note_event(self, n: Note):
         "play note on potentially multiple channels"
         chan_mix = self.string_map[n.string]
@@ -113,11 +152,15 @@ class MultiInstrumentImp(InstrumentBaseImp):
 
 class SingleInstrumentImp(InstrumentBaseImp):
     def __init__(self, instr, chan):
+        super().__init__()
         self.instr = instr
         self.chan = chan
 
     def free_resources(self):
         self.instr.synth.dealloc(self.chan)
+
+    def effects_change(self, ec: EffectChanges):
+        self.update_effect_changes(self.instr.synth, self.chan, ec)
 
     def note_event(self, n: Note):
         midicode_in_use = self.instr.string_playing[n.string]

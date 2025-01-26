@@ -102,7 +102,7 @@ int gcsynth_filter_run(struct gcsynth_filter* gc_filter, LADSPA_Data* fc_buffer,
             );
         }
     } else {
-        printf("disabled\n");
+        //printf("disabled\n");
     }
     
     gc_filter->frame_count++;
