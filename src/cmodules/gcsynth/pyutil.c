@@ -7,30 +7,35 @@ void raise_value_error(char *msg) {
     PyErr_SetString(PyExc_ValueError, msg);
 }
 
-const char *get_dict_str_field(PyObject* dict, const char*key, const char* defval)
+
+const char *get_dict_str_field(PyObject* dict, const char* key, const char* defval)
 {
     PyObject* dict_field = NULL;
     PyObject* py_str = NULL;
     const char* value = defval;
+    char* result = NULL;
 
+    // Get the value from the dictionary (borrowed reference)
     if ((dict_field = PyDict_GetItemString(dict, key)) != NULL) {
+        // Convert the value to a UTF-8 encoded bytes object (new reference)
         if ((py_str = PyUnicode_AsUTF8String(dict_field)) != NULL) {
-            value = PyBytes_AsString(py_str);
+            // Get the C string from the bytes object (borrowed pointer)
+            const char* temp_value = PyBytes_AsString(py_str);
+            if (temp_value != NULL) {
+                // Duplicate the string to return to the caller
+                result = strdup(temp_value);
+            }
+            // Clean up the bytes object
+            Py_DECREF(py_str);
         }
     }
 
-    if (value) {
-        value = strdup(value);
+    // If no value was found, duplicate the default value (if provided)
+    if (result == NULL && defval != NULL) {
+        result = strdup(defval);
     }
 
-    if (dict_field) {
-        Py_DECREF(dict_field);
-    }
-    if (py_str) {
-        Py_DECREF(py_str);
-    }
-
-    return value;
+    return result;  // Caller must free this memory
 }
 
 long get_dict_int_field(PyObject* dict, const char*key, long defval)
@@ -40,7 +45,7 @@ long get_dict_int_field(PyObject* dict, const char*key, long defval)
 
     if ((dict_field = PyDict_GetItemString(dict, key)) != NULL) {
         result = PyLong_AsLong(dict_field);
-        Py_DECREF(dict_field);
+        //Py_DECREF(dict_field);
     }
 
     return result;     
@@ -53,7 +58,7 @@ float get_dict_flt_field(PyObject* dict, const char*key, float defval)
 
     if ((dict_field = PyDict_GetItemString(dict, key)) != NULL) {
         result = (float) PyFloat_AsDouble(dict_field);
-        Py_DECREF(dict_field);
+        //Py_DECREF(dict_field);
     }
 
     return result;     

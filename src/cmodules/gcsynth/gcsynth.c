@@ -435,7 +435,7 @@ static PyObject* py_gcsynth_start(PyObject* self, PyObject* args) {
     if (!PyArg_ParseTuple(args, "O!", &PyDict_Type, &input_dict)) {
         return NULL; // If parsing fails, return NULL
     }
-
+    
     errmsg[0] = '\0';
     gcsynth_start_args_init(&GcSynth.cfg, input_dict, errmsg);
     if (errmsg[0]) {
@@ -503,9 +503,9 @@ static void gcsynth_start_args_init(
             } else {
                 sprintf(errmsg,"start() command sfpaths[%d] is not a string", i);        
             }
-            Py_XDECREF(pyItem);
+            //Py_XDECREF(pyItem);
         }
-        Py_XDECREF(py_list);
+        //Py_XDECREF(py_list);
     } else {
         sprintf(errmsg,"start() command missing sfpaths or its not a list");
     }
@@ -538,7 +538,7 @@ static PyMethodDef GCSynthMethods[] = {
         METH_VARARGS,"filter_set_control_by_name(chan,plugin_label,name,value)" },
 
 
-    {"filter_set_control_by_index", py_gcsynth_channel_set_control_by_index, 
+    {"filter_set_control_by_index", py_gcsynth_channel_set_control_by_index,
         METH_VARARGS,"filter_set_control_by_name(chan,plugin_label,index,value)" },
 
     {"channel_gain",py_channel_gain,METH_VARARGS,"channel_gain(chan,v) v = 0 no change"},
