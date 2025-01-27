@@ -85,3 +85,4 @@ class instrument_info:
 
         f = open(sf_info_file, "w")
         f.write(json.dumps(self.instruments, indent=4, sort_keys=True))
+        f.close()

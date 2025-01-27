@@ -3,7 +3,7 @@ High level controller for the main window
 
 """
 import json
-import uuid
+import copy
 import logging
 
 from PyQt6.QtGui import QStandardItemModel, QStandardItem, QIcon
@@ -240,6 +240,15 @@ class AppController:
 
         Signals.ready.connect(self.on_ready)
 
+
+        n = Note()
+        n.string = 4
+        n.fret = 0
+        n.velocity = 100
+        n.duration = 2000
+        self.effects_preview_note = n
+
+
     def handle_preview_play(self, n: Note):
         self.preview_instr.note_event(n)
         # self.synth_service.noteon(FRETBOARD_CHANNEL, n.midi_code, n.velocity)
@@ -247,12 +256,7 @@ class AppController:
     def handle_effects_preview(self, evt: EffectPreview):
         self.preview_instr.effects_change(evt.changes)
         # send an arbitrary note to hear what applying the effect sounds like.
-        n = Note()
-        n.string = 4
-        n.fret = 0
-        n.velocity = 100
-        n.duration = 2000
-        self.preview_instr.note_event(n)
+        self.preview_instr.note_event(self.effects_preview_note)
         
 
     def handle_preview_stop(self, n: Note):
