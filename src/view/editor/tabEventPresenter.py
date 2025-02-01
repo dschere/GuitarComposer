@@ -15,6 +15,8 @@ from models.measure import Measure, TabEvent
 
 from view.editor import glyphs 
 from models.track import Track
+from PyQt6.QtCore import Qt
+from view.editor.glyphs.common import STAFF_SYM_WIDTH
 
 
 class TabEventPresenter(QWidget):
@@ -34,10 +36,22 @@ class TabEventPresenter(QWidget):
         staff_presentation      = glyphs.StaffGlyph(self.tab_event, measure, track)
         ornamental_presentation = glyphs.oramental_markings(self.tab_event)
         tab_presentation        = glyphs.TabletureGlyph(self.tab_event)
-        
-        layout.addWidget(staff_presentation)
-        layout.addWidget(ornamental_presentation)
-        layout.addWidget(tab_presentation)
+        effects_presentation    = glyphs.EffectsGlyph(self.tab_event)
+
+        #TODO fix this crap!
+        # setSpacing does not work! I needed this kluge to force 
+        # a blank widget to eat up any extra padding set to exactly the correct
+        # height so that no padding is rendered between widgets.
+        pad = QWidget()
+        pad.setFixedHeight(170)
+        pad.setFixedWidth(STAFF_SYM_WIDTH)
+        #################################### 
+
+        layout.addWidget(staff_presentation, alignment=Qt.AlignmentFlag.AlignTop )
+        layout.addWidget(ornamental_presentation )
+        layout.addWidget(tab_presentation )
+        layout.addWidget(effects_presentation)
+        layout.addWidget(pad)
 
         self.setLayout(layout)
 
@@ -45,6 +59,7 @@ class TabEventPresenter(QWidget):
         self.ornamental_p = ornamental_presentation
         self.tab_p = tab_presentation
         self.gstring = len(tab_event.fret)-1 
+        self.effects_p = effects_presentation
 
     def beat_overflow_error(self):
         self.staff_p.beat_overflow_error()    

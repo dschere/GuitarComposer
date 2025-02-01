@@ -10,7 +10,8 @@ from view.editor.glyphs.common import (FLAT_SIGN,
                                        )
 from view.config import GuitarFretboardStyle
 from singleton_decorator import singleton
-from PyQt6.QtGui import QPainter
+from PyQt6.QtGui import QPainter, QColor
+from PyQt6.QtCore import QRect, Qt
 
 @singleton
 class BeatErrorPresenter:
@@ -94,6 +95,10 @@ class Canvas(QLabel):
         painter = QtGui.QPainter()
         painter.begin(self)
         painter.eraseRect(0, 0, self.c_width, self.c_height)
+
+        #useful to see where the margins are.
+        #painter.fillRect(0, 0, self.c_width, self.c_height,QColor(60,60,60))
+       
         self.canvas_paint_event(painter)
         self.draw_beat_error(painter)
         painter.end()

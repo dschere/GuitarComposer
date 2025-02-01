@@ -37,8 +37,7 @@ class GuitarFretboard(QWidget):
                 self.cm.add(fret_x_pos, string_y_pos, n)
 
     def _update_active_notes(self, n: Note):
-        assert(n.string)
-        fret_playing = self.string_playing_fret[n.string]
+        fret_playing = self.string_playing_fret[n.string] # type: ignore
         if fret_playing != -1:
             self.removeDot(fret_playing, n.string)
         if n.is_playing:

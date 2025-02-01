@@ -52,6 +52,7 @@ class Track:
 
     def __init__(self, cleff = None):
         self.instrument_name = "Acoustic Guitar"
+        # instrument currently allocated for this track.
         self.tuning = [
             "E4",
             "B3",
@@ -77,6 +78,7 @@ class Track:
         m.cleff = self.cleff
         self.measures : List[Measure] = [m]
         self.effects = Effects()
+
 
     def append_measure(self, **kwargs):
         m = self.blank_measure(**kwargs)
@@ -111,6 +113,23 @@ class Track:
     def current_moment(self) -> Tuple[TabEvent, Measure]:
         m = self.measures[self.current_measure] 
         return (m.tab_events[m.current_tab_event], m)
+    
+    def get_effects(self, te: TabEvent) -> Effects | None:
+        """
+        track         ----             ---- te
+           <default>      effect change      +-> we want this effect settings
+                               +-------------------------/\
+        """
+        # get the default effect settings for this track
+        e = self.effects 
+        for m in self.measures:
+            for t in m.tab_events:
+                if t is te:
+                    break
+                # the composer could have changed the default effect
+                elif t.effects:
+                    e = t.effects
+        return e
     
     def next_moment(self) -> Tuple[Optional[TabEvent], Measure]:
         """

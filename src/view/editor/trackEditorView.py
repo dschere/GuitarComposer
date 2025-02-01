@@ -9,6 +9,24 @@ from view.editor.toolbar import EditorToolbar
 from models.track import Track
 from view.events import EditorEvent, Signals
 
+from singleton_decorator import singleton 
+
+@singleton
+class TrackEditorData:
+    """ 
+    All information about the current track being
+    edited to be easilly available to glyphs.
+    """
+    def __init__(self):
+        self.active_track_model = None
+
+    def set_active_track_model(self, track: Track):
+        self.active_track_model = track 
+
+    def get_active_track_model(self) -> Track | None:
+        return self.active_track_model
+
+
 class TrackEditorView(QWidget):
 
     def _update_track_editor_content(self):
@@ -43,6 +61,12 @@ class TrackEditorView(QWidget):
 
         self.setLayout(main_layout)
         self.track_model = track_model
+
+        # make this model accessible 
+        TrackEditorData().set_active_track_model(track_model)
+
+    def get_track_model(self):
+        return self.track_model
 
     def current_tab_event_updated(self):
         self.track_presenter.current_tab_event_updated()
