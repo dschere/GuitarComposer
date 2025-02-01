@@ -1,9 +1,9 @@
 from view.editor.glyphs.common import (STAFF_SYM_WIDTH, STAFF_HEIGHT,
-                                       STAFF_HEADER_WIDTH, STAFF_LINE_SPACING, STAFF_ABOVE_LINES, QUATER_NOTE, TREBLE_CLEFF,
-                                       SymFontSize, KeyMidiCodeTable, SHARP_SIGN, FLAT_SIGN, STAFF_NUMBER_OF_LINES,
-                                       BARLINE2, BARLINE1, START_REPEAT,
+    STAFF_HEADER_WIDTH, STAFF_LINE_SPACING, STAFF_ABOVE_LINES, QUATER_NOTE, TREBLE_CLEFF,
+    SymFontSize, KeyMidiCodeTable, SHARP_SIGN, FLAT_SIGN, STAFF_NUMBER_OF_LINES,
+    BARLINE2, BARLINE1, START_REPEAT,
     END_REPEAT
-                                       )
+    )
 
 from view.editor.glyphs.canvas import Canvas
 from models.track import TabEvent, Track

@@ -60,6 +60,7 @@ class SongController:
             instrument = Instrument(track.instrument_name)
             self.instruments[track] = instrument
 
+
     def title(self):
         return self.song.title
 
@@ -118,6 +119,7 @@ class SongController:
 
         # map the instrument name to a syn interface
         self.instruments[track] = instrument
+
         return track
 
     def removeTrack(self, instr_name):

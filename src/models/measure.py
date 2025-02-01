@@ -3,7 +3,7 @@ from music.constants import Dynamic
 from typing import List
 from music.durationtypes import (WHOLE, 
         HALF, QUARTER, SIXTEENTH, THIRTYSECOND, SIXTYFORTH)
-from models.effect import (Reverb,Distortion,ChorusFlanger,EffectModule) 
+from models.effect import Effects 
 import logging
 import math
 
@@ -53,13 +53,13 @@ class TabEvent:
         self.upstroke = False
         self.downstroke = False
         self.stroke_duration = SIXTEENTH
-        self.effects : List[EffectModule] = []
+        self.effects : Effects | None = None
         self.num_gstrings = num_gstrings
 
-    def getEffects(self) -> List[EffectModule]:
+    def getEffects(self) -> Effects | None:
         return self.effects
 
-    def setEffects(self, el : List[EffectModule]):
+    def setEffects(self, el : Effects):
         self.effects = el
 
     def update(self, other):

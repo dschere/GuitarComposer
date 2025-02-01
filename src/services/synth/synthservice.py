@@ -57,14 +57,18 @@ class midi_channel_manager:
 
 @singleton
 class synthservice:
+    """
+    A thin wrapper around the gcsynth cmodule.
+
+    The underlying fluidsynth thread is launched in app.py before
+    the Qt Application is created.
+    """
     def __init__(self):
         # scan soundfonts and produce an archive of information
         # filenames, instrument data etc.
         self.db = instrument_info()
         self.cm = midi_channel_manager(self)
         
-
-
     def reset_channel_manager(self):
         self.cm.reset()
 
@@ -78,9 +82,12 @@ class synthservice:
         """lookup instrument information that can be used to setup a channel"""
         return self.db.find(instrument_name)
 
-
     def shutdown(self):
-        pass
+        #RFU
+        # perform cleanup here is anything needs to be done.
+
+        # stop synth thread
+        self.stop()
 
     def getSequencer(self):
         return sequencer(self)

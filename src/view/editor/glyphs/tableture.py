@@ -2,7 +2,8 @@
 from PyQt6.QtGui import QColor
 from view.editor.glyphs.canvas import Canvas
 from view.editor.glyphs.common import (STAFF_HEADER_WIDTH, STAFF_SYM_WIDTH,
-                                       STAFF_HEIGHT, TABLATURE_LINE_SPACE, TABLATURE_NUM_LINES
+                                       STAFF_HEIGHT, TABLATURE_LINE_SPACE, TABLATURE_NUM_LINES,
+    TABLATURE_HEIGHT
                                        )
 
 from view.config import GuitarFretboardStyle
@@ -60,7 +61,7 @@ class TabletureGlyph(Canvas):
     TEXT_COLOR = QColor(*GuitarFretboardStyle.orament_color_rgb)
 
     def __init__(self, tab_event : TabEvent):
-        super().__init__(STAFF_SYM_WIDTH, STAFF_HEIGHT+15)
+        super().__init__(STAFF_SYM_WIDTH, TABLATURE_HEIGHT)
         # Note: gstring is from 1-6
         self._cursor = None  # type: ignore # None | gstring
         # (gstring) -> (fret, **options)
