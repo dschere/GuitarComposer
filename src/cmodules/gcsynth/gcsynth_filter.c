@@ -44,16 +44,16 @@ void gcsynth_filter_destroy(struct gcsynth_filter* gc_filter)
     }
 }
 
-// sets the value of a control
-int gcsynth_filter_setbyname(struct gcsynth_filter* gc_filter, char* name, LADSPA_Data value)
-{
-    return 0;
-}
+// // sets the value of a control
+// int gcsynth_filter_setbyname(struct gcsynth_filter* gc_filter, char* name, LADSPA_Data value)
+// {
+//     return 0;
+// }
 
-int gcsynth_filter_setbyindex(struct gcsynth_filter* gc_filter, int, LADSPA_Data value)
-{
-    return 0;
-}
+// int gcsynth_filter_setbyindex(struct gcsynth_filter* gc_filter, int, LADSPA_Data value)
+// {
+//     return 0;
+// }
 
 // sends FLUID_BUFSIZE size to the filter and copies FLUID_BUFSIZE out from the
 // filter 
@@ -67,6 +67,7 @@ int gcsynth_filter_run(struct gcsynth_filter* gc_filter, LADSPA_Data* fc_buffer,
             Ladspa filters can be either stereo or mono. The voice_data_router gets called
             once for left and once for right so in the case of stereo we   
         */
+       
 
         // there are filters that just output (like wave generators)
         // so in that case in_buf_count is 0 
@@ -114,7 +115,7 @@ int gcsynth_filter_run(struct gcsynth_filter* gc_filter, LADSPA_Data* fc_buffer,
 void gcsynth_filter_enable(struct gcsynth_filter* gc_filter)
 {
     if ((gc_filter->enabled == 0) && gc_filter->desc->activate) {
-        printf("%s is activated\n", gc_filter->desc->Label);
+        printf("gcsynth: %s is activated\n", gc_filter->desc->Label);
         gc_filter->desc->activate(gc_filter->plugin_instance);
     }
     gc_filter->enabled = 1;
@@ -124,7 +125,7 @@ void gcsynth_filter_disable(struct gcsynth_filter* gc_filter)
 {
     if ((gc_filter->enabled == 1) && gc_filter->desc->deactivate)
     {
-        printf("%s deactivated\n", gc_filter->desc->Label);
+        printf("gcsynth: %s deactivated\n", gc_filter->desc->Label);
         gc_filter->desc->deactivate(gc_filter->plugin_instance);
     }
     gc_filter->enabled = 0;
@@ -201,7 +202,7 @@ static int ladspa_setup(struct gcsynth_filter* gc_filter, const char* path, char
     // open the library with a local namespace so multipel opens of
     // the same library will use different internal variables.
     if ((gc_filter->dl_handle = dlopen(path, RTLD_LOCAL|RTLD_NOW)) == NULL) {
-        sprintf(errmsg,"ladspa_setup dlopen failed %s", dlerror());
+        sprintf(errmsg,"gcsynth: ladspa_setup dlopen failed %s", dlerror());
         gcsynth_raise_exception(errmsg);
         return -1;
     }
@@ -218,7 +219,7 @@ static int ladspa_setup(struct gcsynth_filter* gc_filter, const char* path, char
     for(i = 0; found == 0; i++)
      {
         if ((gc_filter->desc = gc_filter->descriptor_fn(i)) == NULL) {
-            sprintf(errmsg,"No match for plugin name %s in %s", label, path);
+            sprintf(errmsg,"gcsynth: No match for plugin name %s in %s", label, path);
             gcsynth_raise_exception(errmsg);
             ladspa_deallocate(gc_filter);
             return -1;
@@ -250,7 +251,7 @@ static int ladspa_setup(struct gcsynth_filter* gc_filter, const char* path, char
 
             gc_filter->port_map[i] = gc_filter->in_data_buffer[gc_filter->in_buf_count];
 
-            printf("input port %lu (%s) to input host  buffer %d\n",
+            printf("gcsynth: input port %lu (%s) to input host  buffer %d\n",
                  i, gc_filter->desc->PortNames[i], 
                  gc_filter->in_buf_count
             );
@@ -264,7 +265,7 @@ static int ladspa_setup(struct gcsynth_filter* gc_filter, const char* path, char
             gc_filter->out_buf_count < NUM_IO_PORTMAPS) {
 
             gc_filter->port_map[i] = gc_filter->out_data_buffer[gc_filter->out_buf_count];
-            printf("output port %lu (%s) to output host buffer %d\n",
+            printf("gcsynth: output port %lu (%s) to output host buffer %d\n",
                  i, gc_filter->desc->PortNames[i], 
                  gc_filter->out_buf_count
             );
@@ -280,7 +281,7 @@ static int ladspa_setup(struct gcsynth_filter* gc_filter, const char* path, char
                i, &gc_filter->controls[gc_filter->num_controls], pd);
             gc_filter->port_map[i] = &gc_filter->controls[gc_filter->num_controls].value;   
 
-            printf("control port %lu (%s) to control buffer, default %f\n",
+            printf("gcsynth: control port %lu (%s) to control buffer, default %f\n",
                  i, gc_filter->desc->PortNames[i], 
                  gc_filter->controls[gc_filter->num_controls].value);
 
@@ -381,7 +382,7 @@ static LADSPA_Data get_default_value(
 	  break;
 	}
 
-printf("%s set to %f has_default=%d, iHintDescriptor=0x%X lPortIndex=%lu\n", 
+printf("gcsynth: %s set to %f has_default=%d, iHintDescriptor=0x%X lPortIndex=%lu\n", 
     psDescriptor->PortNames[lPortIndex], fDefault, *has_default, iHintDescriptor, lPortIndex);
 
     return fDefault;

@@ -199,11 +199,15 @@ static int _gcsynth_channel_remove_filter(int channel, char* plugin_label_or_all
         struct gcsynth_filter* f = (struct gcsynth_filter*) iter->data;
 
         if (plugin_label_or_all == NULL) {
+            printf("gcsynth: removing filter %s\n", f->desc->Label);
+
             gcsynth_filter_destroy(f);
             // unlink from double linked list.
             c->filter_chain = g_list_delete_link(c->filter_chain, iter);
         }
         else if (strcmp(f->desc->Label,plugin_label_or_all) == 0) {
+            printf("gcsynth: removing filter %s\n", f->desc->Label);
+
             // deallocate
             gcsynth_filter_destroy(f);
             // unlink from double linked list.
@@ -243,6 +247,8 @@ static int _gcsynth_channel_add_filter(int channel, const char* filepath, char* 
 
     // add to the filter chain
     c->filter_chain = g_list_append(c->filter_chain, f);
+
+    printf("gcsynth: adding filter %s, enabled = %d\n", f->desc->Label, f->enabled);
 
     return 0;
 }

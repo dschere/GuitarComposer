@@ -304,8 +304,7 @@ static PyObject* py_gcsynth_noteon(PyObject* self, PyObject* args) {
     Py_RETURN_NONE;
 }
 
-//int fluid_synth_program_select(fluid_synth_t *synth,
- int chan, int sfont_id,
+//int fluid_synth_program_select(fluid_synth_t *synth, int chan, int sfont_id,
 //                               int bank_num, int preset_num);
 static PyObject* py_fluid_synth_program_select(PyObject* self, PyObject* args) {
     int channel;

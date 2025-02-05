@@ -85,7 +85,8 @@ class EffectsDialog(QDialog):
 
         for (e, o) in (pair('distortion'),
                   pair('chorus_flanger'),
-                  pair('reverb')):
+                  pair('reverb'),
+                  pair('echo')):
 
             # if we are going from disabled -> enabled then
             # treat all parameters are changed.
@@ -120,7 +121,7 @@ class EffectsDialog(QDialog):
         evt = EffectChangeEvent(self.effects, self.delta())
         self.effect_update.emit(evt)
 
-    def __init__(self, parent, effects: Effects | None = None):
+    def __init__(self, parent=None, effects: Effects | None = None):
         super().__init__(parent)
         self.setWindowTitle("Audio Effects Control")
         #self.resize(400, 300)
@@ -141,7 +142,8 @@ class EffectsDialog(QDialog):
         data = (
             (EffectsTabContent(self.effects.distortion),"distortion"),
             (EffectsTabContent(self.effects.chorus_flanger),"chorus-flanger"),
-            (EffectsTabContent(self.effects.reverb),"reverb")
+            (EffectsTabContent(self.effects.reverb),"reverb"),
+            (EffectsTabContent(self.effects.echo),"echo")
         )
 
         for (content, name) in data:
@@ -194,7 +196,9 @@ def unittest():
     instr = Instrument(ilist[0])
 
     app = QApplication(sys.argv)
-    dialog = EffectsDialog(e)
+    dialog = EffectsDialog(None, e)
+
+
 
     def on_preview(evt : EffectPreview):
         #  synth, chan, ec: EffectChanges ):

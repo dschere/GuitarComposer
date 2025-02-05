@@ -5,6 +5,41 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "C/C++ Debug (gdb Launch)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "/home/david/proj/GuitarComposer/venv/bin/python",
+            "args": ["${workspaceFolder}/src/app.py"],
+            "stopAtEntry": true,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+
+
+        {
+            "name": "C/C++ Debug (gdb Attach)",
+            "type": "cppdbg",
+            "request": "attach",
+            "program": "/home/david/proj/GuitarComposer/venv/bin/python",
+            "processId": "${command:pickProcess}",
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
             "name": "Python Debugger: Current File",
             "type": "debugpy",
             "request": "launch",

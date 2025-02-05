@@ -66,6 +66,15 @@ class Reverb(EffectModule):
     def name(self):
         return "reverb"
 
+class Echo(EffectModule):
+    def __init__(self):
+        filename = "tap_echo.so"
+        self.label = "tap_stereo_echo"
+        super().__init__(filename, self.label) 
+
+    def name(self):
+        return "echo"
+
 
 class ChorusFlanger(EffectModule):
     def __init__(self):
@@ -82,11 +91,13 @@ class Effects:
         self.distortion = Distortion()
         self.reverb = Reverb() 
         self.chorus_flanger = ChorusFlanger()
+        self.echo = Echo()
 
     def enable_all(self):
         self.distortion.enable()
         self.reverb.enable() 
         self.chorus_flanger.enable() 
+        self.echo.enable()
 
 
 

@@ -84,7 +84,7 @@ class Test_GcSynth_Events(unittest.TestCase):
         time.sleep(3)
 
 
-    def test00_print_filter_info(self):
+    def test05_print_filter_info(self):
         data = {"sfpaths": ["/home/david/proj/GuitarComposer/data/sf/27mg_Symphony_Hall_Bank.SF2"]}
         gcsynth.start(data)
 
@@ -98,6 +98,24 @@ class Test_GcSynth_Events(unittest.TestCase):
         time.sleep(1.0)
         gcsynth.stop()
         print("existing test 0")    
+
+    def test00_play_filter(self):
+        data = {"sfpaths": ["/home/david/proj/GuitarComposer/data/sf/27mg_Symphony_Hall_Bank.SF2"]}
+        gcsynth.start(data)
+        chan = 0
+
+        path = "/usr/lib/ladspa/guitarix_echo.so"
+        label = "guitarix_echo"
+
+        gcsynth.filter_add(chan, path, label)
+        print(f"enable filter {label}")
+        gcsynth.filter_enable(chan, label)
+         
+        gcsynth.noteon(0, 60, 100)
+
+        time.sleep(5.0)
+        gcsynth.stop()
+
 
 if __name__ == '__main__':
     unittest.main()

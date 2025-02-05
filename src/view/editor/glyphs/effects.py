@@ -16,6 +16,7 @@ from view.widgets.effectsControlDialog.effectsControls import (
 from view.editor.trackEditorView import TrackEditorData
 from PyQt6 import QtGui
 from PyQt6.QtWidgets import QWidget, QLabel, QPushButton
+from view.events import Signals
 
 
 
@@ -42,17 +43,8 @@ class EffectsGlyph(QLabel):
         
 
     def on_eff_preview(self, evt: EffectPreview):
-        """
-        track_model = TrackEditorData().get_active_track_model()
+        Signals.preview_effect.emit(evt)
         
-        instr.update_effect_changes(SynthService,0,evt.changes)
-        n = Note()
-        n.string = 4
-        n.fret = 0
-        n.velocity = 100
-        n.duration = 2000
-        instr.note_event(n) 
-        """
         
     def on_eff_update(self, evt: EffectChangeEvent):
         self.te.setEffects(evt.effects)
