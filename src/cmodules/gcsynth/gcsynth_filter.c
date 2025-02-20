@@ -55,28 +55,104 @@ void gcsynth_filter_destroy(struct gcsynth_filter* gc_filter)
 //     return 0;
 // }
 
+static
+int gcsynth_interleaved_filter_run(struct gcsynth_filter* gc_filter, LADSPA_Data* fc_buffer, int len) 
+{
+    int i,  j;
+
+    for(i =0, j=0; i < len; i += 2, j++) {
+        gc_filter->in_data_buffer[0][j] = fc_buffer[i];
+        gc_filter->in_data_buffer[1][j] = fc_buffer[i+1];
+    }
+
+    for(i = 0; i < gc_filter->desc->PortCount; i++) {
+        gc_filter->desc->connect_port(
+            gc_filter->plugin_instance,
+            i,
+            gc_filter->port_map[i]
+        );
+    }
+    
+    // run the filter and populate the output buffer
+    gc_filter->desc->run(gc_filter->plugin_instance, len/2);
+
+    for(i =0, j=0; i < len; i += 2, j++) {
+        fc_buffer[i] = gc_filter->out_data_buffer[0][j];
+        fc_buffer[i+1] = gc_filter->out_data_buffer[1][j];
+    } 
+
+    return 0;
+}
+
+#define MONO_FILTER   1
+#define STEREO_FILTER 2
+
+int gcsynth_filter_run_sterio(
+    struct gcsynth_filter* gc_filter, float* left, float* right, int samples)
+{
+    int i=0;
+
+    if (gc_filter->enabled) {
+        switch(gc_filter->in_buf_count) {
+            case STEREO_FILTER:
+                memcpy(gc_filter->in_data_buffer[0],left,samples);
+                memcpy(gc_filter->in_data_buffer[1],right,samples);
+                break;
+            case MONO_FILTER:
+                // stereo to mono
+                for(i = 0; i < samples; i++) {
+                    gc_filter->in_data_buffer[0][i] = left[i] + right[i];
+                }
+                break;
+        }
+
+        gc_filter->desc->run(gc_filter->plugin_instance, samples);
+
+        switch(gc_filter->out_buf_count) {
+            case STEREO_FILTER:
+                memcpy(left, gc_filter->out_data_buffer[0], samples);
+                memcpy(right, gc_filter->out_data_buffer[1], samples);
+                break;
+            case MONO_FILTER:
+                // mono to stereo
+                for(i = 0; i < samples; i++) {
+                    left[i] = (float) gc_filter->out_data_buffer[0][i] * 0.5;
+                    right[i] = left[i];
+                }
+                break;    
+        }
+
+    }    
+    return 0;
+}
+
+
 // sends FLUID_BUFSIZE size to the filter and copies FLUID_BUFSIZE out from the
 // filter 
 int gcsynth_filter_run(struct gcsynth_filter* gc_filter, LADSPA_Data* fc_buffer, int len)
 {
     unsigned long int i;
- 
+//    int io_count;
+
     if (gc_filter->enabled) {
-        
+        if (gc_filter->in_buf_count == 2 && gc_filter->out_buf_count == 2) {
+            return gcsynth_interleaved_filter_run(gc_filter, fc_buffer, len);
+        }
+
         /*
             Ladspa filters can be either stereo or mono. The voice_data_router gets called
             once for left and once for right so in the case of stereo we   
         */
-       
+
+        // for(io_count = 0; io_count < gc_filter->in_buf_count; io_count++ ) {
+        //     memcpy(gc_filter->in_data_buffer[io_count], fc_buffer, len);            
+        // }       
 
         // there are filters that just output (like wave generators)
         // so in that case in_buf_count is 0 
         if (gc_filter->in_buf_count > 0) {
-            // idx = gc_filter->frame_count % gc_filter->in_buf_count
-            // idx will be 0,1,0,1 ... for stereo
-            //     will be 0,0,0, ... for mono  
             memcpy(                           //  either modulo 1 or 2
-                gc_filter->in_data_buffer[gc_filter->frame_count % gc_filter->in_buf_count],
+                gc_filter->in_data_buffer[0],
                 fc_buffer,
                 len
             );
@@ -90,18 +166,29 @@ int gcsynth_filter_run(struct gcsynth_filter* gc_filter, LADSPA_Data* fc_buffer,
                 gc_filter->port_map[i]
             );
         }
-
+        
         // run the filter and populate the output buffer
         gc_filter->desc->run(gc_filter->plugin_instance, len);
 
+        // for(i = 0; i < len; i++) {
+        //     if (gc_filter->out_buf_count == 1) {
+        //         fc_buffer[i] = gc_filter->out_data_buffer[0][i];
+        //     } else if (gc_filter->out_buf_count == 2) {
+        //         fc_buffer[i] = (
+        //             (gc_filter->out_data_buffer[0][i] + gc_filter->out_data_buffer[1][i])
+        //         );
+        //     }
+        // }
+        
         // output to fc_buffer from filter output
         if (gc_filter->out_buf_count > 0) {
             memcpy(
                 fc_buffer,
-                gc_filter->out_data_buffer[gc_filter->frame_count % gc_filter->out_buf_count],
+                gc_filter->out_data_buffer[0],
                 len
             );
         }
+
     } else {
         //printf("disabled\n");
     }
