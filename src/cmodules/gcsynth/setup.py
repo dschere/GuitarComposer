@@ -5,10 +5,10 @@ import subprocess
 current_module_path = os.sep.join(os.path.abspath(__file__).split(os.sep)[:-1])
 BASE_DIR = current_module_path+"/../../.."
 
-PACKAGES = "glib-2.0"
+PACKAGES = "glib-2.0 sdl2"
 
 _include_dirs = ['.', f'{BASE_DIR}/include']
-_libraries = ['fluidsynth']
+_libraries = ['fluidsynth','m','ev']
 _library_dirs = [f'{BASE_DIR}/lib64']
 
 glib_include = subprocess.getoutput(
@@ -30,7 +30,8 @@ CSOURCES = [
     'gcsynth_filter.c',
     'gcsynth_channel.c',
     'gcsynth_event.c',
-    'pyutil.c'
+    'pyutil.c',
+    "gcsynth_sf.c"
 ]
 
 """
@@ -50,7 +51,7 @@ gcsynth_module = Extension(
     include_dirs=_include_dirs,  # Include path
     library_dirs=_library_dirs,  # Library path
     libraries=_libraries,     # Link against packages
-    extra_compile_args=['-g3'],  # Add the -g2 flag for debug symbols
+    extra_compile_args=['-O0','-g3'],  # Add the -g2 flag for debug symbols
     # Ensure the linker also gets the debug symbols
     extra_link_args=['-g3', '-lasound']
 )

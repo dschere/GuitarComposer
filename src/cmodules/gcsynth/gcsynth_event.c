@@ -4,70 +4,69 @@
 #include <pthread.h>
 #include <unistd.h> // For usleep()
 
+#include "gcsynth.h"
 #include "gcsynth_event.h"
 #include "gcsynth_channel.h"
+#include "gcsynth_sf.h"
+
+#include <pthread.h>
+#include <ev.h>
+#include <glib.h>
+#include <unistd.h>
+
+struct timer_event_data {
+    ev_timer timer_watcher; 
+    struct scheduled_event* s_event;
+};
+
+struct gcsync_timer_dispatcher {
+    int comm_pipefd[2]; // used to alert the worker thread
+    GAsyncQueue *queue;
+    struct ev_loop* loop;
+    pthread_t thread;
+    pthread_attr_t attr;
+};
 
 
-unsigned int ChannelClients[MAX_CHANNELS];
+static struct gcsync_timer_dispatcher Dispatcher;
 
-static void gcsynth_schedule_fluidsynth_event(struct gcsynth* gcs, 
-    struct scheduled_event* s_event);
-static void gcsynth_schedule_custom_event(struct gcsynth* gcs, 
-    struct scheduled_event* s_event);
-//static void* thread_timer_function(void* arg);    
+static int dispatcher_send(struct scheduled_event* s_event);
+static void timer_callback(EV_P_ ev_timer *w, int revents);
+static void *dispatcher_loop_thread(void *arg);
+static int dispatcher_init();
 
 
-void gcsynth_noteon(struct gcsynth* gcs, int chan, int midicode, int velocity)
+
+
+
+static void timer_callback(EV_P_ ev_timer *w, int revents)
 {
-    fluid_synth_noteon(gcs->synth, chan, midicode, velocity);
-}
+    struct timer_event_data* msg = (struct timer_event_data*) w->data;
+    struct scheduled_event* s_event = msg->s_event;
+    // switch on event
 
-
-void gcsynth_noteoff(struct gcsynth* gcs, int chan, int midicode)
-{
-    fluid_synth_noteoff(gcs->synth, chan, midicode);
-}
-
-void gcsynth_select(struct gcsynth* gcs, int chan,  int sfont_id, int bank_num, int preset_num)
-{
-    fluid_synth_program_select(gcs->synth, chan, sfont_id, bank_num, preset_num);
-}
-
-
-void gcsynth_schedule(struct gcsynth* gcs, struct scheduled_event* s_event)
-{
-    if (s_event->ev_type > EV_FLUID_SYNTH_EVENTS) {
-        gcsynth_schedule_fluidsynth_event(gcs, s_event);
-        free(s_event);
-    } else {
-        gcsynth_schedule_custom_event(gcs, s_event);
-        // freed inside timer callback.
-    }
-}
-
-static void timer_function(void* arg)
-{
-    struct scheduled_event* s_event = (struct scheduled_event*) arg;
-    struct gcsynth_active_state state;
-    long milliseconds = (long) s_event->when;
-    struct timespec ts;
-
-    ts.tv_sec = milliseconds / 1000; // Convert milliseconds to seconds
-    ts.tv_nsec = (milliseconds % 1000) * 1000000;
-
-    if (nanosleep(&ts, NULL) < 0) {
-        goto exit_timer_callback;
-    }
-
-    // determine if the synth is not running, or if a restart
-    // occured while we were asleep, in either case discard this event.
-    state = gcsynth_get_active_state();
-    if ((state.running == 0) || 
-        (state.instance_id != s_event->gcsynth_inst_id_when_timer_started)) {
-        goto exit_timer_callback;              
-    }  
-
+    // process scheduled events.
     switch(s_event->ev_type) {
+        case EV_NOTEON:
+            gcsynth_sf_noteon(s_event->channel,
+             s_event->midi_code, s_event->velocity);
+            break;
+
+        case EV_NOTEOFF:
+            gcsynth_sf_noteoff(s_event->channel,
+             s_event->midi_code);
+            break;
+
+        case EV_SELECT:
+            gcsynth_sf_select(s_event->channel, s_event->sfont_id,
+            s_event->bank_num, s_event->preset_num);   
+            break;
+
+        case EV_PITCH_WHEEL:
+            gcsynth_sf_pitchrange(s_event->channel, s_event->pitch_change);
+            // todo
+            break;
+
         case EV_FILTER_ADD:
             gcsynth_channel_add_filter(
             s_event->channel, 
@@ -101,90 +100,155 @@ static void timer_function(void* arg)
                 (char *) s_event->plugin_label);
             break;        
     }
-    
-exit_timer_callback:
-
-    free(s_event);
-}
 
 
-static void gcsynth_schedule_custom_event(struct gcsynth* gcs, 
-    struct scheduled_event* s_event)
-{
-    fluid_event_t *ev = new_fluid_event();
-    fluid_event_set_source(ev, ChannelClients[s_event->channel]);
-    fluid_event_set_dest(ev, gcs->synth_destination);
-    fluid_event_timer(ev, s_event, timer_function);
-    fluid_sequencer_send_at(gcs->sequencer, ev, s_event->when, 0);
-    delete_fluid_event(ev);
-}
 
-#define PITCH_WHEEL_MIDRANGE 8192
-
-static void gcsynth_schedule_fluidsynth_event(struct gcsynth* gcs, 
-    struct scheduled_event* s_event)
-{
-    fluid_event_t *ev = new_fluid_event();
-    fluid_event_set_source(ev, ChannelClients[s_event->channel]);
-    fluid_event_set_dest(ev, gcs->synth_destination);
-    int pitch;
-
-    switch(s_event->ev_type) { 
-        case EV_NOTEON:
-            fluid_event_noteon(ev, s_event->channel, 
-                s_event->midi_code, s_event->velocity);
-            break;
-        case EV_NOTEOFF:
-            fluid_event_noteoff(ev, s_event->channel, s_event->midi_code);
-            break;
-        case EV_SELECT:
-            fluid_event_program_select(ev, s_event->channel, 
-                 s_event->sfont_id, s_event->bank_num, 
-                 s_event->preset_num);
-            break;    
-        case EV_PITCH_WHEEL:
-            //	MIDI pitch bend value (0-16383, 8192 = no bend)
-            pitch = (int) PITCH_WHEEL_MIDRANGE + (s_event->pitch_change/PITCH_WHEEL_SENSITIVITY);
-            if (pitch < 0)     pitch = 0;
-            if (pitch > 16383) pitch = 16383;
-            fluid_event_pitch_bend(ev, s_event->channel, pitch);    
-            break;
-        
-    }
-
-    fluid_sequencer_send_at(gcs->sequencer, ev, s_event->when, 0);
-    delete_fluid_event(ev);
-        
-}
-
-void gcsynth_sequencer_remove_channel_events(struct gcsynth* gcs, int chan)
-{
-    fluid_sequencer_remove_events(gcs->sequencer, 
-    ChannelClients[chan], gcs->synth_destination, -1);
+    // cleanup
+    free(msg->s_event);
+    free(msg);
 }
 
 /*
-TODO WE ARE LIMITED TO 825 THREADS.
-
-must use fluid synth's timer. 
-
-should allow for user data to be attached to the fluid_synth_event 
-
-
+    service the libev loop for events.
 */
+static void *dispatcher_loop_thread(void *arg)
+{
+    struct timer_event_data* msg;
+    unsigned char cmd;
+
+    while (1) {
+        // functions as a sleep, a single byte message is sent after
+        // the client enqueues a message which will make the thread
+        // wake up.
+        read(Dispatcher.comm_pipefd[0],&cmd,1);
+ 
+        // queue alert serves a dual use of a graceful shutdown 
+        // if non zero is sent. 
+        if (cmd) {
+            break;
+        }
+
+        msg = g_async_queue_try_pop(Dispatcher.queue);
+        if (msg) {
+            msg->timer_watcher.data = msg; // circular ref needed for cleanup
+            ev_timer_init(&msg->timer_watcher,timer_callback,
+                msg->s_event->when * 0.001, 0.0);
+            // call timer_callback in 'when' milliseconds.    
+            ev_timer_start(Dispatcher.loop, &msg->timer_watcher);    
+        } 
+
+        // process any libev events without waiting for future ones.
+        ev_loop(Dispatcher.loop, EVLOOP_NONBLOCK);
+    }
+
+    ev_loop_destroy(Dispatcher.loop);
+    return NULL;
+}
+
+
+
+
+/* 
+    route scheduled event to dispatch thread.
+*/
+static int dispatcher_send(struct scheduled_event* s_event)
+{
+    int err = 0;
+    struct timer_event_data* msg = (struct timer_event_data*)
+        calloc(1, sizeof(struct timer_event_data));
+    unsigned char alert = 0;
+
+    if (!msg) {
+        fprintf(stderr,
+            "dispatcher_send: Unable to allocate memory\n");
+        err = -1;
+    } else {
+        msg->s_event = s_event;
+        msg->timer_watcher.data = msg;
+        // enqueue
+        g_async_queue_push(Dispatcher.queue, msg);
+        // wake up worker thread
+        write(Dispatcher.comm_pipefd[1],&alert,sizeof(alert));
+    }
+
+    return err;
+}
+
+/*
+    A thread is used to aid libev in launching timer events, its purpose is
+    to service an async queue that will kick off events to be executed 
+    in teh future.
+*/
+static int dispatcher_init()
+{
+    if (pipe(Dispatcher.comm_pipefd) != 0) {
+        fprintf(stderr,"gcsynth_event: Unable to create pipe for communication!\n");
+        return -1;
+    }
+
+    Dispatcher.loop = ev_loop_new(EVFLAG_AUTO);
+    if (Dispatcher.loop == NULL) {
+        fprintf(stderr,"gcsynth_event: ev_loop_new failed!\n");
+        return -1;
+    }
+
+    pthread_attr_init(&Dispatcher.attr);
+    pthread_attr_setdetachstate(&Dispatcher.attr, PTHREAD_CREATE_DETACHED); // Daemon thread
+
+    // Initialize GLib async queue
+    Dispatcher.queue = g_async_queue_new();
+
+    if (pthread_create(
+        &Dispatcher.thread, 
+        &Dispatcher.attr, dispatcher_loop_thread, NULL) != 0) {
+        fprintf(stderr, "Failed to create thread\n");
+        return -1;
+    }
+
+    pthread_attr_destroy(&Dispatcher.attr);
+    
+    return 0;
+}
+
+
+void gcsynth_noteon(struct gcsynth* gcs, int chan, int midicode, int velocity)
+{
+    if (gcsynth_sf_noteon(chan, midicode, velocity) == -1) {
+         gcsynth_raise_exception("gcsynth_sf_noteon");
+    }
+}
+
+
+void gcsynth_noteoff(struct gcsynth* gcs, int chan, int midicode)
+{
+    if (gcsynth_sf_noteoff(chan, midicode) == -1) {
+        gcsynth_raise_exception("gcsynth_sf_noteoff");
+    }
+}
+
+void gcsynth_select(struct gcsynth* gcs, int chan,  int sfont_id, int bank_num, int preset_num)
+{
+    if (gcsynth_sf_select(chan, sfont_id,bank_num, preset_num) == -1) {
+        gcsynth_raise_exception("gcsynth_sf_select");
+    }
+}
+
+
+void gcsynth_schedule(struct gcsynth* gcs, struct scheduled_event* s_event)
+{
+     if (dispatcher_send(s_event) == -1) {
+        gcsynth_raise_exception("gcsynth_schedule");
+     }
+}
+
+
+void gcsynth_sequencer_remove_channel_events(struct gcsynth* gcs, int chan)
+{
+    // todo?
+}
+
 
 void gcsynth_sequencer_setup(struct gcsynth* gcs)
 {
-    int chan;
-
-    gcs->sequencer = new_fluid_sequencer2(0);
-            
-    /* register the synth with the sequencer */
-    gcs->synth_destination = fluid_sequencer_register_fluidsynth(gcs->sequencer,
-                                gcs->synth);
-
-    for(chan = 0; chan < MAX_CHANNELS; chan++) {
-        ChannelClients[chan] = fluid_sequencer_register_fluidsynth(
-            gcs->sequencer, gcs->synth);
-    }                            
+    dispatcher_init();                            
 }

@@ -2,6 +2,7 @@
 #define __GCSYNTH_FILTER_H
 
 #include "gcsynth.h"
+#include "gcsynth_sf.h"
 
 #ifndef FLUID_BUFSIZE
 #define FLUID_BUFSIZE 64
@@ -54,8 +55,8 @@ struct gcsynth_filter {
 
     int in_buf_count;
     int out_buf_count;
-    LADSPA_Data in_data_buffer[NUM_IO_PORTMAPS][FLUID_BUFSIZE];
-    LADSPA_Data out_data_buffer[NUM_IO_PORTMAPS][FLUID_BUFSIZE];
+    LADSPA_Data in_data_buffer[NUM_IO_PORTMAPS][GCSYNTH_AUDIO_BUFSIZE];
+    LADSPA_Data out_data_buffer[NUM_IO_PORTMAPS][GCSYNTH_AUDIO_BUFSIZE];
 
     // port maps
     //  port number -> buffer
@@ -80,7 +81,9 @@ void gcsynth_filter_destroy(struct gcsynth_filter* gc_filter);
 // filter 
 int gcsynth_filter_run(struct gcsynth_filter* gc_filter, LADSPA_Data* io_buf, int len);
 
-
+int gcsynth_filter_run_sterio(
+    struct gcsynth_filter* gc_filter, float* left, float* right, int samples);
+    
 
 void gcsynth_filter_enable(struct gcsynth_filter* gc_filter);
 void gcsynth_filter_disable(struct gcsynth_filter* gc_filter);

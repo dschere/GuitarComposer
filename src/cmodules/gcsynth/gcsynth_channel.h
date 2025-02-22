@@ -9,6 +9,7 @@ struct gcsynth_channel {
     GList* filter_chain;
     GMutex mutex;
     int initialized;
+    int at_least_one_filter_enabled;
     float gain; // per channel gain adjustment 0 means no change.
 };
 
@@ -23,6 +24,8 @@ void gcsynth_remove_all_filters();
 
 void gcsynth_channel_enable_filter(int channel, char* plugin_label);
 void gcsynth_channel_disable_filter(int channel, char* plugin_label);
+int  gcsynth_channel_filter_is_enabled(int channel);
+
 void gcsynth_channel_gain(int channel, float gain);
 
 
@@ -30,6 +33,8 @@ int gcsynth_channel_set_control_by_index(int channel, char* plugin_label,
     int control_num, float value);
 int gcsynth_channel_set_control_by_name(int channel, char* plugin_label, 
     char* control_name, float value);
+
+
 
 
 struct gcsynth_active_state {
@@ -62,6 +67,9 @@ void gcsynth_incr_instance_id();  called by gcsynth_start()
 // main entry point from fluidsynth to route synth voice data into 
 // an audio filter chain.
 void voice_data_router(void *userdata, int chan, double* buf, int len);
+
+void synth_filter_router(int channel, float* left, float* right, int samples);
+void synth_interleaved_filter_router(int chan, float* interleaved_audio, int samples);
 
 
 #endif
