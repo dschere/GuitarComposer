@@ -104,7 +104,7 @@ class SongController:
             logging.error("userAddTrack called but we have not setup model!")
             return
 
-        track = self.addTrack('Acoustic Guitar')
+        track = self.addTrack('12-str.GT')
         self.addQTrackModel(track, self.q_model)
 
     def addTrack(self, instr_name):
@@ -196,7 +196,7 @@ class AppController:
 
         if len(titles) == 0:
             sc = SongController("noname")
-            sc.addTrack('Acoustic Guitar')
+            sc.addTrack('12-str.GT')
             self.song_ctrl[sc.title()] = sc
         else:
             for title in titles:
@@ -227,7 +227,7 @@ class AppController:
         self.projects = ProjectRepo()
         self.active_song_titles = set()
         self.song_ctrl = {}
-        self.preview_instr = Instrument("Acoustic Guitar")
+        self.preview_instr = Instrument("12-str.GT")
         Signals.fretboard_inst_select.connect(self.on_preview_instr_changed)
 
         # current track being edited.
@@ -247,7 +247,7 @@ class AppController:
         n.string = 4
         n.fret = 0
         n.velocity = 100
-        n.duration = 2000
+        n.duration = 10000
         self.effects_preview_note = n
 
 

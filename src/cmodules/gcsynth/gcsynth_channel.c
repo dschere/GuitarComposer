@@ -5,6 +5,7 @@
 
 #include "gcsynth_channel.h"
 #include "gcsynth_filter.h"
+#include "gcsynth_sf.h"
 
 
 static struct gcsynth_channel ChannelFilters[MAX_CHANNELS];
@@ -142,12 +143,40 @@ void synth_filter_router(int chan, float* left, float* right, int samples)
             iter = iter->next
         ) {
             struct gcsynth_filter* f = (struct gcsynth_filter*) iter->data;
+
             // apply filter to audio buffers
-            gcsynth_filter_run_sterio(f, left, right, samples);
+            if (f->enabled) {
+                //printf("%s enabled\n", f->desc->Label);
+                gcsynth_filter_run_sterio(f, left, right, samples);
+            }
         }
         unlock_channel(chan);
     }
 }
+
+void synth_interleaved_filter_router(int chan, float* interleaved_audio, int samples)
+{
+    float left[0xFFFF];
+    float right[0xFFFF];
+    int i;
+
+    for(i = 0; i < samples; i += 2) {
+        left[i/2] = interleaved_audio[i];
+        right[i/2] = interleaved_audio[i+1];
+    }
+
+    // route to ladspa effects filter(s)
+    synth_filter_router(chan, left, right, samples);
+    // ^^^^^^^ gcsynth_filter routines
+
+    // mux 
+    for(i = 0; i < samples; i += 2) {
+        interleaved_audio[i]   = left[i/2];
+        interleaved_audio[i+1] = right[i/2];
+    }
+}
+
+
 
 int  gcsynth_channel_filter_is_enabled(int chan)
 {
@@ -155,7 +184,7 @@ int  gcsynth_channel_filter_is_enabled(int chan)
     struct gcsynth_channel *c = lock_channel(chan);
 
     if (c) {
-        ret = g_list_first(c->filter_chain) != NULL;
+        ret = c->at_least_one_filter_enabled;
         unlock_channel(chan);
     }
 
@@ -389,10 +418,12 @@ static struct gcsynth_filter* find_by_name(
     return NULL;
 }
  
- static void set_channel_state(int channel, char* plugin_label, int enabled)
- {
+static void set_channel_state(int channel, char* plugin_label, int enabled)
+{
     struct gcsynth_channel* c = &ChannelFilters[channel]; 
     struct gcsynth_filter* f = find_by_name(c, plugin_label);
+    int prev = c->at_least_one_filter_enabled;
+    GList* iter;
 
     if (f) {
         if (enabled) {
@@ -401,7 +432,18 @@ static struct gcsynth_filter* find_by_name(
             gcsynth_filter_disable(f);
         }
     }  
- }
+
+    c->at_least_one_filter_enabled = 0;
+    for(iter = g_list_first(c->filter_chain);
+            (iter != NULL) && (c->at_least_one_filter_enabled == 0);
+            iter = iter->next
+    ) {
+        struct gcsynth_filter* f = (struct gcsynth_filter*) iter->data;
+        if (f->enabled) {
+            c->at_least_one_filter_enabled = 1;
+        }
+    }  
+}
 
 /*
 static GMutex StateMutex;

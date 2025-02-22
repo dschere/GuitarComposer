@@ -52,8 +52,10 @@ struct scheduled_event {
     int gcsynth_inst_id_when_timer_started; 
 };
 
+// scheduled event execution
 void gcsynth_schedule(struct gcsynth* gcs, struct scheduled_event* event);
 
+// immediate execution of synth events
 void gcsynth_noteon(struct gcsynth* gcs, int chan, int midicode, int velocity);
 void gcsynth_noteoff(struct gcsynth* gcs, int chan, int midicode);
 void gcsynth_select(struct gcsynth* gcs, int chan,  int sfont_id, int bank_num, int preset_num);
@@ -61,6 +63,7 @@ void gcsynth_select(struct gcsynth* gcs, int chan,  int sfont_id, int bank_num, 
 
 void gcsynth_sequencer_setup(struct gcsynth* gcs);
 void gcsynth_sequencer_remove_channel_events(struct gcsynth* gcs, int chan);
+
 
 
 

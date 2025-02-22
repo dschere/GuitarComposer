@@ -8,6 +8,7 @@
 #include "gcsynth_filter.h"
 
 
+
 static int ladspa_setup(struct gcsynth_filter* gc_filter, const char* path, char* label);
 static void ladspa_deallocate(struct gcsynth_filter* gc_filter);
 static LADSPA_Data get_default_value(
@@ -202,7 +203,7 @@ int gcsynth_filter_run(struct gcsynth_filter* gc_filter, LADSPA_Data* fc_buffer,
 void gcsynth_filter_enable(struct gcsynth_filter* gc_filter)
 {
     if ((gc_filter->enabled == 0) && gc_filter->desc->activate) {
-        printf("gcsynth: %s is activated\n", gc_filter->desc->Label);
+        //printf("gcsynth: %s is activated\n", gc_filter->desc->Label);
         gc_filter->desc->activate(gc_filter->plugin_instance);
     }
     gc_filter->enabled = 1;
@@ -212,7 +213,7 @@ void gcsynth_filter_disable(struct gcsynth_filter* gc_filter)
 {
     if ((gc_filter->enabled == 1) && gc_filter->desc->deactivate)
     {
-        printf("gcsynth: %s deactivated\n", gc_filter->desc->Label);
+        //printf("gcsynth: %s deactivated\n", gc_filter->desc->Label);
         gc_filter->desc->deactivate(gc_filter->plugin_instance);
     }
     gc_filter->enabled = 0;
@@ -338,10 +339,10 @@ static int ladspa_setup(struct gcsynth_filter* gc_filter, const char* path, char
 
             gc_filter->port_map[i] = gc_filter->in_data_buffer[gc_filter->in_buf_count];
 
-            printf("gcsynth: input port %lu (%s) to input host  buffer %d\n",
-                 i, gc_filter->desc->PortNames[i], 
-                 gc_filter->in_buf_count
-            );
+            // printf("gcsynth: input port %lu (%s) to input host  buffer %d\n",
+            //      i, gc_filter->desc->PortNames[i], 
+            //      gc_filter->in_buf_count
+            // );
 
             gc_filter->in_buf_count++;
         }
@@ -352,10 +353,10 @@ static int ladspa_setup(struct gcsynth_filter* gc_filter, const char* path, char
             gc_filter->out_buf_count < NUM_IO_PORTMAPS) {
 
             gc_filter->port_map[i] = gc_filter->out_data_buffer[gc_filter->out_buf_count];
-            printf("gcsynth: output port %lu (%s) to output host buffer %d\n",
-                 i, gc_filter->desc->PortNames[i], 
-                 gc_filter->out_buf_count
-            );
+            // printf("gcsynth: output port %lu (%s) to output host buffer %d\n",
+            //      i, gc_filter->desc->PortNames[i], 
+            //      gc_filter->out_buf_count
+            // );
 
             gc_filter->out_buf_count++;
         }   
@@ -368,9 +369,9 @@ static int ladspa_setup(struct gcsynth_filter* gc_filter, const char* path, char
                i, &gc_filter->controls[gc_filter->num_controls], pd);
             gc_filter->port_map[i] = &gc_filter->controls[gc_filter->num_controls].value;   
 
-            printf("gcsynth: control port %lu (%s) to control buffer, default %f\n",
-                 i, gc_filter->desc->PortNames[i], 
-                 gc_filter->controls[gc_filter->num_controls].value);
+            // printf("gcsynth: control port %lu (%s) to control buffer, default %f\n",
+            //      i, gc_filter->desc->PortNames[i], 
+            //      gc_filter->controls[gc_filter->num_controls].value);
 
             // increment the number of controls
             gc_filter->num_controls++;
@@ -469,8 +470,8 @@ static LADSPA_Data get_default_value(
 	  break;
 	}
 
-printf("gcsynth: %s set to %f has_default=%d, iHintDescriptor=0x%X lPortIndex=%lu\n", 
-    psDescriptor->PortNames[lPortIndex], fDefault, *has_default, iHintDescriptor, lPortIndex);
+// printf("gcsynth: %s set to %f has_default=%d, iHintDescriptor=0x%X lPortIndex=%lu\n", 
+//     psDescriptor->PortNames[lPortIndex], fDefault, *has_default, iHintDescriptor, lPortIndex);
 
     return fDefault;
 }

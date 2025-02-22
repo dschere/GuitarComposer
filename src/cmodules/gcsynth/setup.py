@@ -8,7 +8,7 @@ BASE_DIR = current_module_path+"/../../.."
 PACKAGES = "glib-2.0 sdl2"
 
 _include_dirs = ['.', f'{BASE_DIR}/include']
-_libraries = ['fluidsynth','m']
+_libraries = ['fluidsynth','m','ev']
 _library_dirs = [f'{BASE_DIR}/lib64']
 
 glib_include = subprocess.getoutput(
@@ -51,7 +51,7 @@ gcsynth_module = Extension(
     include_dirs=_include_dirs,  # Include path
     library_dirs=_library_dirs,  # Library path
     libraries=_libraries,     # Link against packages
-    extra_compile_args=['-g3'],  # Add the -g2 flag for debug symbols
+    extra_compile_args=['-O0','-g3'],  # Add the -g2 flag for debug symbols
     # Ensure the linker also gets the debug symbols
     extra_link_args=['-g3', '-lasound']
 )

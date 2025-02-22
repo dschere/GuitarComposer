@@ -6,6 +6,7 @@
 #include "gcsynth_sf.h"
 #include "gcsynth_channel.h"
 
+
 void gcsynth_start(struct gcsynth* gcSynth)
 {
 #define RAISE(errmsg) { gcsynth_raise_exception(errmsg); gcsynth_stop(gcSynth); return; }   
@@ -28,8 +29,9 @@ void gcsynth_start(struct gcsynth* gcSynth)
     }
 
 
+    gcsynth_sequencer_setup(gcSynth);
 
-    // gcSynth->settings = NULL;
+    //gcSynth->settings = NULL;
     // gcSynth->synth = NULL;
     // gcSynth->adriver = NULL;
 
