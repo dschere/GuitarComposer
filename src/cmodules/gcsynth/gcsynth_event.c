@@ -20,7 +20,6 @@ struct timer_event_data {
 };
 
 struct gcsync_timer_dispatcher {
-    int comm_pipefd[2]; // used to alert the worker thread
     GAsyncQueue *queue;
     struct ev_loop* loop;
     pthread_t thread;
@@ -114,27 +113,17 @@ static void timer_callback(EV_P_ ev_timer *w, int revents)
 static void *dispatcher_loop_thread(void *arg)
 {
     struct timer_event_data* msg;
-    unsigned char cmd;
 
     while (1) {
-        // functions as a sleep, a single byte message is sent after
-        // the client enqueues a message which will make the thread
-        // wake up.
-        read(Dispatcher.comm_pipefd[0],&cmd,1);
- 
-        // queue alert serves a dual use of a graceful shutdown 
-        // if non zero is sent. 
-        if (cmd) {
-            break;
-        }
-
-        msg = g_async_queue_try_pop(Dispatcher.queue);
+        msg = g_async_queue_pop(Dispatcher.queue);
         if (msg) {
             msg->timer_watcher.data = msg; // circular ref needed for cleanup
             ev_timer_init(&msg->timer_watcher,timer_callback,
                 msg->s_event->when * 0.001, 0.0);
             // call timer_callback in 'when' milliseconds.    
             ev_timer_start(Dispatcher.loop, &msg->timer_watcher);    
+        } else {
+            break;
         } 
 
         // process any libev events without waiting for future ones.
@@ -156,7 +145,6 @@ static int dispatcher_send(struct scheduled_event* s_event)
     int err = 0;
     struct timer_event_data* msg = (struct timer_event_data*)
         calloc(1, sizeof(struct timer_event_data));
-    unsigned char alert = 0;
 
     if (!msg) {
         fprintf(stderr,
@@ -167,8 +155,6 @@ static int dispatcher_send(struct scheduled_event* s_event)
         msg->timer_watcher.data = msg;
         // enqueue
         g_async_queue_push(Dispatcher.queue, msg);
-        // wake up worker thread
-        write(Dispatcher.comm_pipefd[1],&alert,sizeof(alert));
     }
 
     return err;
@@ -181,11 +167,6 @@ static int dispatcher_send(struct scheduled_event* s_event)
 */
 static int dispatcher_init()
 {
-    if (pipe(Dispatcher.comm_pipefd) != 0) {
-        fprintf(stderr,"gcsynth_event: Unable to create pipe for communication!\n");
-        return -1;
-    }
-
     Dispatcher.loop = ev_loop_new(EVFLAG_AUTO);
     if (Dispatcher.loop == NULL) {
         fprintf(stderr,"gcsynth_event: ev_loop_new failed!\n");
