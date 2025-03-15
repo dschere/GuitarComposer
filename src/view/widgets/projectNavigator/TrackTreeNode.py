@@ -9,7 +9,7 @@ from view.config import LabelText
 from util.midi import midi_codes
 from models.track import Track
 
-from view.widgets.effectsControlDialog.effectsControls import EffectPreview, EffectsDialog
+from view.dialogs.effectsControlDialog.effectsControls import EffectPreview, EffectsDialog
 
 
 """

@@ -9,7 +9,7 @@ from singleton_decorator import singleton
 from models.note import Note
 from models.track import Track
 from models.effect import Effects
-from view.widgets.effectsControlDialog.effectsControls import EffectChanges, EffectPreview
+from view.dialogs.effectsControlDialog.effectsControls import EffectChanges, EffectPreview
 
 
 class ScaleSelectedEvent:

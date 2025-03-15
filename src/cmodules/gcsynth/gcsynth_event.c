@@ -62,7 +62,8 @@ static void timer_callback(EV_P_ ev_timer *w, int revents)
             break;
 
         case EV_PITCH_WHEEL:
-            gcsynth_sf_pitchrange(s_event->channel, s_event->pitch_change);
+//printf("gcsynth_sf_pitchrange(%d,%f)\n", s_event->channel, s_event->pitch_change);
+            gcsynth_sf_pitchwheel(s_event->channel, s_event->pitch_change);
             // todo
             break;
 
@@ -100,8 +101,6 @@ static void timer_callback(EV_P_ ev_timer *w, int revents)
             break;        
     }
 
-
-
     // cleanup
     free(msg->s_event);
     free(msg);
@@ -113,17 +112,18 @@ static void timer_callback(EV_P_ ev_timer *w, int revents)
 static void *dispatcher_loop_thread(void *arg)
 {
     struct timer_event_data* msg;
+    int usec_timeout = 5000;
 
     while (1) {
-        msg = g_async_queue_pop(Dispatcher.queue);
+        msg = g_async_queue_timeout_pop(Dispatcher.queue, usec_timeout);
         if (msg) {
             msg->timer_watcher.data = msg; // circular ref needed for cleanup
             ev_timer_init(&msg->timer_watcher,timer_callback,
                 msg->s_event->when * 0.001, 0.0);
             // call timer_callback in 'when' milliseconds.    
             ev_timer_start(Dispatcher.loop, &msg->timer_watcher);    
-        } else {
-            break;
+        // } else {
+        //     break;
         } 
 
         // process any libev events without waiting for future ones.
