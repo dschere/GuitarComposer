@@ -21,8 +21,10 @@ int gcsynth_sf_select(int chan, int sfont_id, int bank, int preset);
 
 int gcsynth_sf_noteon(int chan, int midicode, int vel);
 int gcsynth_sf_noteoff(int chan, int midicode);
-int gcsynth_sf_pitchrange(int chan, float pitch_range);
 
+// pitch_range in semitones, default is 2. 
+int gcsynth_sf_pitchrange(int chan, float pitch_range);
+int gcsynth_sf_pitchwheel(int chan, float semitones);
 
 void gcsynth_sf_reset();
 

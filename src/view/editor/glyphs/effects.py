@@ -8,7 +8,7 @@ from models.track import TabEvent
 from PyQt6.QtGui import QIcon, QKeyEvent, QMouseEvent, QPixmap, QImage
 from PyQt6.QtCore import Qt
 
-from view.widgets.effectsControlDialog.effectsControls import ( 
+from view.dialogs.effectsControlDialog.effectsControls import ( 
     EffectsDialog, EffectPreview, EffectChangeEvent)
     
 

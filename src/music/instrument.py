@@ -10,7 +10,7 @@ from models.track import Track
 from models.effect import Effects
 from util.midi import midi_codes
 
-from view.widgets.effectsControlDialog.effectsControls import EffectChanges
+from view.dialogs.effectsControlDialog.effectsControls import EffectChanges
 
 @singleton
 class CustomInstruments:

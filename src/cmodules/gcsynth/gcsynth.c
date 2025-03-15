@@ -416,6 +416,19 @@ static PyObject* py_gcsynth_channel_remove_filter(PyObject* self, PyObject* args
     Py_RETURN_NONE;
 }
 
+static PyObject* py_gcsynth_sf_pitchrange(PyObject* self, PyObject* args) {
+    int chan;
+    int semitones;
+
+    // Parse the Python tuple, expecting two strings and a dictionary
+    if (!PyArg_ParseTuple(args, "ii", &chan, &semitones)) {
+        return NULL;  // Return NULL to indicate an error if the parsing failed
+    }
+
+    gcsynth_sf_pitchrange(chan, (float) semitones);
+    Py_RETURN_NONE;
+}
+
 static PyObject* py_gcsynth_stop(PyObject* self, PyObject* args) {
     gcsynth_stop(&GcSynth);
     gcsynth_remove_all_filters();
@@ -532,6 +545,7 @@ static PyMethodDef GCSynthMethods[] = {
 
     {"filter_enable",py_gcsynth_channel_enable_filter, METH_VARARGS, "enable filter"},
     {"filter_disable",py_gcsynth_channel_disable_filter, METH_VARARGS, "disable filter"},
+    {"pitchrange",py_gcsynth_sf_pitchrange, METH_VARARGS, "pitchrange(chan, semitones)"},
     {"timer_event",py_gcsynth_event,METH_VARARGS,"send an event that gets executed in the future"},
 
     {"filter_set_control_by_name", py_gcsynth_channel_set_control_by_name, 

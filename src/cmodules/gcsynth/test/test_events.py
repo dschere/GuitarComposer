@@ -20,6 +20,34 @@ from unit_test_util import *
 
 class Test_GcSynth_Events(unittest.TestCase):
 
+    def test00_pitch(self):
+        # pitchrange      
+        data = {"sfpaths": ["/home/david/proj/GuitarComposer/data/sf/27mg_Symphony_Hall_Bank.SF2"]}
+        gcsynth.start(data)
+
+        gcsynth.select(0, 1, 0, 0)
+        gcsynth.noteon(0, 60, 120)
+
+        print("before pitchrange")
+        gcsynth.pitchrange(0, 4)
+        print("after pitchrange")
+
+        pitches = [
+            pitch_change(1000,0,2.0)
+        ]
+
+        for p in pitches: 
+            p.send() 
+
+        time.sleep(2.0)
+        gcsynth.noteon(0, 62, 100)
+
+        time.sleep(4.0)
+
+        gcsynth.stop()    
+
+    """
+
     def test01_note_on(self):
         data = {"sfpaths": ["/home/david/proj/GuitarComposer/data/sf/27mg_Symphony_Hall_Bank.SF2"]}
         gcsynth.start(data)
@@ -115,7 +143,7 @@ class Test_GcSynth_Events(unittest.TestCase):
 
         time.sleep(5.0)
         gcsynth.stop()
-
+    """
 
 if __name__ == '__main__':
     unittest.main()

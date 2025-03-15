@@ -285,6 +285,8 @@ int gcsynth_sf_noteon(int chan, int midicode, int vel)
         ret = (ret == 1) ? 0: -1;
 
 	    SDL_UnlockMutex(at->g_Mutex); //get exclusive lock
+    } else {
+        fprintf(stderr,"gcsynth_sf_noteon: audio thread has not been started!\n");
     }
 
     return ret;
@@ -303,6 +305,35 @@ int gcsynth_sf_noteoff(int chan, int midicode)
     }
     return ret;
 }
+
+int gcsynth_sf_pitchwheel(int chan, float semitones) 
+{
+    int ret = -1;
+    struct audio_thread* at = get_audio_thread(chan);
+    int pitchWheel;
+
+    if (at) {
+	    SDL_LockMutex(at->g_Mutex); //get exclusive lock
+// (c->pitchWheel == 8192 ? c->tuning : ((c->pitchWheel / 16383.0f * c->pitchRange * 2.0f) - c->pitchRange + c->tuning));
+
+        float pr = tsf_channel_get_pitchrange(at->g_TinySoundFont, chan);
+        float r = semitones / pr;
+
+        pitchWheel = 8192 + (r * 8192);
+//printf("tsf_channel_set_pitchwheel(%d, %d)\n", chan, pitchWheel);
+        ret = tsf_channel_set_pitchwheel(at->g_TinySoundFont, chan, 
+            pitchWheel);
+	    SDL_UnlockMutex(at->g_Mutex); //get exclusive lock
+        // translate return value so it fits unix tradition  
+        ret = (ret == 1) ? 0: -1;
+
+        // printf("athread %d, gcsynth_sf_pitchrange(%d,%f)\n", 
+        //     at->athread, chan, pitch_range
+        // );
+    }
+    return ret;
+}
+
 
 // tsf_channel_set_pitchrange(tsf* f, int channel, float pitch_range)
 int gcsynth_sf_pitchrange(int chan, float pitch_range) 

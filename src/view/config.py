@@ -14,6 +14,14 @@ from singleton_decorator import singleton
 #from attic.new.GuitarComposer2.guitarcomposer.common.durationtypes import SIXTEENTH, \
 #    THIRTYSECOND, SIXTYFORTH
 
+PRESETS_TEXT = "presets"
+
+BEND_LINE_COLOR = (240, 234, 214)
+BEND_ZERO_PITCH_LINE_COLOR = (128, 0, 32)
+BEND_GRID_LINE_COLOR = (255, 235, 14)
+BEND_POINT_COLOR = (0, 255, 255)
+BEND_GROUP_TEXT = "Pitch Bend Control"
+BEND_RANGE_TEXT = "Pitch in range in steps"
 
 @singleton
 class _GuitarFretboardStyle:

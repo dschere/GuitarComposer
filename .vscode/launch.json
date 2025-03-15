@@ -25,6 +25,26 @@
 
 
         {
+            "name": "C/C++ Debug Tests (gdb Launch)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "/home/david/proj/GuitarComposer/venv/bin/python",
+            "args": ["${workspaceFolder}/src/cmodules/gcsynth/test/test_events.py"],
+            "stopAtEntry": true,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+
+
+        {
             "name": "C/C++ Debug (gdb Attach)",
             "type": "cppdbg",
             "request": "attach",
