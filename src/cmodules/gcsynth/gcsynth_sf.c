@@ -320,7 +320,6 @@ int gcsynth_sf_pitchwheel(int chan, float semitones)
         float r = semitones / pr;
 
         pitchWheel = 8192 + (r * 8192);
-//printf("tsf_channel_set_pitchwheel(%d, %d)\n", chan, pitchWheel);
         ret = tsf_channel_set_pitchwheel(at->g_TinySoundFont, chan, 
             pitchWheel);
 	    SDL_UnlockMutex(at->g_Mutex); //get exclusive lock
