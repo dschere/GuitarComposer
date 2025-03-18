@@ -151,6 +151,9 @@ class synthservice:
     def timer_event(self, ev_or_ev_list):
         print(f"timer event called {ev_or_ev_list}")
         return gcsynth.timer_event( ev_or_ev_list)
+    
+    def pitch_range(self, channel: int, semitones: int):
+        return gcsynth.pitchrange(channel, semitones)
 
     def instrument_info(self):
         return self.db.instruments

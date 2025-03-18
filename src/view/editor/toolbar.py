@@ -192,6 +192,12 @@ class EditorToolbar(QToolBar):
             self._tab_event.staccato = True
         self.update_staff_and_tab()
 
+    def _hand_effect_selected(self, btn: ToolbarButton):
+        if btn.pname() == "clear-hand-effects":
+            pass 
+        elif btn.pname() == "bend-effect":
+            pass
+
 
     def setTabEvent(self, tab_event : TabEvent):
         """
@@ -302,7 +308,16 @@ class EditorToolbar(QToolBar):
         self.setTabEvent(self._tab_event)
         self.addSeparator()
 
+        self._hand_effects_group = MutuallyExclusiveButtonGroup() 
+        self._hand_effects_btns = ( 
+            ToolbarButton(self, " ", "no effects", "clear-hand-effects"),
+            ToolbarButton(self, "bend", "bend", "bend-effect")
+        )
+        for btn in self._hand_effects_btns:
+            self._hand_effects_group.addButton(btn) 
+            self.addWidget(btn) 
 
+       
 
 
 

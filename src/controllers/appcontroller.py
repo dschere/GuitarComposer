@@ -14,7 +14,7 @@ from PyQt6.QtWidgets import QMessageBox
 from models.note import Note
 from models.song import Song
 from models.track import Track
-from view.events import Signals
+from view.events import Signals, StringBendEvent
 from util.projectRepo import ProjectRepo
 from music.instrument import Instrument
 from view.config import LabelText
@@ -237,20 +237,25 @@ class AppController:
         Signals.preview_play.connect(self.handle_preview_play)
         Signals.preview_stop.connect(self.handle_preview_stop)
         Signals.preview_effect.connect(self.handle_effects_preview)
+        Signals.preview_pitch_change.connect(self.handle_pitch_change_preview_event)
 
         Signals.load_settings.connect(self.on_load_settings)
         Signals.save_settings.connect(self.on_load_settings)
 
         Signals.ready.connect(self.on_ready)
 
-
         n = Note()
         n.string = 4
         n.fret = 0
         n.velocity = 100
-        n.duration = 10000
+        n.duration = 4000
         self.effects_preview_note = n
 
+    def handle_pitch_change_preview_event(self, evt: StringBendEvent):
+        self.preview_instr.note_event(self.effects_preview_note)
+        self.effects_preview_note.pitch_range = evt.pitch_range 
+        self.effects_preview_note.pitch_changes = evt.pitch_changes 
+        self.preview_instr.pitchwheel_event(self.effects_preview_note)
 
     def handle_preview_play(self, n: Note):
         self.preview_instr.note_event(n)
