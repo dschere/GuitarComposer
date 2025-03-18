@@ -47,6 +47,14 @@ class InstrumentSelectedEvent:
         self.track = None
         self.instrument = ""
 
+class StringBendEvent:
+    def __init__(self):
+        # [(when_r,pitch),...]
+        # when_r -> time = (self.pitch_range * when_r)   
+        self.pitch_changes = []
+        self.pitch_range = 2
+        self.channel = 0
+        self.preview = True
 
 class EditorEvent:
     UNINITIALIZED = -1
@@ -55,6 +63,7 @@ class EditorEvent:
     KEY_EVENT = 2
     TUNING_CHANGE = 3
     MEASURE_CLICKED = 4
+    BEND_EVENT = 5
 
     def __init__(self):
         self.ev_type = self.UNINITIALIZED
@@ -63,18 +72,22 @@ class EditorEvent:
         self.key = -1
         self.tuning = None
         self.measure = 1
+        self.bend_event : StringBendEvent | None = None  
 
 
 global _toolbar_button_update
 
+
 @singleton
 class _Signals(QObject):
+    preview_pitch_change = pyqtSignal(StringBendEvent)
     scale_selected = pyqtSignal(ScaleSelectedEvent)
     clear_scale = pyqtSignal(ClearScaleEvent)
     load_settings = pyqtSignal(QSettings)
     save_settings = pyqtSignal(QSettings)
     preview_play = pyqtSignal(Note)
     preview_stop = pyqtSignal(Note)
+    preview_pitch_change = pyqtSignal(StringBendEvent)
 
     startup = pyqtSignal(object)
     ready = pyqtSignal(object)  # all startup handlers have run app is up.

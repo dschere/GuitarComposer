@@ -41,8 +41,14 @@ class TabEvent:
         self.string = 5  # current string being edited
         self.fret = [-1] * num_gstrings  # current fret value
         self.tied_notes = [-1] * num_gstrings
+
+        # visual representation in ornament widget 
         self.pitch_bend_histogram = [0] * self.BEND_PERIODS
         self.pitch_bend_active = False
+
+        self.pitch_changes = []
+        self.pitch_range = 2
+
         self.dotted = False
         self.double_dotted = False
         self.dynamic = Dynamic.MP

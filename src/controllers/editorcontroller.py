@@ -9,7 +9,7 @@ import logging
 from PyQt6.QtCore import Qt
 
 from view.config import EditorKeyMap
-from view.events import Signals, EditorEvent
+from view.events import Signals, EditorEvent, StringBendEvent
 from models.track import Track
 from view.editor.trackEditorView import TrackEditorView
 from util.keyprocessor import KeyProcessor
@@ -87,12 +87,30 @@ class EditorController:
     def measure_clicked(self, evt: EditorEvent):
         print(evt.measure)
 
+    def string_bend_event(self, evt: EditorEvent):
+        be = evt.bend_event 
+        tmodel : Track | None = self.track_model
+        tedit : TrackEditorView | None = self.track_editor_view
+
+        if be and tmodel and tedit:
+            # update the Note(s) of the current moment 
+            (tab_event, _) = tmodel.current_moment()
+
+            tab_event.pitch_changes = be.pitch_changes
+            tab_event.pitch_range = be.pitch_range
+            tab_event.pitch_bend_active = True
+
+            # render the updated tab event model.
+            tedit.current_tab_event_updated()
+
+
     dispatch = {
         EditorEvent.ADD_MODEL: add_model,
         EditorEvent.ADD_TRACK_EDITOR: add_editor,
         EditorEvent.KEY_EVENT: keyboard_event,
         EditorEvent.TUNING_CHANGE: tuning_change,
-        EditorEvent.MEASURE_CLICKED: measure_clicked
+        EditorEvent.MEASURE_CLICKED: measure_clicked,
+        EditorEvent.BEND_EVENT: string_bend_event
     }
 
     def editor_event(self, evt: EditorEvent):

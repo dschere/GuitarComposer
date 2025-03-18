@@ -95,22 +95,25 @@ class oramental_markings(Canvas):
         Draw a curve based on the pitch bend histogram.
 
         Use the high/low to scale the curve. 
+
+
+        tab_event.pitch_changes = [(0-1.0,0-<pitch_range>),...]
         """
-        high = self.tab_event.pitch_bend_histogram[0]
+        high = self.tab_event.pitch_changes[0]
         low = high
         points = []
 
-        for b in self.tab_event.pitch_bend_histogram[1:]:
-            if b > high:
-                high = b
-            if b < low:
-                low = b
+        for (when_r, semitones) in self.tab_event.pitch_changes[1:]:
+            if semitones > high:
+                high = semitones
+            if semitones < low:
+                low = semitones
 
         span = (high - low)
-        n = STAFF_SYM_WIDTH / len(self.tab_event.pitch_bend_histogram) 
-        for (i,b) in enumerate(self.tab_event.pitch_bend_histogram):
-            x = int(i * n)
-            y = ((high - b) / span) * ORNAMENT_MARKING_HEIGHT
+        n = STAFF_SYM_WIDTH / len(self.tab_event.pitch_changes) 
+        for (when_r,semitones) in enumerate(self.tab_event.pitch_changes):
+            x = when_r * STAFF_SYM_WIDTH
+            y = ((high - semitones) / span) * ORNAMENT_MARKING_HEIGHT
             points.append((x,y))
 
         for i in range(len(points) - 1):

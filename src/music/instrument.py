@@ -141,7 +141,32 @@ class Instrument:
         for chan in self.channels_used:
             self.update_effect_changes(self.synth, chan, ec)
 
-    def note_event(self, n: Note):
+    def pitchwheel_event(self, n: Note, bpm = 120):
+        s = self.synth.getSequencer()
+
+        # express duration (beats) in milliseconds.
+        if not n.duration:
+            raise ValueError("duration must be defined.") 
+        else:        
+            millisecs = int((n.duration * bpm/60.0) * 1000)
+
+        chan_mix = self.string_map[n.string] # type: ignore
+        channels = [chan for (chan,_) in chan_mix]
+
+        # create events for potentially multiple channels.
+        for chan in channels:
+            if n.pitch_range != n.DEFAULT_PITCH_RANGE:
+                self.synth.pitch_range(chan, n.pitch_range)
+            for (when_r, pitch) in n.pitch_changes:
+                when = int(when_r * millisecs)
+                t_evt = SeqEvt.pitch_change(when, chan, pitch) 
+                s.add(t_evt)
+
+        # schedule events.
+        s.play() 
+        
+
+    def note_event(self, n: Note, bpm=120):
         "play note on potentially multiple channels"
         chan_mix = self.string_map[n.string] # type: ignore
 
@@ -165,7 +190,8 @@ class Instrument:
                 # schedule a noteoff event.
                 s = self.synth.getSequencer()
                 # schedule a noteoff event in the future
-                t_evt = SeqEvt.noteoff(n.duration, chan, midicode)
+                millisecs = int((n.duration * bpm/60.0) * 1000)
+                t_evt = SeqEvt.noteoff(millisecs, chan, midicode)
                 s.add(t_evt)
                 s.play()
 
@@ -182,3 +208,24 @@ def getInstrumentList():
             names.append(instr_spec['name'])
     names.sort()
     return names
+
+if __name__ == '__main__':
+    import time
+
+    ss = synthservice()
+    ss.start()
+    name = "12-str.GT"
+    n = Note() 
+    n.midi_code = 60 
+    n.string = 1
+    n.fret = 0
+    n.velocity = 100 
+    n.duration = 4.0
+    n.pitch_changes = [(0.1,0.25), (0.2,0.5), (0.3,1.0)]
+
+    intr = Instrument(name) 
+    intr.note_event(n)
+    intr.pitchwheel_event(n)
+
+    time.sleep(5) 
+        
