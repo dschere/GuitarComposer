@@ -33,10 +33,12 @@ class TrackEditorView(QWidget):
         # check for error
         if self.track_presenter.current_mp: 
             self.track_presenter.current_mp.beat_error_check()
+        self.track_presenter.current_tab_event_updated()
         # force a repaint of widgets canvas
         self.track_presenter.update()
         # set the focus of the cursor
         self.track_presenter.setFocus()
+        
 
     """ 
     API for the editorcontroller
@@ -54,7 +56,7 @@ class TrackEditorView(QWidget):
         # selected.
         self.track_presenter = TrackPresenter(track_model)
         
-        self.toolbar = EditorToolbar(tab_event, self._update_track_editor_content)
+        self.toolbar = EditorToolbar(track_model, self._update_track_editor_content)
          
         main_layout.addWidget(self.toolbar)
         main_layout.addWidget(self.track_presenter)
