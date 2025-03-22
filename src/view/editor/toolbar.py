@@ -30,7 +30,7 @@ from PyQt6.QtCore import QPointF
 from PyQt6.QtGui import QPainter, QPainterPath, QColor
 
 from music.constants import Dynamic
-from models.track import TabEvent
+from models.track import TabEvent, Track
 
 DOTTED = GHOST_NOTEHEAD
 DOUBLE_DOTTED = DOUBLE_GHOST_NOTEHEAD
@@ -57,46 +57,6 @@ class ToolbarButton(QPushButton):
     def pname(self):
         return self._param
 
-"""
-class BendEffectToolbarButton(QPushButton):
-
-    def __init__(self):
-        super().__init__()
-        self.setToolTip("Bend effect")
-        self.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
-        self.setCheckable(True)
-        self.setFixedWidth(40)
-   
-    def paintEvent(self, event):
-        # Call the base class paintEvent to ensure the button is drawn
-        super().paintEvent(event)
-        
-        # Create a QPainter object
-        painter = QPainter(self)
-        
-        # Set antialiasing for smoother curves
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        
-        # Define a Bézier curve using QPainterPath
-        path = QPainterPath()
-        width, height = self.width(), self.height()
-        start_point = QPointF(0, height)
-        control_point1 = QPointF(width / 3, height / 3)
-        control_point2 = QPointF(2 * width / 3, 2 * height / 3)
-        end_point = QPointF(width, 0)
-        
-        path.moveTo(start_point)
-        path.cubicTo(control_point1, control_point2, end_point)
-        
-        # Set pen color and width
-        pen = painter.pen()
-        pen.setColor(QColor('cyan'))
-        pen.setWidth(2)
-        painter.setPen(pen)
-        
-        # Draw the path
-        painter.drawPath(path)    
-"""    
 
 # workaround for broken QButtonGroup
 class MutuallyExclusiveButtonGroup(QObject):
@@ -135,34 +95,20 @@ class MutuallyExclusiveButtonGroup(QObject):
 
 class EditorToolbar(QToolBar):
 
-    # def _compute_beat(self):
-    #     n = 1.0
-
-    #     if self._tab_event.dotted:
-    #         n *= 1.5
-    #     elif self._tab_event.double_dotted:
-    #         n *= 1.75
-
-    #     if self._tab_event.triplet:
-    #         n *= 0.33
-    #     elif self._tab_event.quintuplet:
-    #         n *= 0.2
-
-    #     self._tab_event.duration = n * self._tab_event.duration            
-        
 
     def _dot_selected(self, btn: ToolbarButton):
+        (te,_) = self.track_model.current_moment()
         n = btn.pname()
         #TODO, move these strings to global constants
         if n == "clear-dots":
-            self._tab_event.dotted = False 
-            self._tab_event.double_dotted = False 
+            te.dotted = False 
+            te.double_dotted = False 
         elif n == "dotted":
-            self._tab_event.dotted = True
-            self._tab_event.double_dotted = False
+            te.dotted = True
+            te.double_dotted = False
         elif n == "double-dotted":
-            self._tab_event.dotted = False
-            self._tab_event.double_dotted = True
+            te.dotted = False
+            te.double_dotted = True
         else:
             # not a dot selected event.
             return    
@@ -170,32 +116,39 @@ class EditorToolbar(QToolBar):
         self.update_staff_and_tab()
 
     def _on_duration_selected(self, btn: ToolbarButton):
+        (te,_) = self.track_model.current_moment()
         if btn.pname() == "duration":
-            self._tab_event.note_duration = btn.pvalue() # type: ignore
+            te.duration = btn.pvalue() # type: ignore
             #self._compute_beat() 
         self.update_staff_and_tab()
 
     def _dyn_selected(self, btn: ToolbarButton):
+        (te,_) = self.track_model.current_moment()
         if btn.pname() == "dynamic":
-            self._tab_event.dynamic = btn.pvalue()
+            te.dynamic = btn.pvalue()
         self.update_staff_and_tab()
 
     def _articulation_selected(self, btn: ToolbarButton):
+        (te,_) = self.track_model.current_moment()
+
         if btn.pname() == "clear-articulation":
-            self._tab_event.legato = False
-            self._tab_event.staccato = False
+            te.legato = False
+            te.staccato = False
         elif btn.pname() == "legato":
-            self._tab_event.legato = True
-            self._tab_event.staccato = False
+            te.legato = True
+            te.staccato = False
         elif btn.pname() == "staccato":
-            self._tab_event.legato = False
-            self._tab_event.staccato = True
+            te.legato = False
+            te.staccato = True
         self.update_staff_and_tab()
 
     def _hand_effect_selected(self, btn: ToolbarButton):
+        (te,_) = self.track_model.current_moment()
         if btn.pname() == "clear-hand-effects":
+            # clear bend 
             pass 
         elif btn.pname() == "bend-effect":
+            # create dialog allow it to manipulate 'te'
             pass
 
 
@@ -204,7 +157,6 @@ class EditorToolbar(QToolBar):
         set the tab cursor and react to any changes in data so 
         the toolbar reflects the state. 
         """ 
-        self._tab_event = tab_event
         # select buttons based on tab settings
 
         # set the matching duration
@@ -235,9 +187,9 @@ class EditorToolbar(QToolBar):
             self._dyn_grp.check_btn(btn)
 
 
-    def __init__(self, tab_event: TabEvent, update_staff_and_tab):
+    def __init__(self, track_model: Track, update_staff_and_tab):
         super().__init__()
-        self._tab_event = tab_event 
+        self.track_model = track_model 
                                          
         self._lookup = {}
         self.update_staff_and_tab = update_staff_and_tab
@@ -304,8 +256,10 @@ class EditorToolbar(QToolBar):
             self._articulation_group.addButton(btn) 
             self.addWidget(btn)
         self._articulation_group.selected.connect(self._articulation_selected)    
-        
-        self.setTabEvent(self._tab_event)
+
+        (te,_) = self.track_model.current_moment()
+
+        self.setTabEvent(te)
         self.addSeparator()
 
         self._hand_effects_group = MutuallyExclusiveButtonGroup() 
