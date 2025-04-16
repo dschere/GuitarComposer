@@ -68,7 +68,7 @@ class TrackPresenter(QScrollArea):
         if len(self.current_measure.tab_events) == 1:
             # delete measure
             self.delete_current_measure()
-        else:  
+        else:
             self.current_measure.remove_current()
             self.current_mp.reset_presentation()
         self.setup()

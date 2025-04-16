@@ -13,6 +13,7 @@ import pickle
 import logging
 
 from models.song import Song
+from models.track import Track
 
 USER_DIR = os.environ['HOME']+"/GuitarComposerUserdata"
 USER_SONG_DIR = USER_DIR+"/songs"
@@ -31,6 +32,21 @@ class ProjectRepo:
         for songpath in glob.glob(USER_SONG_DIR+"/*.data"):
             title = songpath.split("/")[-1][:-len(".data")]
             self.titles.add(title)
+
+        self.song_selected = None 
+        self.track_selected = None 
+
+    def set_current_song(self, s: Song): 
+        self.song_selected = s 
+
+    def get_current_song(self):
+        return self.song_selected 
+    
+    def set_current_track(self, t: Track):
+        self.track_selected = t
+
+    def get_current_track(self):
+        return self.track_selected     
 
     def getTitles(self):
         return self.titles

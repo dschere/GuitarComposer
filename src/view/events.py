@@ -1,6 +1,7 @@
 """
 Central place for custom signals/slots for the application
 """
+from typing import List
 from PyQt6.QtGui import QStandardItemModel
 from PyQt6.QtCore import QObject, pyqtSignal, QSettings
 from PyQt6.QtCore import Qt
@@ -9,6 +10,7 @@ from singleton_decorator import singleton
 from models.note import Note
 from models.track import Track
 from models.effect import Effects
+from models.song import Song
 from view.dialogs.effectsControlDialog.effectsControls import EffectChanges, EffectPreview
 
 
@@ -75,6 +77,25 @@ class EditorEvent:
         self.bend_event : StringBendEvent | None = None  
 
 
+class PlayerEvent:
+    UNINITIALIZED = -1
+    PLAY = 0
+    STOP = 1
+    SKIP_FORWARD_MEASURE = 2
+    SKIP_BACKWARD_MEASURE = 3
+    PAUSE = 4
+    SETTINGS = 5
+
+    def __init__(self):
+        self.ev_type = self.UNINITIALIZED
+        self.tracks : List[Track] = []  
+        self.measure_num = -1
+
+class PlayerVisualEvent:
+    def __init__(self, track, measure):
+        self.track = track 
+        self.measure = measure        
+
 global _toolbar_button_update
 
 
@@ -110,5 +131,8 @@ class _Signals(QObject):
     
     # route EffectChanges to synth channel(s)
     preview_effect = pyqtSignal(EffectPreview)
+
+    player_event = pyqtSignal(PlayerEvent)
+    player_visual_event = pyqtSignal(PlayerVisualEvent)
 
 Signals = _Signals()

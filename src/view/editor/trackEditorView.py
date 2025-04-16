@@ -39,7 +39,6 @@ class TrackEditorView(QWidget):
         # set the focus of the cursor
         self.track_presenter.setFocus()
         
-
     """ 
     API for the editorcontroller
     

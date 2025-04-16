@@ -8,6 +8,7 @@ Track editor toolbars
 <hand effects>
     bend / slide etc.
 """
+from view.dialogs.stringBendDialog import StringBendDialog
 from view.editor.glyphs.common import (
     WHOLE_NOTE,
     HALF_NOTE,
@@ -31,6 +32,7 @@ from PyQt6.QtGui import QPainter, QPainterPath, QColor
 
 from music.constants import Dynamic
 from models.track import TabEvent, Track
+from view.events import StringBendEvent
 
 DOTTED = GHOST_NOTEHEAD
 DOUBLE_DOTTED = DOUBLE_GHOST_NOTEHEAD
@@ -145,12 +147,22 @@ class EditorToolbar(QToolBar):
     def _hand_effect_selected(self, btn: ToolbarButton):
         (te,_) = self.track_model.current_moment()
         if btn.pname() == "clear-hand-effects":
-            # clear bend 
-            pass 
+            empty_evt = StringBendEvent()
+            te.pitch_changes = empty_evt.pitch_changes 
+            te.pitch_range = empty_evt.pitch_range
+            
         elif btn.pname() == "bend-effect":
             # create dialog allow it to manipulate 'te'
-            pass
-
+            dialog = StringBendDialog(self)
+            
+            def on_apply(evt : StringBendEvent):
+                te.pitch_changes = evt.pitch_changes 
+                te.pitch_range = evt.pitch_range
+                dialog.close()
+                self.update_staff_and_tab()
+                
+            dialog.string_bend_selected.connect(on_apply)
+            dialog.show()
 
     def setTabEvent(self, tab_event : TabEvent):
         """
@@ -270,7 +282,7 @@ class EditorToolbar(QToolBar):
         for btn in self._hand_effects_btns:
             self._hand_effects_group.addButton(btn) 
             self.addWidget(btn) 
-
+        self._hand_effects_group.selected.connect(self._hand_effect_selected)
        
 
 

@@ -190,6 +190,7 @@ class AppController:
 
         # send to navigator widget
         Signals.update_navigator.emit(root)
+        
 
     def on_ready(self, app):
         # setup navigator, score editor

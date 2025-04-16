@@ -8,6 +8,7 @@ from view.editor.glyphs.common import (STAFF_HEADER_WIDTH, STAFF_SYM_WIDTH,
 
 from view.config import GuitarFretboardStyle
 from models.measure import TabEvent
+from PyQt6.QtCore import Qt
 
 
 class TabletureMeasure(Canvas):
@@ -59,7 +60,7 @@ class TabletureHeader(Canvas):
 class TabletureGlyph(Canvas):
     CURSOR_COLOR = QColor(*GuitarFretboardStyle.scale_root_color_rgb)
     TEXT_COLOR = QColor(*GuitarFretboardStyle.orament_color_rgb)
-
+    
     def __init__(self, tab_event : TabEvent):
         super().__init__(STAFF_SYM_WIDTH, TABLATURE_HEIGHT)
         # Note: gstring is from 1-6
@@ -67,7 +68,15 @@ class TabletureGlyph(Canvas):
         # (gstring) -> (fret, **options)
         self.tab_notes = {}
         self.tab_event = tab_event
+        self._draw_playline = False 
 
+    def set_playline(self):
+        self._draw_playline = True
+        self.update() 
+
+    def clear_playline(self):
+        self._draw_playline = False
+        self.update()    
     
     def clear_cursor(self):
         self._cursor = None  # type: ignore
@@ -97,6 +106,16 @@ class TabletureGlyph(Canvas):
             # print(f"0 {y} {self.width} {y}")
             painter.drawLine(0, y, self.width(), y)
 
+        if self._draw_playline:
+            # STAFF_SYM_WIDTH, TABLATURE_HEIGHT
+            p = painter.pen()
+            p.setWidth(1)
+            p.setColor(self.CURSOR_COLOR)
+            p.setStyle(Qt.PenStyle.DashLine)
+            painter.setPen(p)
+            # draw a thin dashed vertical line  
+            painter.drawLine(self.width()/2, 0, self.width()/2, y)
+            
     def draw_cursor(self, painter):
         gstring = self._cursor
         if type(gstring) == type(None):
@@ -108,10 +127,9 @@ class TabletureGlyph(Canvas):
         painter.setPen(p)
 
         # Must be called before draw_tab_notes
-        
         x = int(self.c_width * 0.22)
         width = int(2*self.c_width/3)
-        n = gstring  # type: ignore
+        n : int = gstring  # type: ignore
         y = (n * TABLATURE_LINE_SPACE) + int(3 * TABLATURE_LINE_SPACE/10)
 
         # print("painter.drawRect(%d,%d,%d,%d)" % (x, y+4, width, width-4))

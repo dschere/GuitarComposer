@@ -47,11 +47,13 @@ static void timer_callback(EV_P_ ev_timer *w, int revents)
     // process scheduled events.
     switch(s_event->ev_type) {
         case EV_NOTEON:
+            timing_log("timer_callback","noteon");
             gcsynth_sf_noteon(s_event->channel,
              s_event->midi_code, s_event->velocity);
             break;
 
         case EV_NOTEOFF:
+            timing_log("timer_callback","noteoff");
             gcsynth_sf_noteoff(s_event->channel,
              s_event->midi_code);
             break;
@@ -122,8 +124,6 @@ static void *dispatcher_loop_thread(void *arg)
                 msg->s_event->when * 0.001, 0.0);
             // call timer_callback in 'when' milliseconds.    
             ev_timer_start(Dispatcher.loop, &msg->timer_watcher);    
-        // } else {
-        //     break;
         } 
 
         // process any libev events without waiting for future ones.
@@ -159,6 +159,26 @@ static int dispatcher_send(struct scheduled_event* s_event)
 
     return err;
 }
+
+//TODO
+/**
+ * Need a function that can skip forwards or backwards, that is
+ * alter the time of timer being fired while inflight. This
+ * can be done be keeping a table of all inflight events and the 
+ * creation time.
+ * 
+ * skip ahead ->
+ *  compute the elapsed time (now+skip) and search through all inflight timers
+ *  if elapsed > when delete the timer, otherwise delete and reschedule 
+ *  at a new time
+ * 
+ * skip backwards -> 
+ *  this must be done by the caller, provide a way to delete all inflight
+ *  events. then schedule events.
+ * 
+ */
+
+
 
 /*
     A thread is used to aid libev in launching timer events, its purpose is
