@@ -1,4 +1,10 @@
+#include <stdio.h>
+#include <time.h>
+#include <stdlib.h>
+#include <errno.h>
+
 #include <Python.h>
+
 
 
 /**
@@ -299,6 +305,7 @@ static PyObject* py_gcsynth_noteon(PyObject* self, PyObject* args) {
         return NULL;  // Return NULL to indicate an error if the parsing failed
     }
 
+    timing_log("py_gcsynth_noteon","noteon");
     gcsynth_noteon(&GcSynth, channel, midicode, velocity);
 
     Py_RETURN_NONE;
@@ -378,7 +385,7 @@ static PyObject* py_gcsynth_noteoff(PyObject* self, PyObject* args) {
     }
 
     CHECK_CHANNEL_VALUE(channel)
-
+    timing_log("py_gcsynth_noteoff","noteoff");
     gcsynth_noteoff(&GcSynth, channel, midicode);
     
     Py_RETURN_NONE;
@@ -573,8 +580,61 @@ static struct PyModuleDef gcsynthmodule = {
 };
 
 
+/*
+struct timespec start_time, end_time;
+
+  // Get the start time
+  clock_gettime(CLOCK_MONOTONIC, &start_time);
+
+  // Perform some action
+  // ... your code here ...
+
+  // Get the end time
+  clock_gettime(CLOCK_MONOTONIC, &end_time);
+
+  // Calculate the time difference
+  long seconds = end_time.tv_sec - start_time.tv_sec;
+  long nanoseconds = end_time.tv_nsec - start_time.tv_nsec;
+
+  // Handle potential negative nanoseconds (wrap around)
+  if (nanoseconds < 0) {
+    seconds--;
+    nanoseconds += 1000000000;
+  }
+
+  printf("Elapsed time: %ld.%09ld seconds\n", seconds, nanoseconds);
+*/
+   
+static FILE* TimingLog = NULL;
+static struct timespec TimingLogRefTime;
+
+void timing_log(char* caller, char *method)
+{
+    if (TimingLog != NULL) {
+        struct timespec ts;
+        long seconds;
+        long nanoseconds;
+
+        clock_gettime(CLOCK_MONOTONIC, &ts);
+
+        seconds     = ts.tv_sec - TimingLogRefTime.tv_sec;
+        nanoseconds = ts.tv_nsec - TimingLogRefTime.tv_nsec;
+
+        if (nanoseconds < 0) {
+            seconds--;
+            nanoseconds += 1000000000;
+        }
+        
+        fprintf(TimingLog,"%10ld.%09ld %12s %12s\n",
+            seconds, nanoseconds, caller, method);
+    }
+}
+
+
 // Initialization function
 PyMODINIT_FUNC PyInit_gcsynth(void) {
+    char* timing_log_env = getenv(TIMING_LOG_ENV);
+    
     // Create the custom exception
     GcsynthException = PyErr_NewException("gcsynth.GcsynthException", NULL, NULL);
     Py_INCREF(GcsynthException);
@@ -599,6 +659,22 @@ PyMODINIT_FUNC PyInit_gcsynth(void) {
     PyModule_AddIntConstant(module, "EV_PITCH_WHEEL", EV_PITCH_WHEEL);
     PyModule_AddIntConstant(module, "NUM_CHANNELS", NUM_CHANNELS);
 
+    if ((timing_log_env != NULL) && (strcmp(timing_log_env,"1") == 0)) {
+        struct timespec ts;
 
+        TimingLog = fopen(TIMING_LOGPATH,"w");
+        int r = clock_gettime(CLOCK_MONOTONIC, &TimingLogRefTime);
+
+        if (TimingLog == NULL) {
+            printf(stderr,"Warning: %s was set but unable to create log!\n", TIMING_LOG_ENV);
+        }
+        if (r == -1) {
+            printf(stderr,"Warning: unable to get monotonic clock! errno=%d %s\n", 
+                errno, strerror(errno));
+            fclose(TimingLog);
+            TimingLog = NULL;    
+        } 
+    }
+    
     return module;
 }

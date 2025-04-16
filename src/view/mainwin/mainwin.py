@@ -18,6 +18,7 @@ from view.widgets.projectNavigator.navigator import Navigator
 from view.editor.trackEditorView import TrackEditorView
 import logging
 from controllers.editorcontroller import EditorController
+from view.player.playerView import PlayerView
 
 
 class MainWindow(QMainWindow):
@@ -82,6 +83,8 @@ class MainWindow(QMainWindow):
         tools_menu.addAction(settings_action)
         tools_menu.addAction(options_action)
 
+
+
     _shift_key = False
     _arrow_keys = (Qt.Key.Key_Left, Qt.Key.Key_Right, Qt.Key.Key_Up, Qt.Key.Key_Down)
 
@@ -128,6 +131,9 @@ class MainWindow(QMainWindow):
         # Create a toolbar
         toolbar = QToolBar("Main Toolbar")
         self.addToolBar(toolbar)
+        pv = PlayerView(self) 
+        toolbar.addWidget(pv) 
+
 
         # Create a status bar
         status_bar = QStatusBar()

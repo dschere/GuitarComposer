@@ -101,13 +101,14 @@ class sequencer:
     def play(self):
         # flatten dictionary sorted by timer event
         play_list = []
-        for when in sorted(self.te_events):
-            play_list += self.te_events[when]
-        try:
-            self.synth_service.timer_event(play_list)
-        except Exception:
-            print("error in sequence play, this is a dump of the playlist:")
-            for (i, item) in enumerate(play_list):
-                print((i, item.__class__.__name__, vars(item)))
-            # reraise
-            raise
+        if len(self.te_events) > 0:
+            for when in sorted(self.te_events):
+                play_list += self.te_events[when]
+            try:
+                self.synth_service.timer_event(play_list)
+            except Exception:
+                print("error in sequence play, this is a dump of the playlist:")
+                for (i, item) in enumerate(play_list):
+                    print((i, item.__class__.__name__, vars(item)))
+                # reraise
+                raise

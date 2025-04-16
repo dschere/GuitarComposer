@@ -1,5 +1,7 @@
 import os
 import json
+from typing import List
+import time
 
 from singleton_decorator import singleton
 from services.synth.synthservice import synthservice
@@ -11,6 +13,9 @@ from models.effect import Effects
 from util.midi import midi_codes
 
 from view.dialogs.effectsControlDialog.effectsControls import EffectChanges
+from models.measure import TabEvent
+
+
 
 @singleton
 class CustomInstruments:
@@ -165,38 +170,133 @@ class Instrument:
         # schedule events.
         s.play() 
         
+    def tab_event(self, te: TabEvent, bpm: int, beat_duration: float):
+        """
+            generate a series of notes, effects etc in response to tab
+            return the floating point number of seconds for the duration
+            of this event.
+        """
+        te_type = te.classify()
+        beats = te.beats(beat_duration)
+        ev_dur = beats * (60.0 / bpm)
+        # in the case of a chord, all string played ar once.
+        no_stroke = not te.upstroke and not te.downstroke
 
-    def note_event(self, n: Note, bpm=120):
+        if te_type == te.REST:
+            n = Note()
+            n.rest = True
+            n.duration = ev_dur
+            self.note_event(n, bpm)
+
+        elif te_type == te.NOTE or (te_type == te.CHORD and no_stroke):
+            # Either a single note or in the case of a chord with no stroke
+            # were we are plucking the strings usinga finger picking techinique
+            for (string,fret_val) in enumerate(te.fret):
+                # a new note is to be played.
+                if fret_val != -1 and te.tied_notes[string] == -1:
+                    n = Note()
+                    n.rest = False
+                    n.fret = fret_val 
+                    n.string = string
+                    n.midi_code = self.tuning[string] + fret_val 
+                    n.pitch_changes = te.pitch_changes
+                    n.velocity = te.dynamic
+                    n.duration = ev_dur
+
+                    # in the case of a bend of a single string
+                    # or multiple strings using the 'whammy' bar.
+                    if te.pitch_bend_active: 
+                        n.pitch_changes = te.pitch_changes
+                        n.pitch_range = te.pitch_range
+
+                    self.note_event(n, bpm)
+        
+        else:
+            fret_data = list(enumerate(te.fret)) 
+            # we are playing a chord 
+            if te.downstroke:
+                fret_data.reverse()
+            start_offset_inc = te.stroke_duration / len(te.fret)
+            start_offset = 0
+            for (string,fret_val) in fret_data:
+                # a new note is to be played.
+                if fret_val != -1 and te.tied_notes[string] == -1:
+                    n = Note()
+                    n.rest = False
+                    n.fret = fret_val 
+                    n.string = string
+                    n.midi_code = self.tuning[string] + fret_val 
+                    n.pitch_changes = te.pitch_changes
+                    n.velocity = te.dynamic
+                    n.duration = ev_dur
+                    self.note_event(n, bpm, start_offset)
+                    start_offset += start_offset_inc
+                
+        return ev_dur
+
+    #last_print_tm = None
+
+    def note_event(self, n: Note, bpm=120, start_offset=0.0):
         "play note on potentially multiple channels"
         chan_mix = self.string_map[n.string] # type: ignore
+        s = self.synth.getSequencer()
 
+        # If we are already playing a note on this string
+        # then perform a noteoff.
+        # Future: 
+        # A non guitar like instrument such as a keyboard does 
+        # not have this issue. 
         midicode_in_use = self.string_playing[n.string] # type: ignore
         if self.one_note_per_string and midicode_in_use:
             for (chan, velocity_mul) in chan_mix:
                 self.synth.noteoff(chan, midicode_in_use)
+                # Bug!
+                # Must be able to stop any pending timers for this channel
+                # that are inflight, they don't know that the noteoff has been called.
+                
 
         for (chan, velocity_mul) in chan_mix:
             midicode = self.tuning[n.string] + n.fret # type: ignore
             velocity = int(n.velocity * velocity_mul)
             if velocity > 128:
-                velocity = 128
+                velocity = 128    
             if n.rest:
                 self.synth.noteoff(chan, midicode)
+                        
             else:
-                self.synth.noteon(chan, midicode, velocity)
+                # tm = time.time()
+                # delta = 0
+                # if self.last_print_tm:
+                #     delta = tm - self.last_print_tm 
+                # self.last_print_tm = tm    
+                # print(f"     >>>> noteon time={delta} start_offset={start_offset}")
+                if start_offset == 0.0:
+                    self.synth.noteon(chan, midicode, velocity)
+                else:
+                    millisecs = int((start_offset * bpm/60.0) * 1000)
+                    t_evt = SeqEvt.noteon(millisecs, chan, midicode,velocity)
+                    s.add(t_evt)
+
                 self.string_playing[n.string] = midicode # type: ignore
 
+            # is there a pitch bend?
+            if len(n.pitch_changes) > 0:
+                self.synth.pitch_range(chan, n.pitch_range)
+                for (b_when, semitones) in n.pitch_changes:
+                    millisecs = int((b_when * bpm/60.0) * 1000)
+                    t_evt = SeqEvt.pitch_change(millisecs, chan, semitones)
+                    s.add(t_evt)
+
             if n.duration and n.duration > 0:
-                # schedule a noteoff event.
-                s = self.synth.getSequencer()
                 # schedule a noteoff event in the future
-                millisecs = int((n.duration * bpm/60.0) * 1000)
+                millisecs = int(((n.duration-start_offset) * bpm/60.0) * 1000)
                 t_evt = SeqEvt.noteoff(millisecs, chan, midicode)
                 s.add(t_evt)
-                s.play()
 
+        # play any scheduled events if they exist.  
+        s.play()
 
-
+    
 def getInstrumentList():
     # Note: these are both singletons
     custom_instruments = CustomInstruments()
@@ -215,17 +315,44 @@ if __name__ == '__main__':
     ss = synthservice()
     ss.start()
     name = "12-str.GT"
-    n = Note() 
-    n.midi_code = 60 
-    n.string = 1
-    n.fret = 0
-    n.velocity = 100 
-    n.duration = 4.0
-    n.pitch_changes = [(0.1,0.25), (0.2,0.5), (0.3,1.0)]
-
     intr = Instrument(name) 
-    intr.note_event(n)
-    intr.pitchwheel_event(n)
 
-    time.sleep(5) 
+    def note_test():
+        print("note test")
+        n = Note() 
+        n.midi_code = 60 
+        n.string = 1
+        n.fret = 0
+        n.velocity = 100 
+        n.duration = 4.0
+        n.pitch_changes = [(0.1,0.25), (0.2,0.5), (0.3,1.0)]
+
+        intr.note_event(n)
+        intr.pitchwheel_event(n)
+
+        time.sleep(5)
+
+    def tabevent_test():
+        print("tabevent test")
+        te = TabEvent(6) 
+        bpm = 120 
+        te.downstroke = False 
+        te.upstroke = True
+        te.stroke_duration = 1.0
+        # d major triad 
+        te.fret[0] = 2
+        te.fret[1] = 3
+        te.fret[2] = 2
+        te.fret[3] = -1
+        te.fret[4] = -1
+        te.fret[5] = -1
+
+        print(te.duration)
+        dur = intr.tab_event(te, bpm, 1.0) 
+        print(dur)
+        time.sleep(5)
+
+
+    #note_test()     
+    tabevent_test()
         

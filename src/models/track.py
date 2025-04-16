@@ -131,6 +131,19 @@ class Track:
                     e = t.effects
         return e
     
+    def skip_measure(self):
+        "skip the current measure to next one"
+        if (self.current_measure+1) < len(self.measures):
+            self.current_measure += 1
+            m = self.measures[self.current_measure]
+            m.current_tab_event = 0
+
+    def previous_measure(self):
+        if self.current_measure > 0:
+            self.current_measure -= 1
+            m = self.measures[self.current_measure]
+            m.current_tab_event = 0
+
     def next_moment(self) -> Tuple[Optional[TabEvent], Measure]:
         """
         Increments the current tab event in the current measure.

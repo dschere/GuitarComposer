@@ -33,6 +33,7 @@ class TabEvent:
                 if result == self.CHORD:
                     break
         return result
+        
     
     def __init__(self, num_gstrings):
         super().__init__()
@@ -40,12 +41,25 @@ class TabEvent:
         self.duration = QUARTER
         self.string = 5  # current string being edited
         self.fret = [-1] * num_gstrings  # current fret value
-        self.tied_notes = [-1] * num_gstrings
+        self.tied_notes = [-1] * num_gstrings 
+        """ 
+        tied_notes indicate that a note from a prevent tab event will 
+        continue playing for a given string in this event. 
+
+        Example (a hammer on the high E string while still playing two notes):
+
+        Tablature D major hammer on D sus 4.
+        -- 2 -- 3 
+        -- 3 -- <3> << tied note
+        -- 2 -- <2> << tied note
+        -- 0 -- <0> << tied note. 
+        """
 
         # visual representation in ornament widget 
         self.pitch_bend_histogram = [0] * self.BEND_PERIODS
         self.pitch_bend_active = False
 
+        # pitch_changes -> (when_r, semitones)
         self.pitch_changes = []
         self.pitch_range = 2
 

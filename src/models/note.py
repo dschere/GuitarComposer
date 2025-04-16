@@ -2,14 +2,14 @@ class Note:
     DEFAULT_PITCH_RANGE = 2
 
     def __init__(self):
-        self.midi_code = None
-        self.velocity = None
+        self.midi_code : int | None = None
+        self.velocity : int | None = None
         self.rest = False
 
-        self.duration = None
+        self.duration : float | None = None
 
-        self.fret = None
-        self.string = None
+        self.fret : int | None = None
+        self.string : int | None = None
         self.accent = '#'
 
         self.is_playing = False
