@@ -131,6 +131,8 @@ class GuitarFretboard(QWidget):
 
 
     def _render_scale(self, painter: QPainter, fret_positions: list):
+        default_pen = painter.pen()
+
         if len(self.scale) == 0:
             return  # nothing to render
 
@@ -143,9 +145,16 @@ class GuitarFretboard(QWidget):
 
         def_scale_color = QColor(*GuitarFretboardStyle.scale_color_rgb)
         root_color = QColor(*GuitarFretboardStyle.scale_root_color_rgb)
+        
         for (i, midi_code) in enumerate(self.scale):
             steps = self.scale_seq[i % len(self.scale_seq)] # type: ignore
-            if steps == 1:
+            if self.degrees:
+                t = self.degrees[i % len(self.degrees)]
+                if t == '1':
+                    color = root_color
+                else:        
+                    color = def_scale_color 
+            elif steps == 1:
                 color = root_color
             else:
                 color = def_scale_color
@@ -163,6 +172,10 @@ class GuitarFretboard(QWidget):
                         p = 10
 
                     painter.setBrush(QBrush(color, Qt.BrushStyle.SolidPattern))
+                    if color == root_color:
+                        painter.setPen(QPen(QColor(0, 0, 0), 2, Qt.PenStyle.SolidLine))
+                    else:
+                        painter.setPen(default_pen)    
                     painter.drawEllipse(int(x) - p, int(y) - p, r, r)
 
                     if self.degrees:
