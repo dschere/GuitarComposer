@@ -15,7 +15,8 @@ import time
 from music.instrument import Instrument
 from threading import Event as thread_event
 from threading import Lock
-from threading import Timer
+#from threading import Timer
+from util.gctimer import GcTimer
 
 from services.synth.synthservice import synthservice
 from view.events import Signals, PlayerVisualEvent
@@ -36,17 +37,15 @@ class track_player_api(QObject):
         self.track = copy.deepcopy(track) 
         self.midx = start_measure # measure index
         self.expected_tm = None
-        self.timer = None          
+        self.timer_id = -1
+        self.timer = GcTimer()
         self.track.set_moment(start_measure, 0)
         self.is_playing = is_playing
         self.timer_loop_lock = Lock()
-        
+
     def stop(self):
-        self.timer_loop_lock.acquire() 
-        if self.timer: #<<< shared resource 
-            self.timer.cancel() 
-            self.timer = None
-        self.timer_loop_lock.release() 
+        if self.timer_id != -1:
+            self.timer.cancel(self.timer_id)
 
     def _play_current_moment(self) -> Tuple[float,bool]:
         """
@@ -73,58 +72,33 @@ class track_player_api(QObject):
         return (duration,type(r) != type(None))
     
     def skip_measure(self):
-        self.timer_loop_lock.acquire() 
-        if self.timer: #<<< shared resource 
-            self.timer.cancel()
+        if self.timer_id != -1:
+            self.timer.cancel(self.timer_id)
         self.track.skip_measure() 
-        self.timer_loop_lock.release() 
     
     def previous_measure(self):
-        self.timer_loop_lock.acquire() 
-        if self.timer: #<<< shared resource 
-            self.timer.cancel()
+        if self.timer_id != -1:
+            self.timer.cancel(self.timer_id)
         self.track.previous_measure()
-        self.timer_loop_lock.release() 
-   
+        
+    #expected_tm = None
+
     def timer_loop(self):      
-        print("timer_loop called")  
-        self.timer_loop_lock.acquire() 
-        print("aquired lock")
-
-        # remove old timer 
-        if self.timer: 
-            self.timer.cancel()
-            self.timer = None 
-
         # if we are still playing
         if self.is_playing.is_set():
-            drift = 0.0
-            if self.expected_tm: 
-                drift = time.time() - self.expected_tm 
+            # if self.expected_tm:
+            #     drift = self.expected_tm - time.perf_counter()
+            #     print(f"drift = {drift}")        
 
             # play all note(s) in this moment in the measure, return
             # the number of milliseconds till for the next moment.
             duration_secs, more_moments = self._play_current_moment()
-            print("play moment duration_secs=%f more_moments=%s drift=%f" % (
-                duration_secs, str(more_moments), drift
-            ))
-
             if more_moments:
-                # compensate for clock drift of previous onshot timer plus
-                # processing.
-                duration_secs -= drift
-
-                self.expected_tm = time.time() + duration_secs 
-                
-                # recursively call this loop function in the future.
-                self.timer = Timer(duration_secs, self.timer_loop)
-                self.timer.start()
+                #self.expected_tm = time.perf_counter() + duration_secs
+                self.timer = GcTimer().start(duration_secs, self.timer_loop, ())
         
-        self.timer_loop_lock.release() 
-
 
 class Player:
-    
     def __init__(self, tracks : List[Track], start_measure = 0):
         self.is_playing = thread_event()
         self.is_playing.clear()
@@ -162,7 +136,6 @@ class Player:
 
     def resume(self):
         for p in self.track_players:
-
             p.timer_loop()
 
 
@@ -188,13 +161,14 @@ def unittest():
 
     
     def setup_momement(chord, te : TabEvent, x):
-        # if x == 1:
-        #     te.upstroke = True 
-        # elif x == 0:
-        #     te.downstroke = True 
+        if x == 1:
+            te.upstroke = True 
+        elif x == 0:
+            te.downstroke = True 
         for (string,fret) in chord:
             te.fret[string] = fret
-        te.duration = 2.0    
+        te.duration = 1.0 
+        te.dynamic = 50  
 
     i = 0
     te, me = t.current_moment()
@@ -204,7 +178,7 @@ def unittest():
         if not r:
             break
         te, me = t.current_moment()
-        setup_momement([(5,i+1)], te, i % 2)
+        setup_momement([(5,i+1),(4,i+2),(3,i+1)], te, i % 2)
        
     class runner(QThread):
         def __init__(self):
