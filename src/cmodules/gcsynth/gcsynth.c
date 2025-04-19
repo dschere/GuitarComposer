@@ -234,6 +234,7 @@ static PyObject* py_gcsynth_channel_disable_filter(PyObject* self, PyObject* arg
 static PyObject* py_gcsynth_event(PyObject* self, PyObject* args) {
     PyObject* event_params;
     struct scheduled_event* s_event;
+    PyObject* evt_id_list = NULL;
 
     if (!PyArg_ParseTuple(args,"O",&event_params)) {
         return NULL;
@@ -242,7 +243,15 @@ static PyObject* py_gcsynth_event(PyObject* self, PyObject* args) {
     if (PyDict_Check(event_params)) {
         s_event = event_from_pydata(event_params);
         if (s_event) {
+            evt_id_list = PyList_New(1);
+
             gcsynth_schedule(&GcSynth, s_event);
+
+            PyObject *py_evt_id = PyLong_FromLong(s_event->event_id);
+            if (!py_evt_id) {
+                return NULL;
+            }
+            PyList_SET_ITEM(evt_id_list, 0, py_evt_id);
         } else {
             return NULL;
         }
@@ -250,11 +259,20 @@ static PyObject* py_gcsynth_event(PyObject* self, PyObject* args) {
     else if (PyList_Check(event_params)) {
         PyObject* list = event_params;
         Py_ssize_t size = PyList_Size(list);
+
+        evt_id_list = PyList_New(size);
+
         for (Py_ssize_t i = 0; i < size; i++) {
             PyObject *item = PyList_GetItem(list, i);  // Borrowed reference
             s_event = event_from_pydata(item);
             if (s_event) {
                 gcsynth_schedule(&GcSynth, s_event);
+                PyObject *py_evt_id = PyLong_FromLong(s_event->event_id);
+                if (!py_evt_id) {
+                    return NULL;
+                }
+                PyList_SET_ITEM(evt_id_list, i, py_evt_id);
+
             } else {
                 return NULL;
             }
@@ -268,8 +286,7 @@ static PyObject* py_gcsynth_event(PyObject* self, PyObject* args) {
     }
 
 
-//struct scheduled_event* event_from_pydata(PyObject* dict);
-    Py_RETURN_NONE;
+    evt_id_list;
 }
 
 static PyObject* py_load_ladspa_filter(PyObject* self, PyObject* args) {

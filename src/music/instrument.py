@@ -15,6 +15,7 @@ from util.midi import midi_codes
 from view.dialogs.effectsControlDialog.effectsControls import EffectChanges
 from models.measure import TabEvent
 
+from util.gctimer import GcTimer
 
 
 @singleton
@@ -69,6 +70,16 @@ class Instrument:
         self.name = name
         self.tuning = [midi_codes.midi_code(name) for name in tuning]
         self.effect_enabled_state = set()
+
+        self.timer = GcTimer() 
+
+        # if we have to schedule a noteoff then the timer_id
+        # gets saved in the event that we play a note on the same
+        # string, if that is the case we call a noteoff then cancel the inflight
+        # timer which would call a premature noteoff for the new 
+        # note we are playing. 
+        # (chan,guitar string) -> set of running timers 
+        self.timer_inflight = {}
 
         multi_instr_spec = self.custom_instruments.getSpec(name)
 
@@ -234,7 +245,6 @@ class Instrument:
                 
         return ev_dur
 
-    #last_print_tm = None
 
     def note_event(self, n: Note, bpm=120, start_offset=0.0):
         "play note on potentially multiple channels"
@@ -243,55 +253,62 @@ class Instrument:
 
         # If we are already playing a note on this string
         # then perform a noteoff.
-        # Future: 
-        # A non guitar like instrument such as a keyboard does 
-        # not have this issue. 
         midicode_in_use = self.string_playing[n.string] # type: ignore
         if self.one_note_per_string and midicode_in_use:
             for (chan, velocity_mul) in chan_mix:
                 self.synth.noteoff(chan, midicode_in_use)
-                # Bug!
-                # Must be able to stop any pending timers for this channel
-                # that are inflight, they don't know that the noteoff has been called.
-                
+
+                timer_ids = self.timer_inflight.get((chan,n.string),[])
+                for timer_id in timer_ids:
+                    self.timer.cancel(timer_id)
+
 
         for (chan, velocity_mul) in chan_mix:
             midicode = self.tuning[n.string] + n.fret # type: ignore
             velocity = int(n.velocity * velocity_mul)
+
+            # set of timers associated with this channel and guitar string
+            timer_ids = set()
+
             if velocity > 128:
                 velocity = 128    
             if n.rest:
-                self.synth.noteoff(chan, midicode)
-                        
+                self.synth.noteoff(chan, midicode)                        
             else:
-                # tm = time.time()
-                # delta = 0
-                # if self.last_print_tm:
-                #     delta = tm - self.last_print_tm 
-                # self.last_print_tm = tm    
-                # print(f"     >>>> noteon time={delta} start_offset={start_offset}")
                 if start_offset == 0.0:
                     self.synth.noteon(chan, midicode, velocity)
                 else:
-                    millisecs = int((start_offset * bpm/60.0) * 1000)
-                    t_evt = SeqEvt.noteon(millisecs, chan, midicode,velocity)
-                    s.add(t_evt)
+                    when = (start_offset * bpm/60.0)
+                    timer_id = self.timer.start( when, \
+                        self.synth.noteon, (chan, midicode,velocity))
+                    timer_ids.add(timer_id)
 
                 self.string_playing[n.string] = midicode # type: ignore
+
 
             # is there a pitch bend?
             if len(n.pitch_changes) > 0:
                 self.synth.pitch_range(chan, n.pitch_range)
+                
                 for (b_when, semitones) in n.pitch_changes:
-                    millisecs = int((b_when * bpm/60.0) * 1000)
-                    t_evt = SeqEvt.pitch_change(millisecs, chan, semitones)
-                    s.add(t_evt)
+                    #millisecs = int((b_when * bpm/60.0) * 1000)
+                    #t_evt = SeqEvt.pitch_change(millisecs, chan, semitones)
+                    #s.add(t_evt)
+                    when = (b_when * bpm/60.0)
+                    timer_id = self.timer.start(when, \
+                        self.synth.pitch_change, (chan,semitones))
+                    timer_ids.add(timer_id)
 
             if n.duration and n.duration > 0:
                 # schedule a noteoff event in the future
-                millisecs = int(((n.duration-start_offset) * bpm/60.0) * 1000)
-                t_evt = SeqEvt.noteoff(millisecs, chan, midicode)
-                s.add(t_evt)
+                when = ((n.duration-start_offset) * bpm/60.0)
+                timer_id = self.timer.start(when,
+                    self.synth.noteoff, (chan, midicode))
+                timer_ids.add(timer_id)
+
+            # save collection of timers used for audio events
+            if len(timer_ids) > 0:
+                self.timer_inflight[(chan,n.string)] = timer_ids    
 
         # play any scheduled events if they exist.  
         s.play()
