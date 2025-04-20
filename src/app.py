@@ -4,6 +4,7 @@ from view.events import Signals
 from view.mainwin.mainwin import MainWindow
 from controllers.appcontroller import AppController
 from controllers.editorcontroller import EditorController
+from controllers.playercontroller import PlayerController
 from PyQt6.QtWidgets import QApplication
 from services.synth.synthservice import synthservice
 import sys
@@ -53,6 +54,7 @@ class GuitarComposer(QApplication):
         # setup controllers first
         self.app_controller = AppController(SynthService)
         self.editor_controller = EditorController()
+        self.player_controller = PlayerController()
 
         atexit.register(self.on_shutdown)
 

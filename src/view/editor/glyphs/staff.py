@@ -11,6 +11,8 @@ from models.measure import Measure, TimeSig
 from view.editor.glyphs.note_renderer import note_renderer
 from util.midi import midi_codes
 from view.events import Signals, EditorEvent 
+from PyQt6.QtGui import QPen, QColor
+from PyQt6.QtCore import Qt
 
 class StaffMeasureBarlines(Canvas):
     START_OF_STAFF = 0
@@ -72,7 +74,24 @@ class StaffGlyph(Canvas):
             self.accent = SHARP_SIGN
         (ts, bpm, key, cleff) = track.getMeasureParams(m)
         self.cleff = cleff
+        self.play_line = False
 
+    def _draw_play_line(self, painter):
+        # STAFF_SYM_WIDTH, STAFF_HEIGHT
+        saved_pen = painter.pen()
+        painter.setPen(QPen(Qt.GlobalColor.red, 1, Qt.PenStyle.DashLine))
+                    
+        x = int(STAFF_SYM_WIDTH / 2)  # Center of the widget
+        painter.drawLine(x, 0, x, STAFF_HEIGHT)    
+        painter.setPen(saved_pen)  
+
+    def set_play_line(self):
+        self.play_line = True    
+        self.update()
+
+    def clear_play_line(self):
+        self.play_line = False
+        self.update()
         
     """
     def setup(self, m: Measure, te: TabEvent, tuning):
@@ -140,6 +159,9 @@ class StaffGlyph(Canvas):
 
     def canvas_paint_event(self, painter):
         self.draw_staff_background(painter)
+
+        if self.play_line:
+            self._draw_play_line(painter) 
 
         # determine if this is a note, a chord or a rest.
         {

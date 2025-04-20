@@ -18,6 +18,7 @@ class GcTimer(QObject):
     def invoke(self, timer_id):
         if timer_id in self.timers:
             (callback, args, t) = self.timers[timer_id]
+            # invoke callback
             callback( *args )
             del self.timers[timer_id]
 
@@ -31,7 +32,7 @@ class GcTimer(QObject):
 
         atexit.register(self._on_shutdown)
 
-    def start(self, when : float, callback, args):
+    def start(self, when : float, callback, args = ()):
         timer_id = self.id_counter 
         self.id_counter += 1
 

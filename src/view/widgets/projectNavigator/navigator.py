@@ -8,6 +8,10 @@ from view.config import LabelText
 
 from PyQt6.QtCore import QModelIndex, Qt
 
+from controllers.appcontroller import TrackItem
+from controllers.appcontroller import PropertiesItem
+from controllers.appcontroller import SongItem
+
 
 class Navigator(QWidget):
 
@@ -20,17 +24,22 @@ class Navigator(QWidget):
         assert(index.model())
         clicked_item = index.model().itemFromIndex(index) # type: ignore
 
-        if clicked_item.text() == 'properties':
-            item = index.model().itemFromIndex(index) # type: ignore
+        item = index.model().itemFromIndex(index) # type: ignore
+        
+        if isinstance(item, PropertiesItem):
             (track_model, track_qmodel_item) = item.data()
             dialog = TrackTreeDialog(self, track_model, track_qmodel_item)
             dialog.show()
-        elif clicked_item.text().startswith("track"):
+        elif isinstance(item, TrackItem):
             evt = EditorEvent()
             item = index.model().itemFromIndex(index) # type: ignore
             evt.ev_type = EditorEvent.ADD_MODEL  # type: ignore
             evt.model = item.data()
             Signals.editor_event.emit(evt)
+        elif isinstance(item, SongItem):
+            song_model = item.data() 
+            Signals.song_selected.emit(song_model)    
+
 
     def add_track(self, song_controller: SongController):
         song_controller.userAddTrack()

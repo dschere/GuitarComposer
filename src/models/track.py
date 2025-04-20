@@ -114,6 +114,11 @@ class Track:
         m = self.measures[self.current_measure] 
         return (m.tab_events[m.current_tab_event], m)
     
+    def find_tab_measure(self, tab_event: TabEvent) -> Measure | None:
+        for m in self.measures:
+            if tab_event in m.tab_events:
+                return m
+    
     def get_effects(self, te: TabEvent) -> Effects | None:
         """
         track         ----             ---- te
@@ -206,7 +211,7 @@ class Track:
     def createTabEvent(self, inherit=None) -> TabEvent:
         te = TabEvent(len(self.tuning))
         if inherit:
-            te.note_duration = inherit.note_duration
+            te.duration = inherit.duration
             te.dynamic = inherit.dynamic
             te.legato = inherit.legato
             te.staccato = inherit.stacatto
