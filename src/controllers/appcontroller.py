@@ -24,6 +24,14 @@ from view.dialogs.effectsControlDialog.effectsControls import EffectPreview,\
 
 FRETBOARD_CHANNEL = 0
 
+class TrackItem(QStandardItem):
+    pass 
+class PropertiesItem(QStandardItem):
+    pass
+
+class SongItem(QStandardItem):
+    pass
+
 
 class SongController:
 
@@ -67,8 +75,8 @@ class SongController:
 
     def addQTrackModel(self, track, root):
         n = track.instrument_name
-        track_item = QStandardItem(LabelText.track + f": {n}")
-        properties_item = QStandardItem(LabelText.properties)
+        track_item = TrackItem(LabelText.track + f": {n}")
+        properties_item = PropertiesItem(LabelText.properties)
 
         track_item.setData(track)
 
@@ -91,8 +99,8 @@ class SongController:
 
     def createQModel(self):
         "generate a tree structure for this song"
-        root = QStandardItem(self.song.title)
-        root.setData(self)
+        root = SongItem(self.song.title)
+        root.setData(self.song)
 
         for track in self.song.tracks:
             self.addQTrackModel(track, root)
@@ -178,8 +186,13 @@ class AppController:
         root = QStandardItemModel()
         root.itemChanged.connect(self.on_song_title_changed)
         root.setHorizontalHeaderLabels(["Guitar Composer"])
+        default_song_selected = None
+
         for title in sorted(self.song_ctrl):
             sc = self.song_ctrl[title]
+            if not default_song_selected:
+                default_song_selected = sc.song 
+                
             song_item = sc.createQModel()
             root.appendRow(song_item)
 
@@ -190,7 +203,7 @@ class AppController:
 
         # send to navigator widget
         Signals.update_navigator.emit(root)
-        
+        Signals.song_selected.emit(default_song_selected)
 
     def on_ready(self, app):
         # setup navigator, score editor

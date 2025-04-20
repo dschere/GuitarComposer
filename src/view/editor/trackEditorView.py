@@ -3,11 +3,13 @@ from PyQt6.QtWidgets import (QWidget, QGridLayout,
                               QToolBar, QButtonGroup, QPushButton, QScrollArea)
 from PyQt6.QtGui import QKeyEvent
 from PyQt6.QtCore import Qt
+from PyQt6 import QtCore
 
+from models.measure import TabEvent
 from view.editor.trackPresenter import TrackPresenter
 from view.editor.toolbar import EditorToolbar
 from models.track import Track
-from view.events import EditorEvent, Signals
+from view.events import EditorEvent, Signals, PlayerVisualEvent
 
 from singleton_decorator import singleton 
 
@@ -25,6 +27,7 @@ class TrackEditorData:
 
     def get_active_track_model(self) -> Track | None:
         return self.active_track_model
+
 
 
 class TrackEditorView(QWidget):
@@ -120,11 +123,15 @@ class TrackEditorView(QWidget):
     def end_copy(self):
         pass
 
-    def patse(self, moment: int ):
+    def paste(self, moment: int ):
         pass
 
     def cut(self):
         pass
+
+    def play_visual_event(self, evt : PlayerVisualEvent):
+        tab_event = evt.tab_event 
+
 
     def __init__(self):
         super().__init__()
@@ -136,7 +143,8 @@ class TrackEditorView(QWidget):
         evt.ev_type = EditorEvent.ADD_TRACK_EDITOR
         evt.track_editor = self # type: ignore
         Signals.editor_event.emit(evt)
-        
+
+        Signals.player_visual_event.connect(self.play_visual_event)        
 
 
 def unittest():

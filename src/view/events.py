@@ -3,15 +3,18 @@ Central place for custom signals/slots for the application
 """
 from typing import List
 from PyQt6.QtGui import QStandardItemModel
-from PyQt6.QtCore import QObject, pyqtSignal, QSettings
+from PyQt6.QtCore import QObject, QSettings
 from PyQt6.QtCore import Qt
+from PyQt6.QtCore import pyqtSignal
 from singleton_decorator import singleton
 
+from models.measure import TabEvent
 from models.note import Note
 from models.track import Track
 from models.effect import Effects
 from models.song import Song
 from view.dialogs.effectsControlDialog.effectsControls import EffectChanges, EffectPreview
+
 
 
 class ScaleSelectedEvent:
@@ -69,7 +72,7 @@ class EditorEvent:
 
     def __init__(self):
         self.ev_type = self.UNINITIALIZED
-        self.model = None
+        self.model : Track | None = None
         self.track_editor = None
         self.key = -1
         self.tuning = None
@@ -85,16 +88,32 @@ class PlayerEvent:
     SKIP_BACKWARD_MEASURE = 3
     PAUSE = 4
     SETTINGS = 5
+    PLAY_CURRENT_MOMENT = 6
 
-    def __init__(self):
-        self.ev_type = self.UNINITIALIZED
+    def __init__(self, ev_type = -1):
+        self.ev_type = ev_type
         self.tracks : List[Track] = []  
         self.measure_num = -1
 
+@singleton
+class MsgSeqCounter:
+    def __init__(self):
+        self.count = 0
+
+    def get(self):
+        r = self.count 
+        self.count += 1
+        return r
+
 class PlayerVisualEvent:
-    def __init__(self, track, measure):
-        self.track = track 
-        self.measure = measure        
+    TABEVENT_HIGHLIGHT_ON  = 1
+    TABEVENT_HIGHLIGHT_OFF = 2
+
+
+    def __init__(self, ev_type : int, tab_event : TabEvent ):
+        self.ev_type = ev_type
+        self.tab_event : TabEvent = tab_event
+        self.msg_seq = MsgSeqCounter().get()        
 
 global _toolbar_button_update
 
@@ -128,6 +147,7 @@ class _Signals(QObject):
 
     editor_event = pyqtSignal(EditorEvent)
     track_update = pyqtSignal(Track)
+    song_selected = pyqtSignal(Song)
     
     # route EffectChanges to synth channel(s)
     preview_effect = pyqtSignal(EffectPreview)
@@ -136,3 +156,4 @@ class _Signals(QObject):
     player_visual_event = pyqtSignal(PlayerVisualEvent)
 
 Signals = _Signals()
+

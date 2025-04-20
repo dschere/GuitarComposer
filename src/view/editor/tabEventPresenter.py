@@ -61,6 +61,12 @@ class TabEventPresenter(QWidget):
         self.gstring = len(tab_event.fret)-1 
         self.effects_p = effects_presentation
 
+    def set_play_line(self):
+        self.staff_p.set_play_line()
+
+    def clear_play_line(self):
+        self.staff_p.clear_play_line()    
+
     def beat_overflow_error(self):
         self.staff_p.beat_overflow_error()    
 

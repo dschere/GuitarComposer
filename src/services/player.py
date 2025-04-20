@@ -23,7 +23,30 @@ from view.events import Signals, PlayerVisualEvent
 
 
 
+def PlayMoment(track: Track, instrument: Instrument):
+    """ 
+    play a single moment of a track using using the supplied track
+    """
+    timer = GcTimer()
 
+    (tab_event, measure) = track.current_moment()
+    (ts, bpm, _, _) = track.getMeasureParams(measure)
+
+    # emit signal to update visuals
+    on_evt = PlayerVisualEvent(PlayerVisualEvent.TABEVENT_HIGHLIGHT_ON, tab_event) 
+    Signals.player_visual_event.emit(on_evt)
+
+    beat_duration = ts.beat_duration()
+    duration = instrument.tab_event(tab_event, bpm, beat_duration)
+
+    class turn_off_highlight:
+        def __init__(self, tab_event):
+            self.tab_event = tab_event 
+        def __call__(self):
+            off_evt = PlayerVisualEvent(PlayerVisualEvent.TABEVENT_HIGHLIGHT_OFF, tab_event) 
+            Signals.player_visual_event.emit(off_evt)
+
+    timer.start(duration,turn_off_highlight(tab_event))
 
 
 class track_player_api(QObject):
@@ -62,7 +85,7 @@ class track_player_api(QObject):
         (ts, bpm, _, _) = self.track.getMeasureParams(measure)
  
         # emit signal to update visuals
-        evt = PlayerVisualEvent(self.track, measure) 
+        evt = PlayerVisualEvent(PlayerVisualEvent.TABEVENT_HIGHLIGHT_ON, tab_event) 
         Signals.player_visual_event.emit(evt)
 
         beat_duration = ts.beat_duration()
@@ -70,7 +93,7 @@ class track_player_api(QObject):
         r = self.track.next_moment()
 
         return (duration,type(r) != type(None))
-    
+        
     def skip_measure(self):
         if self.timer_id != -1:
             self.timer.cancel(self.timer_id)

@@ -10,6 +10,8 @@ from models.track import Track
 
 import copy
 
+from view.events import PlayerVisualEvent, Signals
+
 class TrackPresenter(QScrollArea):
 
     def setup(self):
@@ -93,7 +95,25 @@ class TrackPresenter(QScrollArea):
             self.mp_map[measure] = mp 
             self.measure_layout.addWidget(mp)
 
+        Signals.player_visual_event.connect(self.play_visual_event)        
+
         self.setup()
+
+    def play_visual_event(self, evt : PlayerVisualEvent):
+        tab_event = evt.tab_event 
+        # get the measure presenter for this tab event
+        m = self.track_model.find_tab_measure(tab_event)
+        if m:
+            # get the tab event presenter associated with the
+            # tab_event
+            mp = self.mp_map[m]
+            tp : TabEventPresenter = mp.tab_map[tab_event]
+        
+            # switch playing highlight on/off
+            if evt.ev_type == evt.TABEVENT_HIGHLIGHT_ON:
+                tp.set_play_line()
+            elif evt.ev_type == evt.TABEVENT_HIGHLIGHT_OFF:
+                tp.clear_play_line()    
 
     def cursor_up(self):
         te : TabEvent = self.current_tab_event
