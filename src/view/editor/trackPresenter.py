@@ -12,7 +12,7 @@ import copy
 
 from view.events import PlayerVisualEvent, Signals
 
-class TrackPresenter(QScrollArea):
+class TrackPresenter(QWidget):
 
     def setup(self):
         "precalculate variables needed for operations"
@@ -24,6 +24,12 @@ class TrackPresenter(QScrollArea):
             self.current_mp.tab_map[self.current_tab_event]
         self.current_tep.cursor_on()
         self.current_tep.update() 
+
+        width = 100
+        for measure in self.track_model.measures:
+            mp = self.mp_map[measure]
+            width += int(mp.width())
+        self.setMinimumWidth(width)
 
     def current_tab_event_updated(self):
         self.setup()
@@ -81,11 +87,16 @@ class TrackPresenter(QScrollArea):
 
     def __init__(self, track_model: Track):
         super().__init__()
-        self.setWidgetResizable(True)
+        #self.setWidgetResizable(True)
         self.measure_layout = QHBoxLayout(self)
         self.measure_layout.setSpacing(0)
         self.measure_layout.setContentsMargins(0, 0, 0, 0)
         self.measure_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
+
+        #self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
+        #self.setWidgetResizable(False)
+        
+        
         
         self.track_model = track_model
         self.mp_map = {}

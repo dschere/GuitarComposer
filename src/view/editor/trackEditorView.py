@@ -30,7 +30,7 @@ class TrackEditorData:
 
 
 
-class TrackEditorView(QWidget):
+class TrackEditorView(QScrollArea):
 
     def _update_track_editor_content(self):
         # check for error
@@ -61,7 +61,13 @@ class TrackEditorView(QWidget):
         self.toolbar = EditorToolbar(track_model, self._update_track_editor_content)
          
         main_layout.addWidget(self.toolbar)
-        main_layout.addWidget(self.track_presenter)
+        
+        scroll_area = QScrollArea()
+        scroll_area.setWidget(self.track_presenter)
+        scroll_area.setWidgetResizable(False)  # Important for custom-size canvas
+        
+        
+        main_layout.addWidget(scroll_area)
 
         self.setLayout(main_layout)
         self.track_model = track_model
@@ -129,8 +135,6 @@ class TrackEditorView(QWidget):
     def cut(self):
         pass
 
-    def play_visual_event(self, evt : PlayerVisualEvent):
-        tab_event = evt.tab_event 
 
 
     def __init__(self):
@@ -144,7 +148,6 @@ class TrackEditorView(QWidget):
         evt.track_editor = self # type: ignore
         Signals.editor_event.emit(evt)
 
-        Signals.player_visual_event.connect(self.play_visual_event)        
 
 
 def unittest():
