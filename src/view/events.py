@@ -70,8 +70,12 @@ class EditorEvent:
     MEASURE_CLICKED = 4
     BEND_EVENT = 5
 
-    def __init__(self):
-        self.ev_type = self.UNINITIALIZED
+    # applied to the measure at the current moment
+    MEASURE_REPEAT_START_KEY = 6
+    MEASURE_REPEAT_END_KEY = 7
+
+    def __init__(self, evt_type = -1):
+        self.ev_type = evt_type
         self.model : Track | None = None
         self.track_editor = None
         self.key = -1

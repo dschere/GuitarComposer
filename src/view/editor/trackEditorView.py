@@ -85,6 +85,37 @@ class TrackEditorView(QScrollArea):
         (te,_) = self.track_model.current_moment()
         self.toolbar.setTabEvent(te)
 
+    def toggle_measure_start_repeat(self):
+        # the start is really the end of the previos measure line
+        m = self.track_model.get_measure(-1)
+        if m:
+            if m.start_repeat:
+                m.start_repeat = False 
+            else:
+                m.start_repeat = True 
+            mp = self.track_presenter.mp_map.get(m)
+            if mp:
+                mp.update_measure_line()
+
+        #self.track_presenter.current_measure_updated()
+ 
+    def toggle_measure_end_repeat(self):
+        #(_,m) = self.track_model.current_moment()
+        m = self.track_model.get_measure()
+        if m:
+            if m.end_repeat:
+                m.end_repeat = False 
+            else:
+                m.end_repeat = True 
+                if m.repeat_count == -1:
+                    # set default
+                    m.repeat_count = 2
+
+            mp = self.track_presenter.mp_map.get(m)
+            if mp:
+                mp.update_measure_line()
+            
+
     def arrow_left_key(self):
         "-> move cursor to next moment, append to track if its the end."
         self.track_presenter.prev_moment()

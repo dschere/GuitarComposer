@@ -74,6 +74,16 @@ class EditorKeyMap:
     QUINTUPLIT_NOTES = ord('Q')
     REST = ord('r')
 
+    START_REPEAT = ord('[')
+    END_REPEAT = ord(']')
+
+    LAGATO = ord('~')
+    STACATTO = ord('`')
+
+    BEND = ord('b')
+    SLIDE = ord('/')
+    VIBRATO = ord('v')
+
     def isEditorInput(self, event: QKeyEvent):
         result = True
         if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
