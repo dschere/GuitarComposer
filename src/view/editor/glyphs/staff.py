@@ -14,6 +14,8 @@ from view.events import Signals, EditorEvent
 from PyQt6.QtGui import QPen, QColor
 from PyQt6.QtCore import Qt
 
+from PyQt6.QtWidgets import QSpinBox
+
 class StaffMeasureBarlines(Canvas):
     START_OF_STAFF = 0
     END_MEASURE = 1
@@ -22,11 +24,10 @@ class StaffMeasureBarlines(Canvas):
     END_BEGIN_NEW_REPEAT = 4
 
 
-    def __init__(self, measure: int, mtype : int, repeat_count : int = 1):
-        super().__init__(STAFF_SYM_WIDTH, STAFF_HEIGHT)
+    def __init__(self, measure: int, mtype : int, width=STAFF_SYM_WIDTH, height=STAFF_HEIGHT):
+        super().__init__(width, height)
         self.measure = measure
         self.mtype = mtype
-        self.repeat_count = repeat_count
 
     def mousePressEvent(self, _):
         if self.measure != -1:
@@ -55,10 +56,6 @@ class StaffMeasureBarlines(Canvas):
                 y=top_line-10, draw_lines=False, size=12 )         
         self.draw_symbol(painter, text, x=x, y=bottom_line, size=size)
 
-        if self.repeat_count != -1:
-            self.draw_symbol(painter, str(self.repeat_count),
-                x=x, y=bottom_line+13, size=12, bold=True, 
-                draw_lines=False)
         
 
 

@@ -10,10 +10,11 @@ many beats in the measure.
 """
 import copy
 
-from PyQt6.QtWidgets import (QWidget, QHBoxLayout, QVBoxLayout)
+from PyQt6.QtWidgets import (QWidget, QHBoxLayout, QVBoxLayout,  QSpinBox)
 from models.measure import Measure, TabEvent
 
 from view.editor import glyphs
+from view.editor.glyphs.common import ORNAMENT_MARKING_HEIGHT, STAFF_HEIGHT, STAFF_SYM_WIDTH
 from view.editor.tabEventPresenter import TabEventPresenter 
 from models.track import Track
 from typing import Dict, List
@@ -39,13 +40,84 @@ class StaffHeader(QWidget):
         layout.addWidget(tab_presentation)
         self.setLayout(layout)
 
+class RepeatMeasureBarlines(QWidget):
+    SPIN_BOX_HEIGHT=24
+
+
+    def update_repeat_count(self):
+        value = int(self.spin_box.value())
+        self.measure.repeat_count = value
+
+    def __init__(self, measure: Measure, b_type : int):
+        super().__init__()
+        #self.setFixedWidth(STAFF_SYM_WIDTH)
+        #self.setFixedHeight(ORNAMENT_MARKING_HEIGHT)
+
+        self.measure = measure
+        layout = QVBoxLayout(self)
+        layout.setSpacing(0)
+        layout.setContentsMargins(0, 0, 0, 0)
+
+        self.spin_box = QSpinBox()
+        self.spin_box.setRange(1,100)
+        self.spin_box.setValue(self.measure.repeat_count)
+        self.spin_box.setToolTip("repeat count")
+        self.spin_box.valueChanged.connect(self.update_repeat_count)
+        self.spin_box.setFixedHeight(self.SPIN_BOX_HEIGHT)
+        self.spin_box.setFixedWidth(STAFF_SYM_WIDTH)
+ 
+        barlines = glyphs.StaffMeasureBarlines(
+            measure.measure_number+1,
+            b_type,
+            STAFF_SYM_WIDTH,
+            STAFF_HEIGHT - self.SPIN_BOX_HEIGHT
+        )
+
+        layout.addWidget(barlines)
+        layout.addWidget(self.spin_box)
+        self.setLayout(layout)
+
+
+
 class MeasureLine(QWidget):
+
+    def _create_measure_bar(self):
+        use_rc_ctlr = False
+        b_type = glyphs.StaffMeasureBarlines.END_MEASURE
+        measure = self.measure
+
+        if measure.start_repeat and measure.end_repeat:
+            b_type = glyphs.StaffMeasureBarlines.END_BEGIN_NEW_REPEAT
+            use_rc_ctlr = True
+        elif measure.end_repeat:
+            b_type = glyphs.StaffMeasureBarlines.END_REPEAT
+            use_rc_ctlr = True
+        elif measure.start_repeat:
+            b_type = glyphs.StaffMeasureBarlines.BEGIN_REPEAT
+        
+        if use_rc_ctlr:
+            measure_glyph = RepeatMeasureBarlines(measure, b_type)
+        else:
+            measure_glyph = \
+                glyphs.StaffMeasureBarlines(
+                    measure.measure_number+1,
+                    b_type
+                )
+        return measure_glyph
+
     def __init__(self, measure: Measure, tm: Track, initial_measure = False):
         super().__init__()
+        self.measure = measure
+
         layout = QVBoxLayout(self)
         layout.setSpacing(0) 
         layout.setContentsMargins(0, 0, 0, 0)
-    
+
+        tab_presentation = glyphs.TabletureMeasure()
+
+        te = TabEvent(len(tm.tuning))
+        ornamental_presentation = glyphs.oramental_markings(te)
+
         if initial_measure:
             # This is first meassure, the line type is start 
             # of staff 
@@ -56,35 +128,26 @@ class MeasureLine(QWidget):
 
             self.measure_glyph = glyphs.StaffMeasureBarlines(
                 1, 
-                b_type,
-                -1
+                b_type
             )
         else:
-            b_type = glyphs.StaffMeasureBarlines.END_MEASURE
-            if measure.start_repeat and measure.end_repeat:
-                b_type = glyphs.StaffMeasureBarlines.END_BEGIN_NEW_REPEAT
-            elif measure.end_repeat:
-                b_type = glyphs.StaffMeasureBarlines.END_REPEAT
-            elif measure.start_repeat:
-                b_type = glyphs.StaffMeasureBarlines.BEGIN_REPEAT
-            
-            self.measure_glyph = \
-                glyphs.StaffMeasureBarlines(
-                    measure.measure_number+1,
-                    b_type,
-                    measure.repeat_count
-                )
-        
-        te = TabEvent(len(tm.tuning))
+            self.measure_glyph = self._create_measure_bar()    
         
         layout.addWidget(self.measure_glyph)
-        ornamental_presentation = glyphs.oramental_markings(te)
         layout.addWidget(ornamental_presentation)
-
-        tab_presentation        = glyphs.TabletureMeasure()
         layout.addWidget(tab_presentation)
-        self.setLayout(layout)
 
+        self.setLayout(layout)
+        self.the_layout = layout 
+
+    def update_bar_ctrl(self):
+        layout = self.the_layout
+        old_measure_glyph = layout.itemAt(0).widget()  # type: ignore
+        new_measure_glyph = self._create_measure_bar()
+        layout.removeWidget(old_measure_glyph)
+        old_measure_glyph.deleteLater() # type: ignore
+        layout.insertWidget(0, new_measure_glyph)               
+ 
 
 class MeasurePresenter(QWidget):
 
@@ -151,14 +214,20 @@ class MeasurePresenter(QWidget):
             self.measure_layout.addWidget(tp)
             self.tab_map[tab_event] = tp
 
-        self.end_measure_glyph = MeasureLine(self.measure, self.track_model, False)
-        self.measure_layout.addWidget(self.end_measure_glyph)
+        self.measure_glyph = MeasureLine(self.measure, self.track_model, False)
+        self.measure_layout.addWidget(self.measure_glyph)
 
         # test for beat errors
         self.beat_error_check()
 
         adjust_size_to_fit(self.measure_layout, self)
         self.update()
+
+    def update_measure_line(self):
+        if self.measure_glyph:
+            self.measure_glyph.update_bar_ctrl()
+            adjust_size_to_fit(self.measure_layout, self)
+            self.update()
 
 
     def __init__(self, measure: Measure, track_model: Track):
@@ -171,7 +240,7 @@ class MeasurePresenter(QWidget):
         self.track_model = track_model
         self.staff_header = None
         self.start_track_measure_glyph = None
-        self.end_measure_glyph = None
+        self.measure_glyph = None
 
         # associate a tab_presenter widget with
         # a TabEvent
@@ -190,8 +259,8 @@ class MeasurePresenter(QWidget):
             self.tab_map[tab_event] = tp
 
 
-        self.end_measure_glyph = MeasureLine(measure, track_model, False)
-        self.measure_layout.addWidget(self.end_measure_glyph)
+        self.measure_glyph = MeasureLine(measure, track_model, False)
+        self.measure_layout.addWidget(self.measure_glyph)
 
         adjust_size_to_fit(self.measure_layout, self)
 

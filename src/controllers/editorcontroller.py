@@ -85,7 +85,7 @@ class EditorController:
             tedit.update()
  
     def measure_clicked(self, evt: EditorEvent):
-        print(evt.measure)
+        pass
 
     def string_bend_event(self, evt: EditorEvent):
         be = evt.bend_event 
@@ -104,13 +104,26 @@ class EditorController:
             tedit.current_tab_event_updated()
 
 
+    def toggle_measure_start_repeat(self, evt: EditorEvent):
+        tedit : TrackEditorView | None = self.track_editor_view
+        if tedit:
+            tedit.toggle_measure_start_repeat()
+            
+    def toggle_measure_end_repeat(self, evt: EditorEvent):
+        tedit : TrackEditorView | None = self.track_editor_view
+        if tedit:
+            tedit.toggle_measure_end_repeat()
+
+
     dispatch = {
         EditorEvent.ADD_MODEL: add_model,
         EditorEvent.ADD_TRACK_EDITOR: add_editor,
         EditorEvent.KEY_EVENT: keyboard_event,
         EditorEvent.TUNING_CHANGE: tuning_change,
         EditorEvent.MEASURE_CLICKED: measure_clicked,
-        EditorEvent.BEND_EVENT: string_bend_event
+        EditorEvent.BEND_EVENT: string_bend_event,
+        EditorEvent.MEASURE_REPEAT_START_KEY: toggle_measure_start_repeat,
+        EditorEvent.MEASURE_REPEAT_END_KEY: toggle_measure_end_repeat
     }
 
     def editor_event(self, evt: EditorEvent):

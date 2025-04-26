@@ -31,6 +31,13 @@ class TrackPresenter(QWidget):
             width += int(mp.width())
         self.setMinimumWidth(width)
 
+    def update_measure_repeat(self, m: Measure):
+        "update the measure line for at the end of measure"
+        tp : MeasurePresenter | None = self.mp_map.get(m)
+        if tp:
+            tp.update_measure_line()
+
+
     def current_tab_event_updated(self):
         self.setup()
         self.current_mp.beat_error_check()
@@ -92,11 +99,6 @@ class TrackPresenter(QWidget):
         self.measure_layout.setSpacing(0)
         self.measure_layout.setContentsMargins(0, 0, 0, 0)
         self.measure_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
-
-        #self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
-        #self.setWidgetResizable(False)
-        
-        
         
         self.track_model = track_model
         self.mp_map = {}
@@ -107,7 +109,6 @@ class TrackPresenter(QWidget):
             self.measure_layout.addWidget(mp)
 
         Signals.player_visual_event.connect(self.play_visual_event)        
-
         self.setup()
 
     def play_visual_event(self, evt : PlayerVisualEvent):

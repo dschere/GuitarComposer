@@ -113,7 +113,12 @@ class Track:
     def current_moment(self) -> Tuple[TabEvent, Measure]:
         m = self.measures[self.current_measure] 
         return (m.tab_events[m.current_tab_event], m)
-    
+
+    def get_measure(self, from_current=0):
+        i = self.current_measure + from_current 
+        if i >= 0 and i < len(self.measures):
+            return self.measures[i]    
+
     def find_tab_measure(self, tab_event: TabEvent) -> Measure | None:
         for m in self.measures:
             if tab_event in m.tab_events:

@@ -2,6 +2,7 @@ from PyQt6.QtCore import Qt
 
 from models.track import TabEvent
 from view.config import EditorKeyMap
+from view.events import Signals, EditorEvent
 
 from music import dynamic
 
@@ -124,5 +125,9 @@ class KeyProcessor:
                 te.double_dotted = True
         elif key in km.dur_lookup:
             te.duration = km.dur_lookup[key]
+        elif key == km.START_REPEAT:
+            Signals.editor_event.emit(EditorEvent(EditorEvent.MEASURE_REPEAT_START_KEY))
+        elif key == km.END_REPEAT:
+            Signals.editor_event.emit(EditorEvent(EditorEvent.MEASURE_REPEAT_END_KEY))
         else:
             self.fret_value(key, te)
