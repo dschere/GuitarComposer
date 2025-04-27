@@ -86,13 +86,18 @@ class MeasureLine(QWidget):
         b_type = glyphs.StaffMeasureBarlines.END_MEASURE
         measure = self.measure
 
-        if measure.start_repeat and measure.end_repeat:
+        start_repeat = False
+        if measure.measure_number < len(self.tm.measures):
+            next_measure = self.tm.measures[measure.measure_number]
+            start_repeat = next_measure.start_repeat
+
+        if start_repeat and measure.end_repeat:
             b_type = glyphs.StaffMeasureBarlines.END_BEGIN_NEW_REPEAT
             use_rc_ctlr = True
         elif measure.end_repeat:
             b_type = glyphs.StaffMeasureBarlines.END_REPEAT
             use_rc_ctlr = True
-        elif measure.start_repeat:
+        elif start_repeat:
             b_type = glyphs.StaffMeasureBarlines.BEGIN_REPEAT
         
         if use_rc_ctlr:
@@ -108,6 +113,7 @@ class MeasureLine(QWidget):
     def __init__(self, measure: Measure, tm: Track, initial_measure = False):
         super().__init__()
         self.measure = measure
+        self.tm = tm
 
         layout = QVBoxLayout(self)
         layout.setSpacing(0) 
@@ -148,6 +154,24 @@ class MeasureLine(QWidget):
         old_measure_glyph.deleteLater() # type: ignore
         layout.insertWidget(0, new_measure_glyph)               
  
+    def update_start_repeat(self):
+        layout = self.the_layout
+        old_measure_glyph = layout.itemAt(0).widget()  # type: ignore
+
+        b_type = glyphs.StaffMeasureBarlines.START_OF_STAFF
+        if self.measure.start_repeat:
+            # the 1st measure is also a start of a repeat
+            b_type = glyphs.StaffMeasureBarlines.BEGIN_REPEAT
+
+        new_measure_glyph = glyphs.StaffMeasureBarlines(
+            1, 
+            b_type
+        )
+
+        layout.removeWidget(old_measure_glyph)
+        old_measure_glyph.deleteLater() # type: ignore
+        layout.insertWidget(0, new_measure_glyph)               
+
 
 class MeasurePresenter(QWidget):
 
@@ -229,6 +253,12 @@ class MeasurePresenter(QWidget):
             adjust_size_to_fit(self.measure_layout, self)
             self.update()
 
+    def update_start_measure_line(self):
+        if self.start_track_measure_glyph:
+            self.start_track_measure_glyph.update_start_repeat()
+            adjust_size_to_fit(self.measure_layout, self)
+            self.update()
+
 
     def __init__(self, measure: Measure, track_model: Track):
         super().__init__()
@@ -252,6 +282,7 @@ class MeasurePresenter(QWidget):
             start_track_measure_glyph = MeasureLine(
                 measure, track_model, True)
             self.measure_layout.addWidget(start_track_measure_glyph)
+            self.start_track_measure_glyph = start_track_measure_glyph
                          
         for tab_event in self.measure.tab_events:
             tp = TabEventPresenter(tab_event, measure, track_model)
