@@ -87,15 +87,21 @@ class TrackEditorView(QScrollArea):
 
     def toggle_measure_start_repeat(self):
         # the start is really the end of the previos measure line
-        m = self.track_model.get_measure(-1)
+        m = self.track_model.get_measure()
         if m:
             if m.start_repeat:
                 m.start_repeat = False 
             else:
                 m.start_repeat = True 
-            mp = self.track_presenter.mp_map.get(m)
-            if mp:
-                mp.update_measure_line()
+            if m.measure_number == 1:
+                mp = self.track_presenter.mp_map.get(m)
+                if mp:
+                    mp.update_start_measure_line()            
+            else:
+                p_m = self.track_model.get_measure(-1)    
+                mp = self.track_presenter.mp_map.get(p_m)
+                if mp:
+                    mp.update_measure_line()
 
         #self.track_presenter.current_measure_updated()
  
