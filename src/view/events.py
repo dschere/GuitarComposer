@@ -8,7 +8,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtCore import pyqtSignal
 from singleton_decorator import singleton
 
-from models.measure import TabEvent
+from models.measure import Measure, TabEvent
 from models.note import Note
 from models.track import Track
 from models.effect import Effects
@@ -118,6 +118,7 @@ class PlayerVisualEvent:
         self.ev_type = ev_type
         self.tab_event : TabEvent = tab_event
         self.msg_seq = MsgSeqCounter().get()        
+        self.measure : Measure | None = None
 
 global _toolbar_button_update
 

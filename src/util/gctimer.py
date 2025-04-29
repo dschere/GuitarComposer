@@ -18,9 +18,10 @@ class GcTimer(QObject):
     def invoke(self, timer_id):
         if timer_id in self.timers:
             (callback, args, t) = self.timers[timer_id]
+            if timer_id in self.timers:
+                del self.timers[timer_id]
             # invoke callback
             callback( *args )
-            del self.timers[timer_id]
 
     def _on_shutdown(self):
         for (callback, args, t) in self.timers.values():
