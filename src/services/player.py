@@ -6,7 +6,7 @@ Processes track(s) and allows user to rewind pause skip etc.
 """
 
 from typing import List, Tuple
-from models.measure import TabEvent
+from models.measure import Measure, TabEvent
 from models.song import Song
 from models.track import Track
 from PyQt6.QtCore import QObject, QTimer, QThread, pyqtSignal
@@ -49,6 +49,62 @@ def PlayMoment(track: Track, instrument: Instrument):
     timer.start(duration,turn_off_highlight(tab_event))
 
 
+
+def compile_track(track: Track, m_idx=0):
+    """ 
+    Walk through track and generate a list of tab events, unravel all repeat loops
+    so that we have a single vector that the player can walk through.
+
+    Return a List of (tab_event,measure)
+    """
+    class repeat_item:
+        def __init__(self, **kw):
+            self.start_measure = kw.get('start',-1)
+            self.end_measure = kw.get('end',-1)
+            self.repeat_counter = kw.get('count',-1)
+            self.tab_events = []
+
+    result = []
+    repeat_stack = []
+    
+    while m_idx < len(track.measures):
+        m = track.measures[m_idx]
+
+        if m.start_repeat:
+            r = repeat_item(start=m.measure_number)
+            repeat_stack = [r] + repeat_stack
+
+        for te in m.tab_events:
+            if len(repeat_stack) == 0:
+                result.append((te, m))
+            else:
+                r : repeat_item = repeat_stack[0]
+                r.tab_events.append((te,m))        
+
+        if m.end_repeat:
+            r : repeat_item = repeat_stack[0]
+            if r.end_measure == -1:
+                r.end_measure = m.measure_number
+                r.repeat_counter = m.repeat_count
+            
+            tab_events = r.tab_events * (r.repeat_counter + 1) 
+            del repeat_stack[0]
+            if len(repeat_stack) > 0:
+                repeat_stack[0].tab_events += tab_events
+            else:
+                result += tab_events
+            
+        m_idx += 1
+
+    # print("compiled result: ")
+    # for (te,m) in result:
+    #     print((te.fret, m.measure_number))
+    # print("-----------------------------------------")
+
+    return result    
+
+
+
 class track_player_api(QObject):
     """ 
     internal api for player thead
@@ -57,7 +113,7 @@ class track_player_api(QObject):
         super().__init__() 
 
         self.intrument = Instrument(track.instrument_name)
-        self.track = copy.deepcopy(track) 
+        self.track = track 
         self.midx = start_measure # measure index
         self.expected_tm = None
         self.timer_id = -1
@@ -104,6 +160,45 @@ class track_player_api(QObject):
             self.timer.cancel(self.timer_id)
         self.track.previous_measure()
         
+
+    def _play_loop(self, i, linear_tabs):
+        if i < len(linear_tabs) and self.is_playing.is_set():
+            (tab_event, measure) = linear_tabs[i]
+            (ts, bpm, _, _) = self.track.getMeasureParams(measure)
+    
+            # emit signal to update visuals
+            evt = PlayerVisualEvent(PlayerVisualEvent.TABEVENT_HIGHLIGHT_ON, tab_event) 
+            evt.measure = measure
+            Signals.player_visual_event.emit(evt)
+
+            beat_duration = ts.beat_duration()
+            duration = self.intrument.tab_event(tab_event, bpm, beat_duration)
+
+            # call next moment 
+            self.timer_id = self.timer.start(duration, 
+                self._play_loop, (i+1,linear_tabs))
+
+            class off_highlight:
+                def __init__(self, evt):
+                    self.off_evt = copy.copy(evt)
+                    self.off_evt.ev_type = PlayerVisualEvent.TABEVENT_HIGHLIGHT_OFF 
+                def __call__(self, *args):
+                    Signals.player_visual_event.emit(self.off_evt)
+
+            # remove highlight line
+            self.timer.start(duration, off_highlight(evt), ())
+
+        elif self.timer_id != -1:
+            self.timer.cancel(self.timer_id)
+            self.timer_id = -1
+            
+         
+    def play(self):
+        linear_tabs = compile_track(self.track)
+        if len(linear_tabs) > 0:
+            self.is_playing.set()
+            self._play_loop(0, linear_tabs)     
+
     #expected_tm = None
 
     def timer_loop(self):      
@@ -160,6 +255,10 @@ class Player:
     def resume(self):
         for p in self.track_players:
             p.timer_loop()
+
+    def play(self):
+        for p in self.track_players:
+            p.play()
 
 
 def unittest():
@@ -221,7 +320,31 @@ def unittest():
     sys.exit(app.exec())
 
 
+def test_compile_track():
+    t = Track()
+    t.append_measure()
+    t.append_measure()
+
+    t.measures[0].start_repeat = True
+    t.measures[0].end_repeat = False
+    t.measures[0].repeat_count = -1
+    t.measures[0].measure_number = 1
+
+
+    t.measures[1].start_repeat = True
+    t.measures[1].end_repeat = True
+    t.measures[1].repeat_count = 1 
+    t.measures[1].measure_number = 2
+
+    t.measures[2].start_repeat = False
+    t.measures[2].end_repeat = True
+    t.measures[2].repeat_count = 1 
+    t.measures[2].measure_number = 3
+
+    compile_track(t)
+
 
 if __name__ == '__main__':
-    unittest()
+    test_compile_track()
+    #unittest()
 

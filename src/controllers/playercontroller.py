@@ -29,13 +29,15 @@ class PlayerController:
     def _handler_player_event(self, evt: PlayerEvent):
         if evt.ev_type == PlayerEvent.PLAY_CURRENT_MOMENT:
             self.play_current_moment()
-
+        elif evt.ev_type == PlayerEvent.PLAY:
+            self.play() 
+            
     def __init__(self):
         self.current_song = None  
         self.current_track : Track | None = None
         self.current_instr : Instrument | None = None
         self.track_editor : TrackEditorView | None = None
-
+        
         Signals.editor_event.connect(self._handle_editor_event)
         Signals.song_selected.connect(self._handle_song_selected)
         Signals.player_event.connect(self._handler_player_event)
@@ -50,7 +52,12 @@ class PlayerController:
         pass 
 
     def play(self):
-        pass 
+        """
+        Mockup for now
+        """
+        if self.current_song:
+            p = Player(self.current_song.tracks)
+            p.play()
 
     def stop(self):
         pass

@@ -118,14 +118,19 @@ class TrackPresenter(QWidget):
         if m:
             # get the tab event presenter associated with the
             # tab_event
-            mp = self.mp_map[m]
-            tp : TabEventPresenter = mp.tab_map[tab_event]
+            mp = self.mp_map.get(m)
+            if not mp:
+                return
+            tp : TabEventPresenter | None = mp.tab_map.get(tab_event)
         
             # switch playing highlight on/off
-            if evt.ev_type == evt.TABEVENT_HIGHLIGHT_ON:
+            if not tp:
+                pass
+            elif evt.ev_type == evt.TABEVENT_HIGHLIGHT_ON:
                 tp.set_play_line()
             elif evt.ev_type == evt.TABEVENT_HIGHLIGHT_OFF:
-                tp.clear_play_line()    
+                tp.clear_play_line()
+            
 
     def cursor_up(self):
         te : TabEvent = self.current_tab_event
