@@ -4,7 +4,9 @@
             "name": "Linux",
             "includePath": [
                 "${workspaceFolder}/**",
-                "/usr/include/python3.11/"
+                "/usr/include/python3.11/",
+                "/usr/include/glib-2.0",
+                "${workspaceFolder}/src/cmodules/gcsynth/"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/clang",

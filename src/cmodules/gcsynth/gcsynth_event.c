@@ -160,6 +160,7 @@ static int dispatcher_send(struct scheduled_event* s_event)
     return err;
 }
 
+
 //TODO
 /**
  * Need a function that can skip forwards or backwards, that is

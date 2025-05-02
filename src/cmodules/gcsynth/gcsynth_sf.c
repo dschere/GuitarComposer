@@ -29,12 +29,11 @@ Also based on tsf's design one sound font is allowed on one audio client.
 #include "gcsynth_sf.h"
 
 #define SAMPLE_RATE   44100
-#define AUDIO_SAMPLES 10000
+#define AUDIO_SAMPLES 512
 #define BUFSIZE       0xFFFF
 #define MAX_CHANNEL_NUM 128
 
 #define NUM_ATHREADS 15 // 1->14 reserved for appling ladspa effects.
-
 
 
 struct audio_thread {
@@ -44,7 +43,7 @@ struct audio_thread {
     tsf* g_TinySoundFont;
 
     // A Mutex so we don't call note_on/note_off while rendering audio samples
-    SDL_mutex* g_Mutex;
+    GAsyncQueue *queue;
 
     pthread_attr_t attr;
     pthread_t thread; 
@@ -53,6 +52,29 @@ struct audio_thread {
     int athread;
     int sfont_id;
 };
+
+enum {
+    SF_NOTEON,
+    SF_NOTEOFF,
+    SF_SELECT,
+    SF_PITCH_WHEEL,
+    SF_PITCH_RANGE,
+    SF_RESET,
+    
+    SF_NUM_MSG_TYPES
+};
+
+struct audio_thread_msg {
+    int ev_type;
+    int chan;
+    int midicode;
+    float vel;
+    int bank;
+    int preset;
+    int pitchWheel;
+    float pitch_range;
+};
+
 
 // route all ladspa audio to this callback for any of the 1-14 audio threads.
 static AudioChannelFilter AudioFilterFunc;
@@ -69,6 +91,17 @@ static struct audio_thread* ChannelAllocTable[MAX_CHANNELS];
 /*
    refactored tsf_render_float so it routes audio data to ladspa filters
    if enabled for this channel.
+
+Original:
+
+TSFDEF void tsf_render_float(tsf* f, float* buffer, int samples, int flag_mixing)
+{
+	struct tsf_voice *v = f->voices, *vEnd = v + f->voiceNum;
+	if (!flag_mixing) TSF_MEMSET(buffer, 0, (f->outputmode == TSF_MONO ? 1 : 2) * sizeof(float) * samples);
+	for (; v != vEnd; v++)
+		if (v->playingPreset != -1)
+			tsf_voice_render(f, v, buffer, samples);
+}
 */
 TSFDEF void my_tsf_render_float(tsf* f, float* buffer, int samples, int flag_mixing)
 {
@@ -120,15 +153,67 @@ static struct audio_thread* checkout(int chan, int sfont_id) {
     return at;
 }
 
+/**
+ * Nonblocking call to the message queue, process any queued 
+ * requests.  
+ */
+static void proc_at_msgs(struct audio_thread* at) {
+    struct audio_thread_msg* msg;
 
+    while ((msg = g_async_queue_timeout_pop(at->queue,0)) != NULL) {
+        switch(msg->ev_type) {
+            case SF_NOTEON:
+                tsf_channel_note_on(
+                    at->g_TinySoundFont,
+                    msg->chan,
+                    msg->midicode,
+                    msg->vel 
+                );
+                break;
+
+            case SF_NOTEOFF:
+                tsf_channel_note_off(
+                    at->g_TinySoundFont,
+                    msg->chan,
+                    msg->midicode
+                );
+                break;
+
+            case SF_SELECT:
+                tsf_channel_set_bank_preset(at->g_TinySoundFont, 
+                msg->chan, msg->bank, msg->preset);    
+                break;
+
+            case SF_PITCH_WHEEL:
+                tsf_channel_set_pitchwheel(at->g_TinySoundFont, msg->chan, 
+                msg->pitchWheel);
+                break;
+
+            case SF_PITCH_RANGE:
+                tsf_channel_set_pitchrange(at->g_TinySoundFont, msg->chan, 
+                    msg->pitch_range);
+                break;
+
+            case SF_RESET:
+                tsf_reset(at->g_TinySoundFont);
+                break;
+
+        }
+        free(msg);
+    }
+}
+
+// this gets called SAMPLE_RATE / AUDIO_SAMPLES every second.
 static void audio_callback(void *userdata, Uint8 *stream, int len) {
     struct audio_thread* at = (struct audio_thread*) userdata;
-
 	int samples = (len / (2 * sizeof(float))); //2 output channels
 
-	SDL_LockMutex(at->g_Mutex); //get exclusive lock
+    // process any pending messages 
+    proc_at_msgs(at);
+ 
+    // render to audio buffer while allowing for ladspa effects to 
+    // be applied to each playing voice.
 	my_tsf_render_float(at->g_TinySoundFont, (float*)stream, samples, 0);
-	SDL_UnlockMutex(at->g_Mutex);
 }
 
 static void *audio_thread(void *arg) {
@@ -147,7 +232,11 @@ static void *audio_thread(void *arg) {
 */
 
 
-int gcsynth_sf_init(char* sf_file[], int num_fonts, AudioChannelFilter filter_func) {
+/**
+ * Create an audio thread for each sound font since the soundfont library
+ * does not support multiple sound fonts.
+ */
+int gcsynth_sf_init(char* sf_file[], int num_font_files, AudioChannelFilter filter_func) {
     int a_thread;
     
     if (SDL_Init(SDL_INIT_AUDIO) < 0) {
@@ -155,31 +244,18 @@ int gcsynth_sf_init(char* sf_file[], int num_fonts, AudioChannelFilter filter_fu
         return -1;
     }
 
-    if (num_fonts >= (NUM_ATHREADS-1)) {
+    if (num_font_files >= (NUM_ATHREADS-1)) {
         fprintf(stderr, "Too many sound fonts!\n");
         return -1;
     }
 
-    // printf("Current audio driver: %s\n", SDL_GetCurrentAudioDriver());
-    // int num_devices = SDL_GetNumAudioDevices(0);
-    // if (num_devices < 0) {
-    //     printf("SDL_GetNumAudioDevices failed: %s\n", SDL_GetError());
-    // } else {
-    //     for (int i = 0; i < num_devices; i++) {
-    //         printf("Audio Device %d: %s\n", i, SDL_GetAudioDeviceName(i, 0));
-    //     }
-    // }
-
-    NumAudioThreads = num_fonts;
+    NumAudioThreads = num_font_files;
     AudioFilterFunc = filter_func;
 
     // setup 
-    for(a_thread =0; a_thread < num_fonts; a_thread++) {
+    for(a_thread =0; a_thread < num_font_files; a_thread++) {
         int f_index = a_thread; 
         SDL_zero(AudioThreads[a_thread].spec);
-
-        // mutex lock for audio thread
-        AudioThreads[a_thread].g_Mutex = SDL_CreateMutex();
 
         AudioThreads[a_thread].spec.freq = SAMPLE_RATE;
         AudioThreads[a_thread].spec.format = AUDIO_F32;
@@ -187,6 +263,7 @@ int gcsynth_sf_init(char* sf_file[], int num_fonts, AudioChannelFilter filter_fu
         AudioThreads[a_thread].spec.samples = AUDIO_SAMPLES;
         AudioThreads[a_thread].spec.callback = audio_callback;
         AudioThreads[a_thread].spec.userdata = &AudioThreads[a_thread];
+        AudioThreads[a_thread].queue = g_async_queue_new();
 
         AudioThreads[a_thread].ladspa_channel = -1;
         AudioThreads[a_thread].athread = a_thread;
@@ -247,44 +324,40 @@ int gcsynth_sf_select(int chan, int sfont_id, int bank, int preset)
     
     struct audio_thread* at = checkout(chan, sfont_id);
     if (at) {
-	    SDL_LockMutex(at->g_Mutex); //get exclusive lock
-        // setup the sound font to play for this channel.
-        ret = tsf_channel_set_bank_preset(at->g_TinySoundFont, 
-            chan, bank, preset);
+        struct audio_thread_msg* msg = (struct audio_thread_msg*)
+            calloc(sizeof(struct audio_thread_msg),1);
+        if (msg != NULL) {
+            msg->ev_type = SF_SELECT;
+            msg->chan = chan;
+            msg->bank = bank;
+            msg->preset = preset;
 
-        // translate return value so it fits unix tradition  
-        ret = (ret == 1) ? 0: -1;
-	    SDL_UnlockMutex(at->g_Mutex); //get exclusive lock
-
-        // printf("athread %d, tsf_channel_set_bank_preset(%d,%d,%d)\n", 
-        //     at->athread, chan, bank, preset
-        // );    
+            g_async_queue_push(at->queue, msg);
+            ret = 0;
+        }
     }
 
     return ret;
 }
 
-
+// noteon event
 int gcsynth_sf_noteon(int chan, int midicode, int vel)
 {
     int ret = -1;
     struct audio_thread* at = get_audio_thread(chan);
 
     if (at) {
-	    SDL_LockMutex(at->g_Mutex); //get exclusive lock
-//printf("noteon: athread=%d chan=%d\n", at->athread, chan);
+        struct audio_thread_msg* msg = (struct audio_thread_msg*)
+            calloc(sizeof(struct audio_thread_msg),1);
+        if (msg != NULL) {
+            msg->ev_type = SF_NOTEON;
+            msg->chan = chan;
+            msg->midicode = midicode;
+            msg->vel = vel / 128.0;    
 
-        ret = tsf_channel_note_on(
-            at->g_TinySoundFont,
-            chan,
-            midicode,
-            vel / 128.0 
-        );
-
-        // translate return value so it fits unix tradition  
-        ret = (ret == 1) ? 0: -1;
-
-	    SDL_UnlockMutex(at->g_Mutex); //get exclusive lock
+            g_async_queue_push(at->queue, msg);
+            ret = 0;
+        }
     } else {
         fprintf(stderr,"gcsynth_sf_noteon: audio thread has not been started!\n");
     }
@@ -292,20 +365,31 @@ int gcsynth_sf_noteon(int chan, int midicode, int vel)
     return ret;
 }
 
+// noteoff
 int gcsynth_sf_noteoff(int chan, int midicode)
 {
     int ret = -1;
     struct audio_thread* at = get_audio_thread(chan);
 
     if (at) {
-	    SDL_LockMutex(at->g_Mutex); //get exclusive lock
-        tsf_channel_note_off(at->g_TinySoundFont, chan, midicode);
-	    SDL_UnlockMutex(at->g_Mutex); //get exclusive lock
-        ret = 0;
+        struct audio_thread_msg* msg = (struct audio_thread_msg*)
+            calloc(sizeof(struct audio_thread_msg),1);
+        if (msg != NULL) {
+            msg->ev_type = SF_NOTEOFF;
+            msg->chan = chan;
+            msg->midicode = midicode;
+
+            g_async_queue_push(at->queue, msg);
+            ret = 0;
+        }
+
     }
     return ret;
 }
 
+// change the pitch of a playing note
+// this is how to mechanize a bend/slide guitar 
+// effect.
 int gcsynth_sf_pitchwheel(int chan, float semitones) 
 {
     int ret = -1;
@@ -313,57 +397,63 @@ int gcsynth_sf_pitchwheel(int chan, float semitones)
     int pitchWheel;
 
     if (at) {
-	    SDL_LockMutex(at->g_Mutex); //get exclusive lock
-// (c->pitchWheel == 8192 ? c->tuning : ((c->pitchWheel / 16383.0f * c->pitchRange * 2.0f) - c->pitchRange + c->tuning));
-
         float pr = tsf_channel_get_pitchrange(at->g_TinySoundFont, chan);
         float r = semitones / pr;
 
         pitchWheel = 8192 + (r * 8192);
-        ret = tsf_channel_set_pitchwheel(at->g_TinySoundFont, chan, 
-            pitchWheel);
-	    SDL_UnlockMutex(at->g_Mutex); //get exclusive lock
-        // translate return value so it fits unix tradition  
-        ret = (ret == 1) ? 0: -1;
 
-        // printf("athread %d, gcsynth_sf_pitchrange(%d,%f)\n", 
-        //     at->athread, chan, pitch_range
-        // );
+        struct audio_thread_msg* msg = (struct audio_thread_msg*)
+            calloc(sizeof(struct audio_thread_msg),1);
+        if (msg != NULL) {
+            msg->ev_type = SF_PITCH_WHEEL;
+            msg->chan = chan;
+            msg->pitchWheel = pitchWheel; 
+
+            g_async_queue_push(at->queue, msg);
+            ret = 0;
+        }
     }
     return ret;
 }
 
-
-// tsf_channel_set_pitchrange(tsf* f, int channel, float pitch_range)
+// set the sensitivity of the pitchwheel at the expense
+// of the range. So we would want a large range for a whammy
+// bar and small range for bend for precision.
 int gcsynth_sf_pitchrange(int chan, float pitch_range) 
 {
     int ret = -1;
     struct audio_thread* at = get_audio_thread(chan);
 
     if (at) {
-	    SDL_LockMutex(at->g_Mutex); //get exclusive lock
-        ret = tsf_channel_set_pitchrange(at->g_TinySoundFont, chan, 
-            pitch_range);
-	    SDL_UnlockMutex(at->g_Mutex); //get exclusive lock
-        // translate return value so it fits unix tradition  
-        ret = (ret == 1) ? 0: -1;
+        struct audio_thread_msg* msg = (struct audio_thread_msg*)
+            calloc(sizeof(struct audio_thread_msg),1);
+        if (msg != NULL) {
+            msg->ev_type = SF_PITCH_RANGE;
+            msg->chan = chan;
+            msg->pitch_range = pitch_range; 
 
-        // printf("athread %d, gcsynth_sf_pitchrange(%d,%f)\n", 
-        //     at->athread, chan, pitch_range
-        // );
+            g_async_queue_push(at->queue, msg);
+            ret = 0;
+        }
     }
     return ret;
 }        
 
+// reset all channels.
 void gcsynth_sf_reset()
 {
     int a_thread;
         
     for(a_thread =0; a_thread < NUM_ATHREADS; a_thread++) {
         struct audio_thread* at = &AudioThreads[a_thread];
-	    SDL_LockMutex(at->g_Mutex); //get exclusive lock
-        tsf_reset(at->g_TinySoundFont);
-	    SDL_UnlockMutex(at->g_Mutex); //get exclusive lock
+
+        struct audio_thread_msg* msg = (struct audio_thread_msg*)
+            calloc(sizeof(struct audio_thread_msg),1);
+        if (msg != NULL) {
+            msg->ev_type = SF_RESET;
+            g_async_queue_push(at->queue, msg);
+        }
+
         at->ladspa_channel = -1;
     }
     memset(ChannelAllocTable, 0, sizeof(ChannelAllocTable));
