@@ -24,6 +24,7 @@ class TabEventPresenter(QWidget):
         super().__init__()
 
         self.tab_event = tab_event
+        self.gstring = tab_event.string
         # allow for navigation within the measure <-- -->
         self.prev : TabEventPresenter | None = None
         self.next : TabEventPresenter | None = None
@@ -58,7 +59,6 @@ class TabEventPresenter(QWidget):
         self.staff_p = staff_presentation
         self.ornamental_p = ornamental_presentation
         self.tab_p = tab_presentation
-        self.gstring = len(tab_event.fret)-1 
         self.effects_p = effects_presentation
 
     def set_play_line(self):
@@ -77,7 +77,7 @@ class TabEventPresenter(QWidget):
         self.staff_p.clear_beat_error()
 
     def cursor_on(self):
-        self.tab_p.set_cursor(self.gstring)
+        self.tab_p.set_cursor(self.tab_event.string)
 
     def cursor_off(self):
         self.tab_p.clear_cursor()
@@ -87,12 +87,14 @@ class TabEventPresenter(QWidget):
         self.gstring = \
             (self.gstring - 1) % len(self.tab_event.fret)
         self.tab_p.set_cursor(self.gstring)
+        self.tab_event.string = self.gstring
 
     def cursor_down(self):
         # Down arrow pressed and move the cursor up or loop around
         self.gstring = \
             (self.gstring + 1) % len(self.tab_event.fret)
         self.tab_p.set_cursor(self.gstring)
+        self.tab_event.string = self.gstring
 
     def set_fret(self, fret_value):
         # Number pressed, update the fret value

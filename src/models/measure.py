@@ -39,7 +39,7 @@ class TabEvent:
         super().__init__()
 
         self.duration = QUARTER
-        self.string = 5  # current string being edited
+        self.string = num_gstrings - 1  # current string being edited
         self.fret = [-1] * num_gstrings  # current fret value
         self.tied_notes = [-1] * num_gstrings 
         """ 
