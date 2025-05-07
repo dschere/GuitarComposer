@@ -12,6 +12,7 @@ import atexit
 import logging
 import os
 import qdarktheme
+import signal
 
 
 # setup logging for application
@@ -82,7 +83,7 @@ def main():
     Signals.ready.emit(app)
 
     sys.exit(app.exec())  # <- main event loop
-
+    
     # stop service
     SynthService.shutdown()
 

@@ -147,12 +147,17 @@ void synth_filter_router(int chan, float* left, float* right, int samples)
             // apply filter to audio buffers
             if (f->enabled) {
                 //printf("%s enabled\n", f->desc->Label);
-                gcsynth_filter_run_sterio(f, left, right, samples);
+                gcsynth_filter_run_sterio_or_mono(f, left, right, samples);
             }
         }
         unlock_channel(chan);
     }
 }
+
+float *synth_get_in_buf(int chan) {
+    return ChannelFilters[chan].in_audio_buffer;
+}
+
 
 void synth_interleaved_filter_router(int chan, float* interleaved_audio, int samples)
 {
@@ -160,20 +165,21 @@ void synth_interleaved_filter_router(int chan, float* interleaved_audio, int sam
     float right[0xFFFF];
     int i;
 
-    for(i = 0; i < samples; i += 2) {
-        left[i/2] = interleaved_audio[i];
-        right[i/2] = interleaved_audio[i+1];
+    for(i = 0; i < samples/2; i++) {
+        left[i] = interleaved_audio[2 *i];
+        right[i] = interleaved_audio[2 * i+1];
     }
 
     // route to ladspa effects filter(s)
-    synth_filter_router(chan, left, right, samples);
+    synth_filter_router(chan, left, right, samples/2);
     // ^^^^^^^ gcsynth_filter routines
 
-    // mux 
-    for(i = 0; i < samples; i += 2) {
-        interleaved_audio[i]   = left[i/2];
-        interleaved_audio[i+1] = right[i/2];
+     // Reinterleave: output_buffer -> audio_buffer
+     for (i = 0; i < samples/2; i++) {
+        interleaved_audio[2 * i] = left[i]; // Left
+        interleaved_audio[2 * i + 1] = right[i]; // Right
     }
+    
 }
 
 

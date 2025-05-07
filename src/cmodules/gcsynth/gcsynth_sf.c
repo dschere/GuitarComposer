@@ -11,6 +11,7 @@ Also based on tsf's design one sound font is allowed on one audio client.
 
 */
 
+#include <time.h>
 #define TSF_IMPLEMENTATION
 #include "tsf.h"
 
@@ -33,7 +34,8 @@ Also based on tsf's design one sound font is allowed on one audio client.
 #define BUFSIZE       0xFFFF
 #define MAX_CHANNEL_NUM 128
 
-#define NUM_ATHREADS 15 // 1->14 reserved for appling ladspa effects.
+
+#define MAX_ATHREADS 15 
 
 
 struct audio_thread {
@@ -79,14 +81,11 @@ struct audio_thread_msg {
 // route all ladspa audio to this callback for any of the 1-14 audio threads.
 static AudioChannelFilter AudioFilterFunc;
 
-static struct audio_thread AudioThreads[NUM_ATHREADS];
+static struct audio_thread AudioThreads[MAX_ATHREADS];
 static int NumAudioThreads;
 
 
 static struct audio_thread* ChannelAllocTable[MAX_CHANNELS];
-
-
-
 
 /*
    refactored tsf_render_float so it routes audio data to ladspa filters
@@ -103,16 +102,31 @@ TSFDEF void tsf_render_float(tsf* f, float* buffer, int samples, int flag_mixing
 			tsf_voice_render(f, v, buffer, samples);
 }
 */
-TSFDEF void my_tsf_render_float(tsf* f, float* buffer, int samples, int flag_mixing)
+TSFDEF void my_tsf_render_float(tsf* f, float* buffer, int samples)
 {
 	struct tsf_voice *v = f->voices, *vEnd = v + f->voiceNum;
-	if (!flag_mixing) TSF_MEMSET(buffer, 0, (f->outputmode == TSF_MONO ? 1 : 2) * sizeof(float) * samples);
+    int n = (f->outputmode == TSF_MONO ? 1 : 2) * sizeof(float) * samples;
+	TSF_MEMSET(buffer, 0, n);
+    int i;
+
 	for (; v != vEnd; v++) {
 		if (v->playingPreset != -1) {
-			tsf_voice_render(f, v, buffer, samples);
-            if (gcsynth_channel_filter_is_enabled(v->playingChannel)) {
-                synth_interleaved_filter_router(v->playingChannel, buffer, samples);
-            }
+
+            if (!gcsynth_channel_filter_is_enabled(v->playingChannel)) {
+                tsf_voice_render(f, v, buffer, samples);
+            } else {
+                float chan_buffer[AUDIO_SAMPLES * 16 * sizeof(float)];
+
+                memset(chan_buffer, 0, n);
+                tsf_voice_render(f, v, chan_buffer, samples);
+
+                synth_interleaved_filter_router(v->playingChannel, 
+                    chan_buffer, samples);
+
+                for(i = 0; i < n; i++) {
+                    buffer[i] += chan_buffer[i];
+                }        
+            }            
         }
     }
 }
@@ -203,27 +217,113 @@ static void proc_at_msgs(struct audio_thread* at) {
     }
 }
 
+
+
+
+// compute the actual freq
+// struct timespec {
+//     time_t   tv_sec;        /* seconds */
+//     long     tv_nsec;       /* nanoseconds */
+// };
+
+
 // this gets called SAMPLE_RATE / AUDIO_SAMPLES every second.
 static void audio_callback(void *userdata, Uint8 *stream, int len) {
     struct audio_thread* at = (struct audio_thread*) userdata;
-	int samples = (len / (2 * sizeof(float))); //2 output channels
+    int samples = (len / (2 * sizeof(float))); //2 output channels
+
+   //actual_freq(len);
 
     // process any pending messages 
     proc_at_msgs(at);
  
     // render to audio buffer while allowing for ladspa effects to 
     // be applied to each playing voice.
-	my_tsf_render_float(at->g_TinySoundFont, (float*)stream, samples, 0);
+	my_tsf_render_float(at->g_TinySoundFont, (float*)stream, samples);
 }
 
 static void *audio_thread(void *arg) {
     struct audio_thread* at = (struct audio_thread*) arg;
     SDL_PauseAudioDevice(at->dev, 0);  // Start playback
     while (1) {
-        SDL_Delay(100);
+        SDL_Delay(1000);
     }
     return NULL;
 }
+
+
+
+/**
+Failed experiment: 
+    produced an unwanted echo. 
+    never fixed the effects problem.
+
+Audio source thread.
+
+drift = 0
+
+while forever
+    start_time = now
+    usleep for INPUT_FEED_INTERVAL -drift seconds
+    actual_sleep_tm = now - start_time
+
+    samples = actual_sleep_tm * SAMPLE_RATE 
+       -- if we slepts for exactly INPUT_FEED_INTERVAL then 
+          samples would = SAMPLE_RATE which it almost never will 
+          be ;)
+
+    start_proc_time = now
+
+    process queued messages if any.
+    
+    process sf events + ladspa
+
+    queue output to sdl
+
+    drift = now - start_proc_time
+*/
+static void *audio_source_thread(void *arg) {
+    struct audio_thread* at = (struct audio_thread*) arg;
+    struct timespec requested_time, remaining; 
+    struct timespec now;
+    long nsecs_after_sleep, nsecs_after_proc;
+    long interval = 
+        (AUDIO_SAMPLES * 1000000000L)/SAMPLE_RATE;
+    
+    float buffer[AUDIO_SAMPLES * 16 * sizeof(float)];
+    int samples;
+    float bps = ((float)SAMPLE_RATE) / 1000000000.0;
+    float r;
+
+    requested_time.tv_sec = 0;
+    requested_time.tv_nsec = interval;
+
+    SDL_PauseAudioDevice(at->dev, 0);  // Start playback
+    
+    while (1) {        
+        nanosleep(&requested_time, &remaining); 
+
+        r = bps * (requested_time.tv_nsec - remaining.tv_nsec);
+        samples = (int) r;   
+         
+        // process any pending messages 
+        proc_at_msgs(at);
+
+        my_tsf_render_float(at->g_TinySoundFont, buffer, samples);
+
+        if (SDL_QueueAudio(at->dev, buffer, samples * 2 * sizeof(float)) < 0) {
+            fprintf(stderr, "SDL_QueueAudio failed: %s\n", SDL_GetError());
+            break;
+        }
+    }
+    
+    return NULL;
+}
+
+
+
+
+
 
 
 
@@ -244,7 +344,7 @@ int gcsynth_sf_init(char* sf_file[], int num_font_files, AudioChannelFilter filt
         return -1;
     }
 
-    if (num_font_files >= (NUM_ATHREADS-1)) {
+    if (num_font_files >= (MAX_ATHREADS-1)) {
         fprintf(stderr, "Too many sound fonts!\n");
         return -1;
     }
@@ -258,7 +358,7 @@ int gcsynth_sf_init(char* sf_file[], int num_font_files, AudioChannelFilter filt
         SDL_zero(AudioThreads[a_thread].spec);
 
         AudioThreads[a_thread].spec.freq = SAMPLE_RATE;
-        AudioThreads[a_thread].spec.format = AUDIO_F32;
+        AudioThreads[a_thread].spec.format =  AUDIO_F32SYS;  // AUDIO_F32;
         AudioThreads[a_thread].spec.channels = 2;
         AudioThreads[a_thread].spec.samples = AUDIO_SAMPLES;
         AudioThreads[a_thread].spec.callback = audio_callback;
@@ -288,7 +388,7 @@ int gcsynth_sf_init(char* sf_file[], int num_font_files, AudioChannelFilter filt
                 0, 
         &AudioThreads[a_thread].spec, 
                 NULL, 
-                SDL_AUDIO_ALLOW_ANY_CHANGE);
+                0);
         if (AudioThreads[a_thread].dev == 0) {
             fprintf(stderr, "SDL_OpenAudioDevice failed: %s\n", SDL_GetError());
             return -1;
@@ -444,7 +544,7 @@ void gcsynth_sf_reset()
 {
     int a_thread;
         
-    for(a_thread =0; a_thread < NUM_ATHREADS; a_thread++) {
+    for(a_thread =0; a_thread < MAX_ATHREADS; a_thread++) {
         struct audio_thread* at = &AudioThreads[a_thread];
 
         struct audio_thread_msg* msg = (struct audio_thread_msg*)

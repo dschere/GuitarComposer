@@ -4,6 +4,9 @@
 
 #include <glib.h>
 
+#define IN_AUDIO_SAMPLE_SIZE 64
+#define IN_AUDIO_BUFSIZE IN_AUDIO_SAMPLE_SIZE * (2 * sizeof(float))
+
 struct gcsynth_channel {
     // filter chain  
     GList* filter_chain;
@@ -11,6 +14,7 @@ struct gcsynth_channel {
     int initialized;
     int at_least_one_filter_enabled;
     float gain; // per channel gain adjustment 0 means no change.
+    float in_audio_buffer[IN_AUDIO_BUFSIZE];
 };
 
 //Note channel has already been range checked prior to these function calls.
@@ -71,5 +75,6 @@ void voice_data_router(void *userdata, int chan, double* buf, int len);
 void synth_filter_router(int channel, float* left, float* right, int samples);
 void synth_interleaved_filter_router(int chan, float* interleaved_audio, int samples);
 
+float *synth_get_in_buf(int chan);
 
 #endif

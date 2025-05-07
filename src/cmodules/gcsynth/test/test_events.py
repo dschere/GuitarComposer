@@ -20,6 +20,7 @@ from unit_test_util import *
 
 class Test_GcSynth_Events(unittest.TestCase):
 
+    """
     def test00_pitch(self):
         # pitchrange      
         data = {"sfpaths": ["/home/david/proj/GuitarComposer/data/sf/27mg_Symphony_Hall_Bank.SF2"]}
@@ -48,6 +49,7 @@ class Test_GcSynth_Events(unittest.TestCase):
 
     """
 
+    """
     def test01_note_on(self):
         data = {"sfpaths": ["/home/david/proj/GuitarComposer/data/sf/27mg_Symphony_Hall_Bank.SF2"]}
         gcsynth.start(data)
@@ -126,24 +128,81 @@ class Test_GcSynth_Events(unittest.TestCase):
         time.sleep(1.0)
         gcsynth.stop()
         print("existing test 0")    
+    """
 
     def test00_play_filter(self):
         data = {"sfpaths": ["/home/david/proj/GuitarComposer/data/sf/27mg_Symphony_Hall_Bank.SF2"]}
         gcsynth.start(data)
         chan = 0
 
+        gcsynth.select(0,1,1,30)
+
+        path = "/usr/lib/ladspa/guitarix_freeverb.so"
+        label = "guitarix_freeverb"
+
+        gcsynth.filter_add(chan, path, label)
+        gcsynth.filter_set_control_by_index(0, label, 0, 1.0)
+        print(f"enable filter {label}")
+        gcsynth.filter_enable(chan, label)
+         
+        gcsynth.noteon(chan, 65, 100)
+        
+        time.sleep(5.0)
+        gcsynth.filter_disable(chan, label)
+        gcsynth.filter_remove(chan, label)
+
         path = "/usr/lib/ladspa/guitarix_echo.so"
         label = "guitarix_echo"
 
         gcsynth.filter_add(chan, path, label)
+        gcsynth.filter_set_control_by_index(0, label, 1, 500.0)
         print(f"enable filter {label}")
         gcsynth.filter_enable(chan, label)
          
-        gcsynth.noteon(0, 60, 100)
+        gcsynth.noteon(chan, 65, 100)
+        
+        time.sleep(5.0)
+        gcsynth.filter_disable(chan, label)
+        gcsynth.filter_remove(chan, label)
+
+
+
+        path = "/usr/lib/ladspa/tap_echo.so"
+        label = "tap_stereo_echo"
+        gcsynth.filter_add(chan, path, label)
+        #     if (!PyArg_ParseTuple(args, "isif", &channel, &plugin_label, &control_num, &value)) {
+
+        gcsynth.filter_set_control_by_index(0, label, 0, 1000.0)
+        gcsynth.filter_set_control_by_index(0, label, 1, 50.0)
+
+
+        gcsynth.filter_set_control_by_index(0, label, 4, 10.0)
+        gcsynth.filter_set_control_by_index(0, label, 5, 10.0)
+
+        gcsynth.filter_set_control_by_index(0, label, 6, -70.0)
+
+        
+        print(f"enable filter {label}")
+        gcsynth.filter_enable(chan, label)
+         
+        gcsynth.noteon(chan, 65, 100)
+        time.sleep(1.0)
+
+        gcsynth.noteon(chan, 67, 100)
+        time.sleep(1.0)
+
+        gcsynth.noteon(chan, 69, 100)
+        time.sleep(1.0)
 
         time.sleep(5.0)
+        gcsynth.filter_disable(chan, label)
+
+        print("--- end of test ---")
+
+
+
         gcsynth.stop()
-    """
+    
 
 if __name__ == '__main__':
     unittest.main()

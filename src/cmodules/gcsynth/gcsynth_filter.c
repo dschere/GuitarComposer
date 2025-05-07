@@ -14,6 +14,8 @@ static void ladspa_deallocate(struct gcsynth_filter* gc_filter);
 static LADSPA_Data get_default_value(
     struct gcsynth_filter* gc_filter, unsigned long int lPortIndex,
     int* has_default);
+static void gcsynth_filter_report(struct gcsynth_filter* gc_filter);
+
 
 struct gcsynth_filter* gcsynth_filter_new_ladspa(const char* pathname, char* label)
 {
@@ -88,7 +90,7 @@ int gcsynth_interleaved_filter_run(struct gcsynth_filter* gc_filter, LADSPA_Data
 #define MONO_FILTER   1
 #define STEREO_FILTER 2
 
-int gcsynth_filter_run_sterio(
+int gcsynth_filter_run_sterio_or_mono(
     struct gcsynth_filter* gc_filter, float* left, float* right, int samples)
 {
     int i=0;
@@ -96,13 +98,17 @@ int gcsynth_filter_run_sterio(
     if (gc_filter->enabled) {
         switch(gc_filter->in_buf_count) {
             case STEREO_FILTER:
-                memcpy(gc_filter->in_data_buffer[0],left,samples);
-                memcpy(gc_filter->in_data_buffer[1],right,samples);
+                //memcpy(gc_filter->in_data_buffer[0],left,samples);
+                //memcpy(gc_filter->in_data_buffer[1],right,samples);
+                for (i = 0; i < samples; i++) {
+                    gc_filter->in_data_buffer[0][i] = left[i];
+                    gc_filter->in_data_buffer[1][i] = right[i];
+                }
                 break;
             case MONO_FILTER:
                 // stereo to mono
                 for(i = 0; i < samples; i++) {
-                    gc_filter->in_data_buffer[0][i] = left[i] + right[i];
+                    gc_filter->in_data_buffer[0][i] = left[i] + right[i] * 0.5f;
                 }
                 break;
         }
@@ -111,8 +117,13 @@ int gcsynth_filter_run_sterio(
 
         switch(gc_filter->out_buf_count) {
             case STEREO_FILTER:
-                memcpy(left, gc_filter->out_data_buffer[0], samples);
-                memcpy(right, gc_filter->out_data_buffer[1], samples);
+                //memcpy(left, gc_filter->out_data_buffer[0], samples);
+                //memcpy(right, gc_filter->out_data_buffer[1], samples);
+                for (i = 0; i < samples; i++) {
+                    left[i] = gc_filter->out_data_buffer[0][i];
+                    right[i] = gc_filter->out_data_buffer[1][i];
+                }
+
                 break;
             case MONO_FILTER:
                 // mono to stereo
@@ -200,23 +211,30 @@ int gcsynth_filter_run(struct gcsynth_filter* gc_filter, LADSPA_Data* fc_buffer,
 }
 
 
+
 void gcsynth_filter_enable(struct gcsynth_filter* gc_filter)
 {
-    if ((gc_filter->enabled == 0) && gc_filter->desc->activate) {
-        //printf("gcsynth: %s is activated\n", gc_filter->desc->Label);
-        gc_filter->desc->activate(gc_filter->plugin_instance);
+    if (gc_filter->enabled == 0) {
+        gc_filter->enabled = 1;
+        gcsynth_filter_report(gc_filter);
     }
-    gc_filter->enabled = 1;
+ 
+    if (gc_filter->desc->activate) {
+        gc_filter->desc->activate(gc_filter->plugin_instance);
+    }   
 }
 
 void gcsynth_filter_disable(struct gcsynth_filter* gc_filter)
 {
-    if ((gc_filter->enabled == 1) && gc_filter->desc->deactivate)
+    if (gc_filter->enabled == 1) {
+        gc_filter->enabled = 0;
+        printf("gcsynth: %s deactivated\n", gc_filter->desc->Label);
+    }
+
+    if (gc_filter->desc->deactivate)
     {
-        //printf("gcsynth: %s deactivated\n", gc_filter->desc->Label);
         gc_filter->desc->deactivate(gc_filter->plugin_instance);
     }
-    gc_filter->enabled = 0;
 }
 
 int  gcsynth_filter_isEnabled(struct gcsynth_filter* gc_filter)
@@ -276,6 +294,9 @@ static void setup_ctl_value(struct gcsynth_filter* gc_filter,
     if (control->has_default) {
         control->value = control->default_value;
     }
+
+    printf("Updated %s, set control %s to %f\n",
+        gc_filter->desc->Label, control->name, control->value);
 
 }
 
@@ -474,4 +495,18 @@ static LADSPA_Data get_default_value(
 //     psDescriptor->PortNames[lPortIndex], fDefault, *has_default, iHintDescriptor, lPortIndex);
 
     return fDefault;
+}
+
+static void gcsynth_filter_report(struct gcsynth_filter* gc_filter)
+{
+    int i;
+
+    printf("gcsynth_filter %s\n", gc_filter->desc->Label);
+    printf("-------------------------------\n");
+    printf("enabled %d\n", gc_filter->enabled);
+    for (i = 0; i < gc_filter->num_controls; i++) {
+        printf("    %24s = %f\n", 
+            gc_filter->controls[i].name,
+            gc_filter->controls[i].value);
+    }
 }
