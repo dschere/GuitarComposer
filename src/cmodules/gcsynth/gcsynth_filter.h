@@ -11,9 +11,7 @@
 #define MAX_LADSPA_CONTROLS 32
 #define MAX_LADSPA_PORTS    MAX_LADSPA_CONTROLS + 4
 
-//make this adjustable? although I've never seen the need
 #define SAMPLE_RATE 44100
-//#define SAMPLE_RATE 73728
 
 struct gcsynth_filter_control {
     int isOutput;
@@ -82,7 +80,7 @@ void gcsynth_filter_destroy(struct gcsynth_filter* gc_filter);
 // filter 
 int gcsynth_filter_run(struct gcsynth_filter* gc_filter, LADSPA_Data* io_buf, int len);
 
-int gcsynth_filter_run_sterio_or_mono(
+int gcsynth_filter_run_sterio(
     struct gcsynth_filter* gc_filter, float* left, float* right, int samples);
     
 

@@ -90,7 +90,7 @@ int gcsynth_interleaved_filter_run(struct gcsynth_filter* gc_filter, LADSPA_Data
 #define MONO_FILTER   1
 #define STEREO_FILTER 2
 
-int gcsynth_filter_run_sterio_or_mono(
+int gcsynth_filter_run_sterio(
     struct gcsynth_filter* gc_filter, float* left, float* right, int samples)
 {
     int i=0;
