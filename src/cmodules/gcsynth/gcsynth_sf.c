@@ -11,6 +11,7 @@ Also based on tsf's design one sound font is allowed on one audio client.
 
 */
 
+#include <assert.h>
 #include <time.h>
 #define TSF_IMPLEMENTATION
 #include "tsf.h"
@@ -87,6 +88,12 @@ static int NumAudioThreads;
 
 static struct audio_thread* ChannelAllocTable[MAX_CHANNELS];
 
+static float av_clipf_rvf(float a, float min,
+    float max)
+{
+    return fminf(fmaxf(a, min), max);
+}
+
 /*
    refactored tsf_render_float so it routes audio data to ladspa filters
    if enabled for this channel.
@@ -124,11 +131,16 @@ TSFDEF void my_tsf_render_float(tsf* f, float* buffer, int samples)
                     chan_buffer, samples);
 
                 for(i = 0; i < n; i++) {
-                    buffer[i] += chan_buffer[i];
+                    buffer[i] += chan_buffer[i]; 
                 }        
             }            
         }
     }
+
+    // for(i = 0; i < n; i++) {
+    //     //buffer[i] = av_clipf_rvf(buffer[i],-1.0f,1.0f);
+    //     assert((1.0f >= buffer[i]) && (buffer[i] >= -1.0f));
+    // }
 }
 
 
@@ -225,12 +237,30 @@ static void proc_at_msgs(struct audio_thread* at) {
 //     time_t   tv_sec;        /* seconds */
 //     long     tv_nsec;       /* nanoseconds */
 // };
+long freq_calc_tm = 0;
+long byte_count = 0;  
 
 
 // this gets called SAMPLE_RATE / AUDIO_SAMPLES every second.
 static void audio_callback(void *userdata, Uint8 *stream, int len) {
     struct audio_thread* at = (struct audio_thread*) userdata;
+    struct timespec now;
     int samples = (len / (2 * sizeof(float))); //2 output channels
+
+    // 88576 is the median rate
+    // clock_gettime(CLOCK_MONOTONIC, &now);
+    // if (freq_calc_tm == 0) {
+    //     freq_calc_tm = now.tv_sec * 1000000000 + now.tv_nsec;
+    //     byte_count = samples;
+    // } else {
+    //     long ref = now.tv_sec * 1000000000 + now.tv_nsec;
+    //     if ((ref - freq_calc_tm) > 1000000000) {
+    //         printf("byte_count = %ld\n", byte_count);
+    //         freq_calc_tm = 0;
+    //     } else {
+    //         byte_count += samples;
+    //     }
+    // }
 
    //actual_freq(len);
 
