@@ -550,6 +550,19 @@ static void gcsynth_start_args_init(
 }
 
 
+
+static PyObject* py_ladspa_plugin_labels(PyObject* self, PyObject* args) {
+    const char* filepath;
+    
+    // Parse the Python tuple, expecting two strings and a dictionary
+    if (!PyArg_ParseTuple(args, "s", &filepath)) {
+        return NULL;  // Return NULL to indicate an error if the parsing failed
+    }
+
+    return ladspa_get_labels(filepath);
+}
+
+
 // ------------ interface for moduler loader in python
 
 
@@ -563,6 +576,8 @@ static PyMethodDef GCSynthMethods[] = {
     {"noteon", py_gcsynth_noteon,METH_VARARGS, "noteon(chan,midicod,velocity)"},
     {"select", py_fluid_synth_program_select, METH_VARARGS, "select(chan,sfont_id,bank,preset)"},
     
+    {"ladspa_plugin_labels", py_ladspa_plugin_labels, METH_VARARGS, 
+        "return a list of labels within a ladspa plugin"},
     {"filter_add",py_load_ladspa_filter, METH_VARARGS,"create a filter for a channel"},
     {"filter_remove",py_gcsynth_channel_remove_filter, METH_VARARGS,"remove filter from channel"},
     {"filter_query",py_query_filter, METH_VARARGS,"py_query_filter(path,plugin_label)->[{info}]"},

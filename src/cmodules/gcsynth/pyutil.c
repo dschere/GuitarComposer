@@ -1,6 +1,8 @@
+#include <dlfcn.h>
 #include <Python.h>
 
 #include "pyutil.h"
+#include "ladspa.h"
 
 void raise_value_error(char *msg) {
     // Raise a ValueError with a custom message
@@ -201,4 +203,42 @@ struct scheduled_event* event_from_pydata(PyObject* dict)
     }
 
     return ev;
+}
+
+
+
+PyObject* ladspa_get_labels(const char* path) {
+    int i;
+    void* dl_handle = dlopen(path, RTLD_LOCAL|RTLD_NOW);
+    PyObject* labels = PyList_New(0);
+
+    if ((dl_handle != NULL) && (labels != NULL)) {
+        LADSPA_Descriptor_Function descriptor_fn = 
+            dlsym(dl_handle, "ladspa_descriptor");
+
+        if (descriptor_fn) {
+            LADSPA_Descriptor *desc;
+            for (i = 0; ((desc = descriptor_fn(i)) != NULL); i++) {
+                char data[4096];
+                
+                sprintf(data,"%s:%s", desc->Label, desc->Name);
+                PyObject* py_str = PyUnicode_FromString(data);
+                if (!py_str) {
+                    Py_DECREF(labels); // Clean up list on error
+                    return NULL;
+                }
+        
+                // Append string to list
+                if (PyList_Append(labels, py_str) < 0) {
+                    Py_DECREF(py_str); // Clean up string
+                    Py_DECREF(labels);  // Clean up list
+                    return NULL;
+                }
+                Py_DECREF(py_str); // List takes ownership, so release reference
+            }
+        }
+        dlclose(dl_handle);
+    }
+
+    return labels;
 }

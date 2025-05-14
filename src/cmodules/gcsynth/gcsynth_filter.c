@@ -300,6 +300,7 @@ static void setup_ctl_value(struct gcsynth_filter* gc_filter,
 
 }
 
+
 static int ladspa_setup(struct gcsynth_filter* gc_filter, const char* path, char* label)
 {
     char errmsg[256];
