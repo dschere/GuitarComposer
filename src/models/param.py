@@ -10,7 +10,7 @@ sample data for reference
 from typing import List
 
 
-def create_choices(low, high, defval, is_integer):
+def create_choices(low, high, defval, is_integer) -> List[float]:
     r = []
     if is_integer:
         r = range(int(low),int(high)+1)
@@ -21,7 +21,8 @@ def create_choices(low, high, defval, is_integer):
             if v > defval and (v-step) < defval:
                 r.append(defval)
             r.append(v)
-        assert(defval in r) 
+        if defval not in r:
+            raise ValueError
     return r    
 
 class EffectParameter:
@@ -30,6 +31,10 @@ class EffectParameter:
     UNBOUNDED_REAL = 2
     UNBOUNDED_INTEGER = 3
     BOOLEAN = 4
+
+    def __str__(self):
+        msg = f"{self.name} {self.current_value}"
+        return msg
 
     def __init__(self, spec: dict):
         self.c_index = 0
@@ -50,10 +55,13 @@ class EffectParameter:
         for k,v in spec.items():
             setattr(self, k, v) 
 
+        self.current_value = self.default_value
+
+
         bounded = self.is_bounded_below and self.is_bounded_above
         if self.is_toggled:
             self.pres_type = self.BOOLEAN
-        elif bounded:
+        elif bounded and not self.is_logarithmic:
             if self.is_integer:
                 self.pres_type = self.BOUNDED_INTEGER
             else:
@@ -62,15 +70,19 @@ class EffectParameter:
                 diff = self.upper_bound - self.lower_bound
                 self.default_value = self.lower_bound + (diff/2)
 
-            self.choices = create_choices(self.lower_bound, 
-                self.upper_bound, self.default_value, self.is_integer)    
+            try:
+                self.choices = create_choices(self.lower_bound, 
+                    self.upper_bound, self.default_value, self.is_integer)  
+            except ValueError:
+                # punt ...  
+                self.pres_type = self.UNBOUNDED_REAL
         else:
             if self.is_integer:
                 self.pres_type = self.UNBOUNDED_INTEGER
             else:
                 self.pres_type = self.UNBOUNDED_REAL
 
-        self.current_value = self.default_value
+        
 
 
         

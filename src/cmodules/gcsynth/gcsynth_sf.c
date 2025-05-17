@@ -11,7 +11,6 @@ Also based on tsf's design one sound font is allowed on one audio client.
 
 */
 
-#include <assert.h>
 #include <time.h>
 #define TSF_IMPLEMENTATION
 #include "tsf.h"
@@ -30,7 +29,6 @@ Also based on tsf's design one sound font is allowed on one audio client.
 
 #include "gcsynth_sf.h"
 
-#define SAMPLE_RATE   44100
 #define AUDIO_SAMPLES 512
 #define BUFSIZE       0xFFFF
 #define MAX_CHANNEL_NUM 128
@@ -50,6 +48,9 @@ struct audio_thread {
 
     pthread_attr_t attr;
     pthread_t thread; 
+    
+    pthread_mutex_t running_mutex;
+    int running; 
 
     int ladspa_channel;   
     int athread;
@@ -88,11 +89,7 @@ static int NumAudioThreads;
 
 static struct audio_thread* ChannelAllocTable[MAX_CHANNELS];
 
-static float av_clipf_rvf(float a, float min,
-    float max)
-{
-    return fminf(fmaxf(a, min), max);
-}
+
 
 /*
    refactored tsf_render_float so it routes audio data to ladspa filters
@@ -131,27 +128,20 @@ TSFDEF void my_tsf_render_float(tsf* f, float* buffer, int samples)
                     chan_buffer, samples);
 
                 for(i = 0; i < n; i++) {
-                    buffer[i] += chan_buffer[i]; 
-                }        
+                    buffer[i] += chan_buffer[i];
+                }
             }            
         }
     }
 
-    // for(i = 0; i < n; i++) {
-    //     //buffer[i] = av_clipf_rvf(buffer[i],-1.0f,1.0f);
-    //     assert((1.0f >= buffer[i]) && (buffer[i] >= -1.0f));
-    // }
+    //FUTURE
+    //this is were I could create a master effects output 
+    // or stream the audio to a file 
 }
 
 
 static struct audio_thread* get_audio_thread(int chan) {
     return ChannelAllocTable[chan % MAX_CHANNELS];
-}
-
-static void checkin(int chan) {
-    if (chan >=0 && chan < MAX_CHANNELS) {
-        ChannelAllocTable[chan] = NULL;
-    }
 }
 
 static struct audio_thread* checkout(int chan, int sfont_id) {
@@ -237,30 +227,12 @@ static void proc_at_msgs(struct audio_thread* at) {
 //     time_t   tv_sec;        /* seconds */
 //     long     tv_nsec;       /* nanoseconds */
 // };
-long freq_calc_tm = 0;
-long byte_count = 0;  
 
 
 // this gets called SAMPLE_RATE / AUDIO_SAMPLES every second.
 static void audio_callback(void *userdata, Uint8 *stream, int len) {
     struct audio_thread* at = (struct audio_thread*) userdata;
-    struct timespec now;
     int samples = (len / (2 * sizeof(float))); //2 output channels
-
-    // 88576 is the median rate
-    // clock_gettime(CLOCK_MONOTONIC, &now);
-    // if (freq_calc_tm == 0) {
-    //     freq_calc_tm = now.tv_sec * 1000000000 + now.tv_nsec;
-    //     byte_count = samples;
-    // } else {
-    //     long ref = now.tv_sec * 1000000000 + now.tv_nsec;
-    //     if ((ref - freq_calc_tm) > 1000000000) {
-    //         printf("byte_count = %ld\n", byte_count);
-    //         freq_calc_tm = 0;
-    //     } else {
-    //         byte_count += samples;
-    //     }
-    // }
 
    //actual_freq(len);
 
@@ -275,9 +247,17 @@ static void audio_callback(void *userdata, Uint8 *stream, int len) {
 static void *audio_thread(void *arg) {
     struct audio_thread* at = (struct audio_thread*) arg;
     SDL_PauseAudioDevice(at->dev, 0);  // Start playback
-    while (1) {
+    int running = 1;
+
+    while (running) {
         SDL_Delay(1000);
+        pthread_mutex_lock(&at->running_mutex);
+        running = at->running;
+        pthread_mutex_unlock(&at->running_mutex);
     }
+
+    printf("audio thread exited\n");
+
     return NULL;
 }
 
@@ -312,43 +292,42 @@ while forever
 
     drift = now - start_proc_time
 */
-static void *audio_source_thread(void *arg) {
-    struct audio_thread* at = (struct audio_thread*) arg;
-    struct timespec requested_time, remaining; 
-    struct timespec now;
-    long nsecs_after_sleep, nsecs_after_proc;
-    long interval = 
-        (AUDIO_SAMPLES * 1000000000L)/SAMPLE_RATE;
+//Interesting concept but was abandond 
+// static void *audio_source_thread(void *arg) {
+//     struct audio_thread* at = (struct audio_thread*) arg;
+//     struct timespec requested_time, remaining; 
+//     long interval = 
+//         (AUDIO_SAMPLES * 1000000000L)/SAMPLE_RATE;
     
-    float buffer[AUDIO_SAMPLES * 16 * sizeof(float)];
-    int samples;
-    float bps = ((float)SAMPLE_RATE) / 1000000000.0;
-    float r;
+//     float buffer[AUDIO_SAMPLES * 16 * sizeof(float)];
+//     int samples;
+//     float bps = ((float)SAMPLE_RATE) / 1000000000.0;
+//     float r;
 
-    requested_time.tv_sec = 0;
-    requested_time.tv_nsec = interval;
+//     requested_time.tv_sec = 0;
+//     requested_time.tv_nsec = interval;
 
-    SDL_PauseAudioDevice(at->dev, 0);  // Start playback
+//     SDL_PauseAudioDevice(at->dev, 0);  // Start playback
     
-    while (1) {        
-        nanosleep(&requested_time, &remaining); 
+//     while (1) {        
+//         nanosleep(&requested_time, &remaining); 
 
-        r = bps * (requested_time.tv_nsec - remaining.tv_nsec);
-        samples = (int) r;   
+//         r = bps * (requested_time.tv_nsec - remaining.tv_nsec);
+//         samples = (int) r;   
          
-        // process any pending messages 
-        proc_at_msgs(at);
+//         // process any pending messages 
+//         proc_at_msgs(at);
 
-        my_tsf_render_float(at->g_TinySoundFont, buffer, samples);
+//         my_tsf_render_float(at->g_TinySoundFont, buffer, samples);
 
-        if (SDL_QueueAudio(at->dev, buffer, samples * 2 * sizeof(float)) < 0) {
-            fprintf(stderr, "SDL_QueueAudio failed: %s\n", SDL_GetError());
-            break;
-        }
-    }
+//         if (SDL_QueueAudio(at->dev, buffer, samples * 2 * sizeof(float)) < 0) {
+//             fprintf(stderr, "SDL_QueueAudio failed: %s\n", SDL_GetError());
+//             break;
+//         }
+//     }
     
-    return NULL;
-}
+//     return NULL;
+// }
 
 
 
@@ -424,6 +403,12 @@ int gcsynth_sf_init(char* sf_file[], int num_font_files, AudioChannelFilter filt
             return -1;
         }
 
+        AudioThreads[a_thread].running = 1;
+        if (pthread_mutex_init(&AudioThreads[a_thread].running_mutex, NULL) != 0) {
+            perror("Mutex initialization failed");
+            return 1;
+        }
+    
         // create deamon threads that terminate when the application exits
         pthread_attr_init(&AudioThreads[a_thread].attr);
         pthread_attr_setdetachstate(
@@ -590,3 +575,20 @@ void gcsynth_sf_reset()
 }
 
 
+/*
+    Clear the running flag for all threads.
+*/
+void gcsynth_sf_shutdown() {
+    int i;
+    for (i = 0; i < NumAudioThreads; i++) {
+        struct audio_thread* at = &AudioThreads[i];
+        pthread_mutex_lock(&at->running_mutex);
+        at->running = 0;
+        pthread_mutex_unlock(&at->running_mutex);
+    }
+
+    for (i = 0; i < NumAudioThreads; i++) {
+        struct audio_thread* at = &AudioThreads[i];
+        pthread_join(at->thread, NULL);
+    }
+}

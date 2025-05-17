@@ -13,5 +13,6 @@ struct scheduled_event* event_from_pydata(PyObject* dict);
 
 void raise_value_error(char* msg);
 
+PyObject* ladspa_get_labels(const char* path);
 
 #endif

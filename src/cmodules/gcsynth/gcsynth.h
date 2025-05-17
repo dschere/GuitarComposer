@@ -60,7 +60,6 @@ void gcsynth_raise_exception(char* text);
 void timing_log(char* caller, char *method);
 
 
-
 /**
  * python api
  * 

@@ -12,6 +12,7 @@
 from models.measure import Measure, TimeSig, TabEvent 
 from typing import List, Optional, Tuple
 from models.effect import Effects
+from services.effectRepo import EffectRepository
 
 class Track:
     FIRST_NOTE_COLUMN = 2
@@ -77,7 +78,9 @@ class Track:
             key="C")
         m.cleff = self.cleff
         self.measures : List[Measure] = [m]
-        self.effects = Effects()
+
+        # effects to be applied to this track
+        self.effects = EffectRepository().create_effects()
 
 
     def append_measure(self, **kwargs):

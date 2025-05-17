@@ -11,6 +11,7 @@ from PyQt6.QtCore import QSettings, pyqtSignal
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QMessageBox
 
+from models.effect import Effect
 from models.note import Note
 from models.song import Song
 from models.track import Track
@@ -279,7 +280,6 @@ class AppController:
         self.preview_instr.effects_change(evt.changes)
         # send an arbitrary note to hear what applying the effect sounds like.
         self.preview_instr.note_event(self.effects_preview_note)
-        
 
     def handle_preview_stop(self, n: Note):
         self.preview_instr.note_event(n)

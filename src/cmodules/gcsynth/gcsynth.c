@@ -285,8 +285,7 @@ static PyObject* py_gcsynth_event(PyObject* self, PyObject* args) {
         return NULL;
     }
 
-
-    evt_id_list;
+    return evt_id_list;
 }
 
 static PyObject* py_load_ladspa_filter(PyObject* self, PyObject* args) {
@@ -550,6 +549,19 @@ static void gcsynth_start_args_init(
 }
 
 
+
+static PyObject* py_ladspa_plugin_labels(PyObject* self, PyObject* args) {
+    const char* filepath;
+    
+    // Parse the Python tuple, expecting two strings and a dictionary
+    if (!PyArg_ParseTuple(args, "s", &filepath)) {
+        return NULL;  // Return NULL to indicate an error if the parsing failed
+    }
+
+    return ladspa_get_labels(filepath);
+}
+
+
 // ------------ interface for moduler loader in python
 
 
@@ -563,6 +575,8 @@ static PyMethodDef GCSynthMethods[] = {
     {"noteon", py_gcsynth_noteon,METH_VARARGS, "noteon(chan,midicod,velocity)"},
     {"select", py_fluid_synth_program_select, METH_VARARGS, "select(chan,sfont_id,bank,preset)"},
     
+    {"ladspa_plugin_labels", py_ladspa_plugin_labels, METH_VARARGS, 
+        "return a list of labels within a ladspa plugin"},
     {"filter_add",py_load_ladspa_filter, METH_VARARGS,"create a filter for a channel"},
     {"filter_remove",py_gcsynth_channel_remove_filter, METH_VARARGS,"remove filter from channel"},
     {"filter_query",py_query_filter, METH_VARARGS,"py_query_filter(path,plugin_label)->[{info}]"},
@@ -677,16 +691,14 @@ PyMODINIT_FUNC PyInit_gcsynth(void) {
     PyModule_AddIntConstant(module, "NUM_CHANNELS", NUM_CHANNELS);
 
     if ((timing_log_env != NULL) && (strcmp(timing_log_env,"1") == 0)) {
-        struct timespec ts;
-
         TimingLog = fopen(TIMING_LOGPATH,"w");
         int r = clock_gettime(CLOCK_MONOTONIC, &TimingLogRefTime);
 
         if (TimingLog == NULL) {
-            printf(stderr,"Warning: %s was set but unable to create log!\n", TIMING_LOG_ENV);
+            fprintf(stderr,"Warning: %s was set but unable to create log!\n", TIMING_LOG_ENV);
         }
         if (r == -1) {
-            printf(stderr,"Warning: unable to get monotonic clock! errno=%d %s\n", 
+            fprintf(stderr,"Warning: unable to get monotonic clock! errno=%d %s\n", 
                 errno, strerror(errno));
             fclose(TimingLog);
             TimingLog = NULL;    

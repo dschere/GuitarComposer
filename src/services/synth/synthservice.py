@@ -3,6 +3,7 @@ import gcsynth
 from singleton_decorator import singleton
 from services.synth.instrument_info import instrument_info
 from services.synth.sequencer import sequencer
+import atexit
 
 class midi_channel_manager:
     DRUM_CHANNEL = 9
@@ -69,6 +70,9 @@ class synthservice:
         self.db = instrument_info()
         self.cm = midi_channel_manager(self)
         
+        # stop audio threads on exit
+        atexit.register(self.shutdown)
+
     def reset_channel_manager(self):
         self.cm.reset()
 

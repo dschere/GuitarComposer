@@ -71,7 +71,7 @@
             "name": "Python Debugger: One file",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/src/services/player.py",
+            "program": "${workspaceFolder}/src/services/effectRepo.py",
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}"
         }
