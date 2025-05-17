@@ -26,7 +26,6 @@ Also based on tsf's design one sound font is allowed on one audio client.
 #include "gcsynth_sf.h"
 #include "gcsynth_channel.h"
 
-#include "audio_output.h"
 
 #include "gcsynth_sf.h"
 
@@ -92,61 +91,6 @@ static struct audio_thread* ChannelAllocTable[MAX_CHANNELS];
 
 
 
-
-/*
-Echo experiment to see if the 'noise' disappears if I
-do the echo without ladspa.
-*/
-// double ring1[SAMPLE_RATE];
-// int r1 = 0;
-
-// double ring2[SAMPLE_RATE*2];
-// int r2 = 0;
-
-// double ring3[SAMPLE_RATE*3];
-// int r3 = 0;
-
-// static void echo_test(float* buffer, int samples)
-// {
-//     int i;
-
-//     for(i = 0; i < samples; i++) {
-//         ring1[(r1 + samples + 1) % SAMPLE_RATE]     = buffer[i] * 0.66;
-//         ring2[(r2 + samples + 1) % (SAMPLE_RATE*2)] = buffer[i] * 0.33;
-//         ring3[(r3 + samples + 1) % (SAMPLE_RATE*3)] = buffer[i] * 0.15;
-        
-//         buffer[i] += (float)
-//             ring1[(r1 + i) % SAMPLE_RATE] +
-//             ring2[(r2 + i) % (SAMPLE_RATE*2)] + 
-//             ring3[(r3 + i) % (SAMPLE_RATE*3)]
-//         ;
-
-//         ring1[(r1 + i) % SAMPLE_RATE] = 0.0;
-//         ring2[(r2 + i) % (SAMPLE_RATE*2)] = 0.0;
-//         ring3[(r3 + i) % (SAMPLE_RATE*3)] = 0.0;
-
-//         r1++;
-//         r2++;
-//         r3++;
-//     }
-     
-
-// }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /*
    refactored tsf_render_float so it routes audio data to ladspa filters
    if enabled for this channel.
@@ -189,17 +133,15 @@ TSFDEF void my_tsf_render_float(tsf* f, float* buffer, int samples)
             }            
         }
     }
+
+    //FUTURE
+    //this is were I could create a master effects output 
+    // or stream the audio to a file 
 }
 
 
 static struct audio_thread* get_audio_thread(int chan) {
     return ChannelAllocTable[chan % MAX_CHANNELS];
-}
-
-static void checkin(int chan) {
-    if (chan >=0 && chan < MAX_CHANNELS) {
-        ChannelAllocTable[chan] = NULL;
-    }
 }
 
 static struct audio_thread* checkout(int chan, int sfont_id) {
@@ -300,9 +242,6 @@ static void audio_callback(void *userdata, Uint8 *stream, int len) {
     // render to audio buffer while allowing for ladspa effects to 
     // be applied to each playing voice.
 	my_tsf_render_float(at->g_TinySoundFont, (float*)stream, samples);
-
-    // optional output such as to a wave file.
-    proc_audio_output((float *)stream, samples);
 }
 
 static void *audio_thread(void *arg) {
@@ -353,43 +292,42 @@ while forever
 
     drift = now - start_proc_time
 */
-static void *audio_source_thread(void *arg) {
-    struct audio_thread* at = (struct audio_thread*) arg;
-    struct timespec requested_time, remaining; 
-    struct timespec now;
-    long nsecs_after_sleep, nsecs_after_proc;
-    long interval = 
-        (AUDIO_SAMPLES * 1000000000L)/SAMPLE_RATE;
+//Interesting concept but was abandond 
+// static void *audio_source_thread(void *arg) {
+//     struct audio_thread* at = (struct audio_thread*) arg;
+//     struct timespec requested_time, remaining; 
+//     long interval = 
+//         (AUDIO_SAMPLES * 1000000000L)/SAMPLE_RATE;
     
-    float buffer[AUDIO_SAMPLES * 16 * sizeof(float)];
-    int samples;
-    float bps = ((float)SAMPLE_RATE) / 1000000000.0;
-    float r;
+//     float buffer[AUDIO_SAMPLES * 16 * sizeof(float)];
+//     int samples;
+//     float bps = ((float)SAMPLE_RATE) / 1000000000.0;
+//     float r;
 
-    requested_time.tv_sec = 0;
-    requested_time.tv_nsec = interval;
+//     requested_time.tv_sec = 0;
+//     requested_time.tv_nsec = interval;
 
-    SDL_PauseAudioDevice(at->dev, 0);  // Start playback
+//     SDL_PauseAudioDevice(at->dev, 0);  // Start playback
     
-    while (1) {        
-        nanosleep(&requested_time, &remaining); 
+//     while (1) {        
+//         nanosleep(&requested_time, &remaining); 
 
-        r = bps * (requested_time.tv_nsec - remaining.tv_nsec);
-        samples = (int) r;   
+//         r = bps * (requested_time.tv_nsec - remaining.tv_nsec);
+//         samples = (int) r;   
          
-        // process any pending messages 
-        proc_at_msgs(at);
+//         // process any pending messages 
+//         proc_at_msgs(at);
 
-        my_tsf_render_float(at->g_TinySoundFont, buffer, samples);
+//         my_tsf_render_float(at->g_TinySoundFont, buffer, samples);
 
-        if (SDL_QueueAudio(at->dev, buffer, samples * 2 * sizeof(float)) < 0) {
-            fprintf(stderr, "SDL_QueueAudio failed: %s\n", SDL_GetError());
-            break;
-        }
-    }
+//         if (SDL_QueueAudio(at->dev, buffer, samples * 2 * sizeof(float)) < 0) {
+//             fprintf(stderr, "SDL_QueueAudio failed: %s\n", SDL_GetError());
+//             break;
+//         }
+//     }
     
-    return NULL;
-}
+//     return NULL;
+// }
 
 
 

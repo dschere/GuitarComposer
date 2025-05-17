@@ -285,8 +285,7 @@ static PyObject* py_gcsynth_event(PyObject* self, PyObject* args) {
         return NULL;
     }
 
-
-    evt_id_list;
+    return evt_id_list;
 }
 
 static PyObject* py_load_ladspa_filter(PyObject* self, PyObject* args) {
@@ -692,16 +691,14 @@ PyMODINIT_FUNC PyInit_gcsynth(void) {
     PyModule_AddIntConstant(module, "NUM_CHANNELS", NUM_CHANNELS);
 
     if ((timing_log_env != NULL) && (strcmp(timing_log_env,"1") == 0)) {
-        struct timespec ts;
-
         TimingLog = fopen(TIMING_LOGPATH,"w");
         int r = clock_gettime(CLOCK_MONOTONIC, &TimingLogRefTime);
 
         if (TimingLog == NULL) {
-            printf(stderr,"Warning: %s was set but unable to create log!\n", TIMING_LOG_ENV);
+            fprintf(stderr,"Warning: %s was set but unable to create log!\n", TIMING_LOG_ENV);
         }
         if (r == -1) {
-            printf(stderr,"Warning: unable to get monotonic clock! errno=%d %s\n", 
+            fprintf(stderr,"Warning: unable to get monotonic clock! errno=%d %s\n", 
                 errno, strerror(errno));
             fclose(TimingLog);
             TimingLog = NULL;    

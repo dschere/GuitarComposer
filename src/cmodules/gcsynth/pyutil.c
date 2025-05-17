@@ -14,7 +14,6 @@ const char *get_dict_str_field(PyObject* dict, const char* key, const char* defv
 {
     PyObject* dict_field = NULL;
     PyObject* py_str = NULL;
-    const char* value = defval;
     char* result = NULL;
 
     // Get the value from the dictionary (borrowed reference)
@@ -218,7 +217,7 @@ PyObject* ladspa_get_labels(const char* path) {
 
         if (descriptor_fn) {
             LADSPA_Descriptor *desc;
-            for (i = 0; ((desc = descriptor_fn(i)) != NULL); i++) {
+            for (i = 0; ((desc = (LADSPA_Descriptor *)descriptor_fn(i)) != NULL); i++) {
                 char data[4096];
                 
                 sprintf(data,"%s:%s", desc->Label, desc->Name);

@@ -427,7 +427,6 @@ static void set_channel_state(int channel, char* plugin_label, int enabled)
 {
     struct gcsynth_channel* c = &ChannelFilters[channel]; 
     struct gcsynth_filter* f = find_by_name(c, plugin_label);
-    int prev = c->at_least_one_filter_enabled;
     GList* iter;
 
     if (f) {

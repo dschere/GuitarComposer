@@ -70,7 +70,7 @@ int gcsynth_interleaved_filter_run(struct gcsynth_filter* gc_filter, LADSPA_Data
         gc_filter->in_data_buffer[1][j] = fc_buffer[i+1];
     }
 
-    for(i = 0; i < gc_filter->desc->PortCount; i++) {
+    for(i = 0; i < (int) gc_filter->desc->PortCount; i++) {
         gc_filter->desc->connect_port(
             gc_filter->plugin_instance,
             i,

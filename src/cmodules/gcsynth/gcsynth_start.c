@@ -12,7 +12,6 @@ void gcsynth_start(struct gcsynth* gcSynth)
 #define RAISE(errmsg) { gcsynth_raise_exception(errmsg); gcsynth_stop(gcSynth); return; }   
     int i;
     char errmsg[4096];
-    int r;
     struct gcsynth_cfg* cfg = &gcSynth->cfg;
 
     // check for existance of soundfont files 
