@@ -33,7 +33,9 @@ CSOURCES = [
     'gcsynth_channel.c',
     'gcsynth_event.c',
     'pyutil.c',
-    "gcsynth_sf.c"
+    'gcsynth_sf.c',
+    'audio_output.c',
+    'wave.c'
 ]
 
 """

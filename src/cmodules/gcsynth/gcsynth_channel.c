@@ -146,7 +146,6 @@ void synth_filter_router(int chan, float* left, float* right, int samples)
 
             // apply filter to audio buffers
             if (f->enabled) {
-                //printf("%s enabled\n", f->desc->Label);
                 gcsynth_filter_run_sterio(f, left, right, samples);
             }
         }

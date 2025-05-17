@@ -32,6 +32,10 @@ class EffectParameter:
     UNBOUNDED_INTEGER = 3
     BOOLEAN = 4
 
+    def __str__(self):
+        msg = f"{self.name} {self.current_value}"
+        return msg
+
     def __init__(self, spec: dict):
         self.c_index = 0
         self.has_default = False

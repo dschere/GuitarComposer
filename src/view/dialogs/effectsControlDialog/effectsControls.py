@@ -1,7 +1,7 @@
 import sys
 import copy
 from typing import Dict, List, Tuple
-
+import logging
 
 
 from PyQt6.QtWidgets import (
@@ -114,7 +114,15 @@ class EffectsDialog(QDialog):
                     r[e] = diffs
 
             # else disabled -> disabled so do nothing
-
+        if logging.getLogger('root').getEffectiveLevel() == logging.DEBUG:    
+            report = "effects\n"
+            for e, diffs in r.items():
+                report += f"  {e.name} enabled={e.enabled}:\n"
+                if e.enabled:
+                    for pname, e_param in diffs:
+                        report += f"       {e_param}\n"
+            logging.debug(report)
+        
         return r
 
     def on_preview(self):
@@ -158,6 +166,10 @@ class EffectsDialog(QDialog):
         control_layout = QHBoxLayout() 
         control_bar.setLayout(control_layout)
 
+        configure = QPushButton("configure")
+        configure.clicked.connect(self.on_configure)
+        control_layout.addWidget(configure)
+
         apply = QPushButton("apply")
         apply.clicked.connect(self.on_update)
         control_layout.addWidget(apply)
@@ -168,8 +180,23 @@ class EffectsDialog(QDialog):
 
         main_layout.addWidget(control_bar)
 
+        self.tab_widget = tab_widget
 
-            
+    def on_configure(self):
+        dialog = LadspaSelectDialog() 
+        # modal dialog that updates the effects repo. 
+        dialog.exec()
+        self.effect = self.effect_repo.create_effects()
+
+        self.tab_widget.clear()
+        data = []
+        for label, e in self.effects.etable.items():
+            data.append((EffectsTabContent(e), label))
+
+        for (content, name) in data:
+            self.tab_widget.addTab(content, name)
+
+
 
 
 def unittest():

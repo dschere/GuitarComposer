@@ -7,7 +7,8 @@
 #include "gcsynth.h"
 #include "gcsynth_filter.h"
 
-
+#define MONO_FILTER   1
+#define STEREO_FILTER 2
 
 static int ladspa_setup(struct gcsynth_filter* gc_filter, const char* path, char* label);
 static void ladspa_deallocate(struct gcsynth_filter* gc_filter);
@@ -58,6 +59,7 @@ void gcsynth_filter_destroy(struct gcsynth_filter* gc_filter)
 //     return 0;
 // }
 
+
 static
 int gcsynth_interleaved_filter_run(struct gcsynth_filter* gc_filter, LADSPA_Data* fc_buffer, int len) 
 {
@@ -77,6 +79,7 @@ int gcsynth_interleaved_filter_run(struct gcsynth_filter* gc_filter, LADSPA_Data
     }
     
     // run the filter and populate the output buffer
+    printf("gcsynth_interleaved_filter_run run()\n");
     gc_filter->desc->run(gc_filter->plugin_instance, len/2);
 
     for(i =0, j=0; i < len; i += 2, j++) {
@@ -87,8 +90,8 @@ int gcsynth_interleaved_filter_run(struct gcsynth_filter* gc_filter, LADSPA_Data
     return 0;
 }
 
-#define MONO_FILTER   1
-#define STEREO_FILTER 2
+
+
 
 int gcsynth_filter_run_sterio(
     struct gcsynth_filter* gc_filter, float* left, float* right, int samples)
@@ -98,17 +101,48 @@ int gcsynth_filter_run_sterio(
     if (gc_filter->enabled) {
         switch(gc_filter->in_buf_count) {
             case STEREO_FILTER:
-                //memcpy(gc_filter->in_data_buffer[0],left,samples);
-                //memcpy(gc_filter->in_data_buffer[1],right,samples);
-                for (i = 0; i < samples; i++) {
-                    gc_filter->in_data_buffer[0][i] = left[i];
-                    gc_filter->in_data_buffer[1][i] = right[i];
+                if (gc_filter->in_place_supported) {
+
+                    gc_filter->desc->connect_port(
+                        gc_filter->plugin_instance,
+                        gc_filter->left_in_idx,
+                        left
+                    );
+            
+                    gc_filter->desc->connect_port(
+                        gc_filter->plugin_instance,
+                        gc_filter->right_in_idx,
+                        right
+                    );
+
+                    gc_filter->desc->connect_port(
+                        gc_filter->plugin_instance,
+                        gc_filter->left_out_idx,
+                        left
+                    );
+            
+                    gc_filter->desc->connect_port(
+                        gc_filter->plugin_instance,
+                        gc_filter->right_out_idx,
+                        right
+                    );
+                } else {
+                    memcpy(gc_filter->in_data_buffer[0],left,samples * sizeof(float));
+                    memcpy(gc_filter->in_data_buffer[1],right,samples* sizeof(float));
                 }
                 break;
             case MONO_FILTER:
                 // stereo to mono
-                for(i = 0; i < samples; i++) {
-                    gc_filter->in_data_buffer[0][i] = left[i] + right[i] * 0.5f;
+                if (gc_filter->in_place_supported) {
+                    // the plugin was configured to use the same buffer 
+                    // for input and output.
+                    for(i = 0; i < samples; i++) {
+                        gc_filter->out_data_buffer[0][i] = (left[i] + right[i]) * 0.5f;
+                     } 
+                } else {
+                    for(i = 0; i < samples; i++) {
+                       gc_filter->in_data_buffer[0][i] = (left[i] + right[i]) * 0.5f;
+                    }
                 }
                 break;
         }
@@ -117,18 +151,11 @@ int gcsynth_filter_run_sterio(
 
         switch(gc_filter->out_buf_count) {
             case STEREO_FILTER:
-                //memcpy(left, gc_filter->out_data_buffer[0], samples);
-                //memcpy(right, gc_filter->out_data_buffer[1], samples);
-                for (i = 0; i < samples; i++) {
-                    left[i] = gc_filter->out_data_buffer[0][i];
-                    right[i] = gc_filter->out_data_buffer[1][i];
-                }
-
                 break;
             case MONO_FILTER:
                 // mono to stereo
                 for(i = 0; i < samples; i++) {
-                    left[i] = (float) gc_filter->out_data_buffer[0][i] * 0.5;
+                    left[i] = (float) gc_filter->out_data_buffer[0][i];
                     right[i] = left[i];
                 }
                 break;    
@@ -180,6 +207,7 @@ int gcsynth_filter_run(struct gcsynth_filter* gc_filter, LADSPA_Data* fc_buffer,
         }
         
         // run the filter and populate the output buffer
+        printf("gcsynth_filter_run run()\n"); 
         gc_filter->desc->run(gc_filter->plugin_instance, len);
 
         // for(i = 0; i < len; i++) {
@@ -350,6 +378,12 @@ static int ladspa_setup(struct gcsynth_filter* gc_filter, const char* path, char
     gc_filter->num_controls = 0;
     gc_filter->in_buf_count = 0;
     gc_filter->out_buf_count = 0;
+
+    if (LADSPA_IS_INPLACE_BROKEN(gc_filter->desc->Properties)) {
+        gc_filter->in_place_supported = 0;
+    } else {
+        gc_filter->in_place_supported = 1;
+    }
     
     for(i = 0; i < gc_filter->desc->PortCount; i++) {
         int pd = gc_filter->desc->PortDescriptors[i];
@@ -366,6 +400,12 @@ static int ladspa_setup(struct gcsynth_filter* gc_filter, const char* path, char
             //      gc_filter->in_buf_count
             // );
 
+            if (gc_filter->in_buf_count) {
+                gc_filter->left_in_idx = (int) i;
+            } else {
+                gc_filter->right_in_idx = (int) i;
+            }
+
             gc_filter->in_buf_count++;
         }
         // setup output port(s)
@@ -379,6 +419,11 @@ static int ladspa_setup(struct gcsynth_filter* gc_filter, const char* path, char
             //      i, gc_filter->desc->PortNames[i], 
             //      gc_filter->out_buf_count
             // );
+            if (gc_filter->out_buf_count) {
+                gc_filter->left_out_idx = (int) i;
+            } else {
+                gc_filter->right_out_idx = (int) i;
+            }
 
             gc_filter->out_buf_count++;
         }   
@@ -400,6 +445,7 @@ static int ladspa_setup(struct gcsynth_filter* gc_filter, const char* path, char
         }
     }
 
+
     // connect all ports, must be called before activate
     for(i = 0; i < gc_filter->desc->PortCount; i++) {
         gc_filter->desc->connect_port(
@@ -408,6 +454,25 @@ static int ladspa_setup(struct gcsynth_filter* gc_filter, const char* path, char
             gc_filter->port_map[i]
         );
     }
+
+    if (gc_filter->in_place_supported) {
+        // reconnect ports to use the same buffer for 
+        // input as output.
+        gc_filter->desc->connect_port(
+            gc_filter->plugin_instance,
+            gc_filter->left_in_idx,
+            gc_filter->port_map[gc_filter->left_out_idx]
+        );
+
+        gc_filter->desc->connect_port(
+            gc_filter->plugin_instance,
+            gc_filter->right_in_idx,
+            gc_filter->port_map[gc_filter->right_out_idx]
+        );
+
+        printf("Inplace buffer configuartion");
+    }
+
 
     // enable filter by default
     gcsynth_filter_enable(gc_filter);

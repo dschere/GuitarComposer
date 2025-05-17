@@ -8,10 +8,14 @@
 #define MAX_CHANNELS 64
 #endif
 
+#define SAMPLE_RATE   44100
+
+
 typedef void (*AudioChannelFilter)(int channel, float* left, float* right, int samples);
 
-int gcsynth_sf_init(char* sf_file[], int num_fonts, AudioChannelFilter filter_func);
 
+int gcsynth_sf_init(char* sf_file[], int num_fonts, AudioChannelFilter filter_func);
+void gcsynth_sf_shutdown();
 
 /**
  * bind a channel with a particular audio thread for a given soundfont id

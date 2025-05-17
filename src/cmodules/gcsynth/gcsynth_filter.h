@@ -42,6 +42,7 @@ struct gcsynth_filter {
     void* dl_handle;
 
     int enabled;
+    int in_place_supported;
 
     const LADSPA_Descriptor* desc;
     LADSPA_Descriptor_Function descriptor_fn;
@@ -57,8 +58,13 @@ struct gcsynth_filter {
     LADSPA_Data in_data_buffer[NUM_IO_PORTMAPS][GCSYNTH_AUDIO_BUFSIZE];
     LADSPA_Data out_data_buffer[NUM_IO_PORTMAPS][GCSYNTH_AUDIO_BUFSIZE];
 
+
     // port maps
     //  port number -> buffer
+    int left_out_idx; // mono
+    int right_out_idx;
+    int left_in_idx; // mono
+    int right_in_idx;
     LADSPA_Data* port_map[MAX_LADSPA_PORTS];
 };
 
