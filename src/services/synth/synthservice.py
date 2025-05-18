@@ -4,6 +4,7 @@ from singleton_decorator import singleton
 from services.synth.instrument_info import instrument_info
 from services.synth.sequencer import sequencer
 import atexit
+import signal
 
 class midi_channel_manager:
     DRUM_CHANNEL = 9
@@ -87,11 +88,13 @@ class synthservice:
         return self.db.find(instrument_name)
 
     def shutdown(self):
-        #RFU
         # perform cleanup here is anything needs to be done.
 
         # stop synth thread
         self.stop()
+        # failsafe in case there some race condition during shutdown
+        signal.alarm(2)
+
 
     def getSequencer(self):
         return sequencer(self)
