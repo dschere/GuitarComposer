@@ -29,7 +29,8 @@ Also based on tsf's design one sound font is allowed on one audio client.
 
 #include "gcsynth_sf.h"
 
-#define AUDIO_SAMPLES 512
+//#define AUDIO_SAMPLES 512
+#define AUDIO_SAMPLES 128
 #define BUFSIZE       0xFFFF
 #define MAX_CHANNEL_NUM 128
 
@@ -90,6 +91,165 @@ static int NumAudioThreads;
 static struct audio_thread* ChannelAllocTable[MAX_CHANNELS];
 
 
+struct voice_render_result {
+    int out_samples;
+    float* outL;
+    float* outR;
+};
+
+struct voice_render_result my_tsf_voice_render(tsf* f, struct tsf_voice* v, float* outputBuffer, int numSamples)
+{
+	struct tsf_region* region = v->region;
+	float* input = f->fontSamples;
+	float* outL = outputBuffer;
+	float* outR = (f->outputmode == TSF_STEREO_UNWEAVED ? outL + numSamples : TSF_NULL);
+    struct voice_render_result result;
+
+    result.out_samples = 0;
+    result.outL = outL;
+    result.outR = outR;
+
+	// Cache some values, to give them at least some chance of ending up in registers.
+	TSF_BOOL updateModEnv = (region->modEnvToPitch || region->modEnvToFilterFc);
+	TSF_BOOL updateModLFO = (v->modlfo.delta && (region->modLfoToPitch || region->modLfoToFilterFc || region->modLfoToVolume));
+	TSF_BOOL updateVibLFO = (v->viblfo.delta && (region->vibLfoToPitch));
+	TSF_BOOL isLooping    = (v->loopStart < v->loopEnd);
+	unsigned int tmpLoopStart = v->loopStart, tmpLoopEnd = v->loopEnd;
+	double tmpSampleEndDbl = (double)region->end, tmpLoopEndDbl = (double)tmpLoopEnd + 1.0;
+	double tmpSourceSamplePosition = v->sourceSamplePosition;
+	struct tsf_voice_lowpass tmpLowpass = v->lowpass;
+
+	TSF_BOOL dynamicLowpass = (region->modLfoToFilterFc || region->modEnvToFilterFc);
+	float tmpSampleRate = f->outSampleRate, tmpInitialFilterFc, tmpModLfoToFilterFc, tmpModEnvToFilterFc;
+
+	TSF_BOOL dynamicPitchRatio = (region->modLfoToPitch || region->modEnvToPitch || region->vibLfoToPitch);
+	double pitchRatio;
+	float tmpModLfoToPitch, tmpVibLfoToPitch, tmpModEnvToPitch;
+
+	TSF_BOOL dynamicGain = (region->modLfoToVolume != 0);
+	float noteGain = 0, tmpModLfoToVolume;
+
+	if (dynamicLowpass) tmpInitialFilterFc = (float)region->initialFilterFc, tmpModLfoToFilterFc = (float)region->modLfoToFilterFc, tmpModEnvToFilterFc = (float)region->modEnvToFilterFc;
+	else tmpInitialFilterFc = 0, tmpModLfoToFilterFc = 0, tmpModEnvToFilterFc = 0;
+
+	if (dynamicPitchRatio) pitchRatio = 0, tmpModLfoToPitch = (float)region->modLfoToPitch, tmpVibLfoToPitch = (float)region->vibLfoToPitch, tmpModEnvToPitch = (float)region->modEnvToPitch;
+	else pitchRatio = tsf_timecents2Secsd(v->pitchInputTimecents) * v->pitchOutputFactor, tmpModLfoToPitch = 0, tmpVibLfoToPitch = 0, tmpModEnvToPitch = 0;
+
+	if (dynamicGain) tmpModLfoToVolume = (float)region->modLfoToVolume * 0.1f;
+	else noteGain = tsf_decibelsToGain(v->noteGainDB), tmpModLfoToVolume = 0;
+
+	while (numSamples)
+	{
+		float gainMono, gainLeft, gainRight;
+		int blockSamples = (numSamples > TSF_RENDER_EFFECTSAMPLEBLOCK ? TSF_RENDER_EFFECTSAMPLEBLOCK : numSamples);
+		numSamples -= blockSamples;
+
+		if (dynamicLowpass)
+		{
+			float fres = tmpInitialFilterFc + v->modlfo.level * tmpModLfoToFilterFc + v->modenv.level * tmpModEnvToFilterFc;
+			float lowpassFc = (fres <= 13500 ? tsf_cents2Hertz(fres) / tmpSampleRate : 1.0f);
+			tmpLowpass.active = (lowpassFc < 0.499f);
+			if (tmpLowpass.active) tsf_voice_lowpass_setup(&tmpLowpass, lowpassFc);
+		}
+
+		if (dynamicPitchRatio)
+			pitchRatio = tsf_timecents2Secsd(v->pitchInputTimecents + (v->modlfo.level * tmpModLfoToPitch + v->viblfo.level * tmpVibLfoToPitch + v->modenv.level * tmpModEnvToPitch)) * v->pitchOutputFactor;
+
+		if (dynamicGain)
+			noteGain = tsf_decibelsToGain(v->noteGainDB + (v->modlfo.level * tmpModLfoToVolume));
+
+		gainMono = noteGain * v->ampenv.level;
+
+		// Update EG.
+		tsf_voice_envelope_process(&v->ampenv, blockSamples, tmpSampleRate);
+		if (updateModEnv) tsf_voice_envelope_process(&v->modenv, blockSamples, tmpSampleRate);
+
+		// Update LFOs.
+		if (updateModLFO) tsf_voice_lfo_process(&v->modlfo, blockSamples);
+		if (updateVibLFO) tsf_voice_lfo_process(&v->viblfo, blockSamples);
+
+		switch (f->outputmode)
+		{
+			case TSF_STEREO_INTERLEAVED:
+				gainLeft = gainMono * v->panFactorLeft, gainRight = gainMono * v->panFactorRight;
+				while (blockSamples-- && tmpSourceSamplePosition < tmpSampleEndDbl)
+				{
+					unsigned int pos = (unsigned int)tmpSourceSamplePosition, nextPos = (pos >= tmpLoopEnd && isLooping ? tmpLoopStart : pos + 1);
+
+					// Simple linear interpolation.
+					float alpha = (float)(tmpSourceSamplePosition - pos), val = (input[pos] * (1.0f - alpha) + input[nextPos] * alpha);
+
+					// Low-pass filter.
+					if (tmpLowpass.active) val = tsf_voice_lowpass_process(&tmpLowpass, val);
+
+					*outL++ += val * gainLeft;
+					*outL++ += val * gainRight;
+
+                    result.out_samples++;  
+
+					// Next sample.
+					tmpSourceSamplePosition += pitchRatio;
+					if (tmpSourceSamplePosition >= tmpLoopEndDbl && isLooping) tmpSourceSamplePosition -= (tmpLoopEnd - tmpLoopStart + 1.0);
+				}
+				break;
+
+			case TSF_STEREO_UNWEAVED:
+				gainLeft = gainMono * v->panFactorLeft, gainRight = gainMono * v->panFactorRight;
+				while (blockSamples-- && tmpSourceSamplePosition < tmpSampleEndDbl)
+				{
+					unsigned int pos = (unsigned int)tmpSourceSamplePosition, nextPos = (pos >= tmpLoopEnd && isLooping ? tmpLoopStart : pos + 1);
+
+					// Simple linear interpolation.
+					float alpha = (float)(tmpSourceSamplePosition - pos), val = (input[pos] * (1.0f - alpha) + input[nextPos] * alpha);
+
+					// Low-pass filter.
+					if (tmpLowpass.active) val = tsf_voice_lowpass_process(&tmpLowpass, val);
+
+					*outL++ += val * gainLeft;
+					*outR++ += val * gainRight;
+
+                    result.out_samples++;
+
+					// Next sample.
+					tmpSourceSamplePosition += pitchRatio;
+					if (tmpSourceSamplePosition >= tmpLoopEndDbl && isLooping) tmpSourceSamplePosition -= (tmpLoopEnd - tmpLoopStart + 1.0);
+				}
+				break;
+
+			case TSF_MONO:
+				while (blockSamples-- && tmpSourceSamplePosition < tmpSampleEndDbl)
+				{
+					unsigned int pos = (unsigned int)tmpSourceSamplePosition, nextPos = (pos >= tmpLoopEnd && isLooping ? tmpLoopStart : pos + 1);
+
+					// Simple linear interpolation.
+					float alpha = (float)(tmpSourceSamplePosition - pos), val = (input[pos] * (1.0f - alpha) + input[nextPos] * alpha);
+
+					// Low-pass filter.
+					if (tmpLowpass.active) val = tsf_voice_lowpass_process(&tmpLowpass, val);
+
+					*outL++ += val * gainMono;
+                    result.out_samples++;
+
+					// Next sample.
+					tmpSourceSamplePosition += pitchRatio;
+					if (tmpSourceSamplePosition >= tmpLoopEndDbl && isLooping) tmpSourceSamplePosition -= (tmpLoopEnd - tmpLoopStart + 1.0);
+				}
+				break;
+		}
+
+		if (tmpSourceSamplePosition >= tmpSampleEndDbl || v->ampenv.segment == TSF_SEGMENT_DONE)
+		{
+			tsf_voice_kill(v);
+			return result;
+		}
+	}
+
+	v->sourceSamplePosition = tmpSourceSamplePosition;
+	if (tmpLowpass.active || dynamicLowpass) v->lowpass = tmpLowpass;
+
+    return result;
+}
+
 
 /*
    refactored tsf_render_float so it routes audio data to ladspa filters
@@ -113,24 +273,26 @@ TSFDEF void my_tsf_render_float(tsf* f, float* buffer, int samples)
 	TSF_MEMSET(buffer, 0, n);
     int i;
 
-	for (; v != vEnd; v++) {
+    for (; v != vEnd; v++) {
 		if (v->playingPreset != -1) {
+            float chan_buffer[AUDIO_SAMPLES * 2];
+            float* left, *right;
+            struct voice_render_result vr;
 
-            if (!gcsynth_channel_filter_is_enabled(v->playingChannel)) {
-                tsf_voice_render(f, v, buffer, samples);
-            } else {
-                float chan_buffer[AUDIO_SAMPLES * 16 * sizeof(float)];
+            memset(chan_buffer, 0, sizeof(chan_buffer));
 
-                memset(chan_buffer, 0, n);
-                tsf_voice_render(f, v, chan_buffer, samples);
+            vr = my_tsf_voice_render(f, v, chan_buffer, samples);
+        
+            if (gcsynth_channel_filter_is_enabled(v->playingChannel)) { 
+                synth_filter_router(
+                    v->playingChannel, vr.outL, vr.outR, vr.out_samples);
+            }
 
-                synth_interleaved_filter_router(v->playingChannel, 
-                    chan_buffer, samples);
-
-                for(i = 0; i < n; i++) {
-                    buffer[i] += chan_buffer[i];
-                }
-            }            
+            // convert to interleaved output.
+            for(i = 0; i < vr.out_samples; i++) {
+                buffer[i * 2] += vr.outL[i];
+                buffer[i * 2 + 1] += vr.outR[i];
+            }                        
         }
     }
 
@@ -366,7 +528,17 @@ int gcsynth_sf_init(char* sf_file[], int num_font_files, AudioChannelFilter filt
         int f_index = a_thread; 
         SDL_zero(AudioThreads[a_thread].spec);
 
-        AudioThreads[a_thread].spec.freq = SAMPLE_RATE;
+        AudioThreads[a_thread].g_TinySoundFont = tsf_load_filename(sf_file[f_index]);
+        if (!AudioThreads[a_thread].g_TinySoundFont) {
+            fprintf(stderr,"Unable to load %s\n", sf_file[f_index]);
+            return -1;
+        }
+        int sample_rate = (int) 
+            AudioThreads[a_thread].g_TinySoundFont->outSampleRate;
+
+        printf("%s sample_rate = %d\n", sf_file[f_index], sample_rate);    
+
+        AudioThreads[a_thread].spec.freq = sample_rate;
         AudioThreads[a_thread].spec.format =  AUDIO_F32SYS;  // AUDIO_F32;
         AudioThreads[a_thread].spec.channels = 2;
         AudioThreads[a_thread].spec.samples = AUDIO_SAMPLES;
@@ -380,16 +552,11 @@ int gcsynth_sf_init(char* sf_file[], int num_font_files, AudioChannelFilter filt
         // sfont_id is basically the index for the audio thread
         AudioThreads[a_thread].sfont_id = f_index + 1;  
 
-        AudioThreads[a_thread].g_TinySoundFont = tsf_load_filename(sf_file[f_index]);
-        if (!AudioThreads[a_thread].g_TinySoundFont) {
-            fprintf(stderr,"Unable to load %s\n", sf_file[f_index]);
-            return -1;
-        }
 
      	// Set the SoundFont rendering output mode
 	    tsf_set_output(
             AudioThreads[a_thread].g_TinySoundFont, 
-            TSF_STEREO_INTERLEAVED, 
+            TSF_STEREO_UNWEAVED, 
             AudioThreads[a_thread].spec.freq, 0);
 
         AudioThreads[a_thread].dev = SDL_OpenAudioDevice(

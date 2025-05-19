@@ -74,6 +74,8 @@ void voice_data_router(void *userdata, int chan, double* buf, int len);
 
 void synth_filter_router(int channel, float* left, float* right, int samples);
 void synth_interleaved_filter_router(int chan, float* interleaved_audio, int samples);
+void synth_unweaved_filter_router(int chan, float* unweaved_audio, int samples);
+
 
 float *synth_get_in_buf(int chan);
 
