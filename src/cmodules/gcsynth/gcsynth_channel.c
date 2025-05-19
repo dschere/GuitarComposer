@@ -157,6 +157,14 @@ float *synth_get_in_buf(int chan) {
     return ChannelFilters[chan].in_audio_buffer;
 }
 
+//TSF_STEREO_UNWEAVED
+void synth_unweaved_filter_router(int chan, float* unweaved_audio, int samples)
+{
+    float *left = unweaved_audio;
+    float *right = &left[samples];
+
+    synth_filter_router(chan, left, right, samples);
+}
 
 void synth_interleaved_filter_router(int chan, float* interleaved_audio, int samples)
 {
