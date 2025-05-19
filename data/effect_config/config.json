@@ -716,7 +716,7 @@
         "label": "autoPhaser",
         "name": "Auto phaser",
         "path": "/usr/lib/ladspa/phasers_1217.so",
-        "selected": false
+        "selected": true
     },
     "bandpass_a_iir": {
         "controls": [
@@ -1423,7 +1423,7 @@
         "label": "delay_c",
         "name": "Simple delay line, cubic spline interpolation",
         "path": "/usr/lib/ladspa/delay_1898.so",
-        "selected": true
+        "selected": false
     },
     "delay_l": {
         "controls": [
@@ -1689,7 +1689,7 @@
         "label": "divider",
         "name": "Audio Divider (Suboctave Generator)",
         "path": "/usr/lib/ladspa/divider_1186.so",
-        "selected": true
+        "selected": false
     },
     "djFlanger": {
         "controls": [
@@ -1968,7 +1968,7 @@
         "label": "fadDelay",
         "name": "Fractionally Addressed Delay Line",
         "path": "/usr/lib/ladspa/fad_delay_1192.so",
-        "selected": true
+        "selected": false
     },
     "fastLookaheadLimiter": {
         "controls": [
@@ -2103,7 +2103,7 @@
         "label": "flanger",
         "name": "Flanger",
         "path": "/usr/lib/ladspa/flanger_1191.so",
-        "selected": false
+        "selected": true
     },
     "fmOsc": {
         "controls": [
@@ -5043,7 +5043,7 @@
         "label": "modDelay",
         "name": "Modulatable delay",
         "path": "/usr/lib/ladspa/mod_delay_1419.so",
-        "selected": false
+        "selected": true
     },
     "multivoiceChorus": {
         "controls": [
@@ -6798,7 +6798,7 @@
         "label": "tap_chorusflanger",
         "name": "TAP Chorus/Flanger",
         "path": "/usr/lib/ladspa/tap_chorusflanger.so",
-        "selected": true
+        "selected": false
     },
     "tap_deesser": {
         "controls": [

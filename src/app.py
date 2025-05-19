@@ -15,6 +15,34 @@ import qdarktheme
 import signal
 
 
+# setup signal handlers to aid in troublshooting
+# SIGUSR1 dumps the current call stack, SIGUSR2
+# prints out stack traces for each thread.
+def dump_current_call_stack(*args):
+    import inspect
+
+    stack = inspect.stack()
+    for frame_info in stack:
+        print(frame_info.filename, frame_info.lineno, frame_info.function)
+signal.signal(signal.SIGUSR1, dump_current_call_stack)
+
+def print_all_thread_stack_traces(*args):
+    import threading
+    import traceback
+
+    for thread in threading.enumerate():
+        if thread.ident:
+            print(f"Thread: {thread.name} ID: {thread.ident}")
+            frame = sys._current_frames().get(thread.ident)
+            if frame:
+                traceback.print_stack(frame)
+            else:
+                print("No stack trace available.")
+        else:
+            print("Unknown thread " + str(vars(thread)))
+signal.signal(signal.SIGUSR2, print_all_thread_stack_traces)
+
+
 # setup logging for application
 
 
