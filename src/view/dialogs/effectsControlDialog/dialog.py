@@ -36,7 +36,7 @@ class EffectsDialog(QDialog):
     original_effects_state : Effects | None = None
 
 
-    def is_filtered(self, text):
+    def is_not_filtered(self, text):
         """
         return true|false if the text entered in filter text box
         is contained within text. the search is case insensitive.
@@ -45,8 +45,8 @@ class EffectsDialog(QDialog):
         ft : QLineEdit = self.effect_name_filter
         t = ft.text().lower()
         if t == "":
-            return False
-        return text.lower().find(t) == -1 
+            return True
+        return text.lower().find(t) != -1 
     
     def populate_effect_name_combo(self):
         """
@@ -59,14 +59,15 @@ class EffectsDialog(QDialog):
         enames.sort()
 
         for n in enames:
-            item = QStandardItem(n)
-            e = self.effects.get_effect(n)
-            assert(e)
-            font = QFont()
-            font.setBold(e.is_enabled())
-            item.setFont(font)
-            self.effect_list_model.appendRow(item)
-            self.effect_item_table[n] = item
+            if self.is_not_filtered(n):
+                item = QStandardItem(n)
+                e = self.effects.get_effect(n)
+                assert(e)
+                font = QFont()
+                font.setBold(e.is_enabled())
+                item.setFont(font)
+                self.effect_list_model.appendRow(item)
+                self.effect_item_table[n] = item
 
         self.effect_name_combo.setModel(self.effect_list_model)
         
@@ -96,7 +97,9 @@ class EffectsDialog(QDialog):
         n = self.effect_name_combo.currentText()
         assert(self.effects)
         e = self.effects.get_effect(n)
-        assert(e)
+        if not e:
+            return
+
         #item = self.effect_item_table[n]
         e.enabled = state
         idx = self.effect_name_combo.currentIndex() 
@@ -106,6 +109,7 @@ class EffectsDialog(QDialog):
             font.setBold(e.is_enabled())
             item.setFont(font)
 
+        self.effect_name_combo.setMaxVisibleItems(10)
         self.effect_name_combo.update()
             
 
@@ -113,7 +117,8 @@ class EffectsDialog(QDialog):
         assert(self.effects)
         n = self.effect_name_combo.currentText()
         e = self.effects.get_effect(n)
-        assert(e)
+        if not e:
+            return
         
         self.enable_ctrl.setChecked(e.is_enabled())
         # clear grid
@@ -130,17 +135,24 @@ class EffectsDialog(QDialog):
         ctrl_row_layout = QGridLayout()
 
         self.effect_name_filter_lbl = QLabel("filter: ")
+        self.effect_name_filter_lbl.setMaximumWidth(100)
         self.effect_name_filter = QLineEdit()
         self.effect_name_combo = QComboBox()
+        self.effect_name_combo.setMaximumWidth(200)
+        self.effect_name_filter.setMaximumWidth(200)
 
         ctrl_row_layout.addWidget(self.effect_name_filter_lbl, 0, 0)
         ctrl_row_layout.addWidget(self.effect_name_filter, 0, 1)
         ctrl_row_layout.addWidget(self.effect_name_combo, 1, 1)
 
         self.effect_name_combo.setMaxVisibleItems(10)
+        
+        self.effect_name_combo.setStyleSheet("QComboBox { combobox-popup: 0; }");        
+
         self.populate_effect_name_combo()
 
         self.effect_name_combo.currentIndexChanged.connect(self.on_effect_selected)
+        self.effect_name_filter.textChanged.connect(self.populate_effect_name_combo)
 
         layout.addLayout(ctrl_row_layout) 
 
@@ -172,12 +184,17 @@ class EffectsDialog(QDialog):
         setup row with enable disable button.
         """
         ctrl_layout = QHBoxLayout()
+        ctrl_layout.setSpacing(0)
+        
 
         self.enable_ctrl = QCheckBox()
+        self.enable_ctrl.setMaximumWidth(100)
         self.enable_ctrl.setText("Enable: ")
         self.preview_effect = QPushButton("preview")
+        self.preview_effect.setMaximumWidth(100)
         self.preview_effect.setToolTip("preview these effect settings")
         self.apply_effect = QPushButton("apply")
+        self.apply_effect.setMaximumWidth(100)
         self.apply_effect.setToolTip("assign effect settings to track or moment in track.")
 
         self.preview_effect.clicked.connect(self.on_preview)
@@ -199,6 +216,8 @@ class EffectsDialog(QDialog):
     def __init__(self, parent=None, effects: Effects | None = None):
         super().__init__(parent)
         self.setWindowTitle("Audio Effects Control")
+        self.setMinimumWidth(600)
+
         self.original_effects_state = effects 
 
         if effects:
@@ -227,7 +246,7 @@ class EffectsDialog(QDialog):
 
 
 def unittest():
-    import sys
+    import sys, signal
     from models.note import Note
     from PyQt6.QtWidgets import QApplication
     from services.synth.synthservice import synthservice
@@ -263,8 +282,8 @@ def unittest():
 
 
     def on_preview(evt : EffectPreview):
-        #  synth, chan, ec: EffectChanges ):
-        instr.update_effect_changes(SynthService,0,evt.changes)
+        instr.effects_change(evt.changes)
+        # send an arbitrary note to hear what applying the effect sounds like.
         n = Note()
         n.string = 4
         n.fret = 0
@@ -272,10 +291,12 @@ def unittest():
         n.duration = 2000
         instr.note_event(n)
 
+
     dialog.effect_preview.connect(on_preview)
 
     dialog.exec()
     SynthService.stop()
+    signal.alarm(1)
 
 
 if __name__ == '__main__':
