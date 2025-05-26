@@ -1,7 +1,7 @@
 """
 Central place for custom signals/slots for the application
 """
-from typing import List
+from typing import Dict, List, Tuple
 from PyQt6.QtGui import QStandardItemModel
 from PyQt6.QtCore import QObject, QSettings
 from PyQt6.QtCore import Qt
@@ -10,8 +10,9 @@ from singleton_decorator import singleton
 
 from models.measure import Measure, TabEvent
 from models.note import Note
+from models.param import EffectParameter
 from models.track import Track
-from models.effect import Effects
+from models.effect import Effect, Effects
 from models.song import Song
 from view.dialogs.effectsControlDialog.effectsControls import EffectChanges, EffectPreview
 
@@ -121,6 +122,18 @@ class PlayerVisualEvent:
         self.measure : Measure | None = None
 
 global _toolbar_button_update
+
+
+EffectChanges = Dict[Effect, List[Tuple[str, EffectParameter]]]
+
+class EffectPreview:
+    def __init__(self, e :Effects, c: EffectChanges):
+        self.effects = e
+        self.changes = c
+        self.note = "C3"
+        self.repeat_note = False
+        self.note_interval = 120        
+
 
 
 @singleton

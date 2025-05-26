@@ -1,3 +1,5 @@
+import copy
+
 from models.effect import Effect, Effects
 from models.param import EffectParameter
 from view.dialogs.effectsControlDialog.parameter import ParameterRow
@@ -11,16 +13,7 @@ from PyQt6.QtWidgets import (QDialog, QGridLayout,
 from typing import Dict, List, Tuple
 from PyQt6.QtGui import QStandardItemModel, QStandardItem, QFont
 
-
-EffectChanges = Dict[Effect, List[Tuple[str, EffectParameter]]]
-
-class EffectPreview:
-    def __init__(self, e :Effects, c: EffectChanges):
-        self.effects = e
-        self.changes = c
-        self.note = "C3"
-        self.repeat_note = False
-        self.note_interval = 120        
+from view.events import EffectPreview, EffectChanges
 
 
 
@@ -38,6 +31,10 @@ class EffectsDialog(QDialog):
     # bold text.
     effect_list_model = QStandardItemModel()
     effect_item_table : Dict[str,QStandardItem] = {}
+
+    effects : Effects | None = None 
+    original_effects_state : Effects | None = None
+
 
     def is_filtered(self, text):
         """
@@ -57,6 +54,7 @@ class EffectsDialog(QDialog):
         the user to filter the list.
         """
         self.effect_list_model.clear()
+        assert(self.effects)
         enames = self.effects.get_names()
         enames.sort()
 
@@ -96,20 +94,23 @@ class EffectsDialog(QDialog):
                     w.setEnabled(state)
             
         n = self.effect_name_combo.currentText()
+        assert(self.effects)
         e = self.effects.get_effect(n)
         assert(e)
         #item = self.effect_item_table[n]
         e.enabled = state
         idx = self.effect_name_combo.currentIndex() 
         item = self.effect_list_model.item(idx)
-        font = item.font()
-        font.setBold(e.is_enabled())
-        item.setFont(font)
+        if item:
+            font = item.font()
+            font.setBold(e.is_enabled())
+            item.setFont(font)
 
         self.effect_name_combo.update()
             
 
     def on_effect_selected(self):
+        assert(self.effects)
         n = self.effect_name_combo.currentText()
         e = self.effects.get_effect(n)
         assert(e)
@@ -143,15 +144,28 @@ class EffectsDialog(QDialog):
 
         layout.addLayout(ctrl_row_layout) 
 
-    
+    def all_changes(self) -> EffectChanges: # type: ignore
+        r = {}
+        assert(self.effects)
+
+        # in this case were we are not altering a prior effects state then 
+        # then simply generate EffectChanges for all enabled effects
+        for n in self.effects.get_names():     
+            e = self.effects.get_effect(n)
+            if e and e.is_enabled():
+                r[e] = [(n, e.get_param_by_name(n)) for n in e.getParamNames()]
+        return r
 
     def on_preview(self):
-        #evt = EffectPreview(self.effects, self.delta()) 
-        #self.effect_preview.emit(evt)
-        pass
-
+        assert(self.effects)
+        evt = EffectPreview(self.effects, self.all_changes()) 
+        self.effect_preview.emit(evt)
+        
     def on_apply(self):
-        pass
+        # only applicable if we are altering the exising effects state.
+        if self.original_effects_state:
+            self.original_effects_state = self.effects
+            self.close()
 
     def setup_control_row(self, layout : QVBoxLayout):
         """
@@ -161,9 +175,9 @@ class EffectsDialog(QDialog):
 
         self.enable_ctrl = QCheckBox()
         self.enable_ctrl.setText("Enable: ")
-        self.preview_effect = QPushButton()
+        self.preview_effect = QPushButton("preview")
         self.preview_effect.setToolTip("preview these effect settings")
-        self.apply_effect = QPushButton()
+        self.apply_effect = QPushButton("apply")
         self.apply_effect.setToolTip("assign effect settings to track or moment in track.")
 
         self.preview_effect.clicked.connect(self.on_preview)
@@ -180,12 +194,18 @@ class EffectsDialog(QDialog):
         layout.addLayout(ctrl_layout)
         
 
+    
 
     def __init__(self, parent=None, effects: Effects | None = None):
         super().__init__(parent)
         self.setWindowTitle("Audio Effects Control")
-        self.effects = effects if effects else self.effect_repo.create_effects()
+        self.original_effects_state = effects 
 
+        if effects:
+            self.effects = copy.deepcopy(effects)
+        else:
+            self.effects = self.effect_repo.create_effects()
+            
         layout = QVBoxLayout()
         self.param_grid = QGridLayout()
 
