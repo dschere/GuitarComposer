@@ -37,7 +37,12 @@ class Effect:
         d = copy.deepcopy(vars(self))
         del d['params']
         return d
-
+    
+    def getParamNames(self) -> List[str]:
+        return list(self.params.keys())
+    
+    def getParameters(self) -> list[EffectParameter]:
+        return list(self.params.values())
 
     def select(self):
         "If this plugin available for use."
@@ -64,7 +69,7 @@ class Effect:
     def plugin_label(self):
         return self.label
 
-    def get_name(self):
+    def get_name(self) -> str:
         return self.name 
 
     def get_param_by_name(self, name) -> EffectParameter:
@@ -162,8 +167,13 @@ class Effects:
     def add(self, label: str, e: Effect):
         self.etable[label] = e
 
+    def get_effect(self, label: str) -> Effect | None:
+        return self.etable.get(label)
 
-
+    def get_names(self) -> List[str]:
+        r = list(self.etable.keys())
+        r.sort()
+        return r
 
 
 
