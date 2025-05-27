@@ -14,7 +14,7 @@ from models.param import EffectParameter
 from models.track import Track
 from models.effect import Effect, Effects
 from models.song import Song
-from view.dialogs.effectsControlDialog.effectsControls import EffectChanges, EffectPreview
+#from view.dialogs.effectsControlDialog.dialog import EffectChanges, EffectPreview
 
 
 

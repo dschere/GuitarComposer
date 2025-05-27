@@ -9,12 +9,16 @@ from services.effectRepo import EffectRepository
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import (QDialog, QGridLayout, 
         QVBoxLayout, QHBoxLayout, QComboBox, QLineEdit, 
-        QCheckBox, QLabel, QPushButton, QSpacerItem, QSizePolicy)
+        QCheckBox, QLabel, QPushButton, QSpacerItem, QSizePolicy, QMessageBox)
 from typing import Dict, List, Tuple
 from PyQt6.QtGui import QStandardItemModel, QStandardItem, QFont
 
 from view.events import EffectPreview, EffectChanges
 
+class EffectChangeEvent:
+    def __init__(self, e: Effects, c: EffectChanges):
+        self.effects = e
+        self.changes = c
 
 
 class EffectsDialog(QDialog):
@@ -24,7 +28,7 @@ class EffectsDialog(QDialog):
     effect_preview = pyqtSignal(EffectPreview)
     # user wishes to update the current effects state in the
     # track.
-    effect_updated = pyqtSignal(Effects)
+    effect_updated = pyqtSignal(EffectChangeEvent)
     selected_effect : Effect | None  = None
 
     # allow for enabled effects to be displayed in
@@ -175,9 +179,19 @@ class EffectsDialog(QDialog):
         
     def on_apply(self):
         # only applicable if we are altering the exising effects state.
-        if self.original_effects_state:
-            self.original_effects_state = self.effects
-            self.close()
+        if self.original_effects_state and self.effects:
+            reply = QMessageBox.question(
+                None,  # parent widget
+                "Confirm",  # window title
+                "Do you want to apply effect changes?",  # message text
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+            if reply == QMessageBox.StandardButton.Yes:
+                e_changes = self.effects.delta(self.original_effects_state) 
+                evt = EffectChangeEvent(self.effects, e_changes)
+                self.effect_updated.emit(evt)
+
+                self.close()
 
     def setup_control_row(self, layout : QVBoxLayout):
         """
@@ -211,8 +225,6 @@ class EffectsDialog(QDialog):
         layout.addLayout(ctrl_layout)
         
 
-    
-
     def __init__(self, parent=None, effects: Effects | None = None):
         super().__init__(parent)
         self.setWindowTitle("Audio Effects Control")
@@ -226,6 +238,7 @@ class EffectsDialog(QDialog):
             self.effects = self.effect_repo.create_effects()
             
         layout = QVBoxLayout()
+        layout.setSpacing(0)
         self.param_grid = QGridLayout()
 
         self.setLayout(layout)
