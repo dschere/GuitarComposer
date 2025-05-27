@@ -3,13 +3,13 @@ from PyQt6.QtWidgets import (QHBoxLayout, QDialogButtonBox,
                              QVBoxLayout, QComboBox, QGroupBox, QPushButton)
 
 from music.instrument import getInstrumentList
-from view.events import EditorEvent, Signals, InstrumentSelectedEvent
+from view.events import EditorEvent, EffectPreview, Signals, InstrumentSelectedEvent
 
 from view.config import LabelText
 from util.midi import midi_codes
 from models.track import Track
 
-from view.dialogs.effectsControlDialog.effectsControls import EffectPreview, EffectsDialog
+from view.dialogs.effectsControlDialog.dialog import EffectsDialog
 
 
 """

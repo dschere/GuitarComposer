@@ -19,6 +19,9 @@ class EffectRepository:
     def getNames(self) -> List[str]:
         return list(self.effects.keys())
     
+    def getEffects(self) -> List[Effect]:
+        return list(self.effects.values())
+    
     def update(self, elist: List[Effect]):
         data = open(EFFECT_CFG_FILE).read()
         cfg = json.loads(data)
@@ -35,8 +38,7 @@ class EffectRepository:
         """    
         r = Effects()
         for (label, e) in self.effects.items():
-            if e.selected:
-                r.add(label, copy.deepcopy(e))
+            r.add(label, copy.deepcopy(e))
         return r
 
     def __init__(self):
@@ -63,7 +65,6 @@ class EffectRepository:
                         'controls': controls,
                         'name': name,
                         'label': label,
-                        'selected': False,
                         'path': filepath
                     }
                     self.effects[label] = e
@@ -72,7 +73,6 @@ class EffectRepository:
                     d = cfg[label]
                     controls = d['controls']
                     e = Effect(name, label, filepath, controls)
-                    e.selected = d['selected']
                     self.effects[label] = e
 
         data = json.dumps(cfg, indent=4, sort_keys=True)

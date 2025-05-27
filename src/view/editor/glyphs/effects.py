@@ -1,3 +1,6 @@
+from typing import Dict, List, Tuple
+from models.effect import Effect
+from models.param import EffectParameter
 from view.editor.glyphs.common import (
         STAFF_SYM_WIDTH,
         EFFECTS_SYM_HEIGHT 
@@ -8,8 +11,11 @@ from models.track import TabEvent
 from PyQt6.QtGui import QIcon, QKeyEvent, QMouseEvent, QPixmap, QImage
 from PyQt6.QtCore import Qt
 
-from view.dialogs.effectsControlDialog.effectsControls import ( 
+from view.dialogs.effectsControlDialog.dialog import ( 
     EffectsDialog, EffectPreview, EffectChangeEvent)
+
+
+EffectChanges = Dict[Effect, List[Tuple[str, EffectParameter]]]
     
 
 

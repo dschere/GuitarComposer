@@ -20,7 +20,7 @@ from util.projectRepo import ProjectRepo
 from music.instrument import Instrument
 from view.config import LabelText
 
-from view.dialogs.effectsControlDialog.effectsControls import EffectPreview,\
+from view.dialogs.effectsControlDialog.dialog import EffectPreview,\
     EffectChanges
 
 FRETBOARD_CHANNEL = 0

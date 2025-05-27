@@ -31,6 +31,11 @@ class FretboardControls(QWidget):
         instrument_layout = QHBoxLayout()
         instrument_label = QLabel(LabelText.instruments)
         self.instr_combo_box = QComboBox()
+
+
+        self.instr_combo_box.setMaxVisibleItems(10)
+        self.instr_combo_box.setStyleSheet("QComboBox { combobox-popup: 0; }")
+
         instr_list = getInstrumentList()
         self.instr_combo_box.addItems(instr_list)
         instrument_layout.addWidget(instrument_label)
@@ -48,6 +53,12 @@ class FretboardControls(QWidget):
         combo_layout = QHBoxLayout()
         combo_label = QLabel(LabelText.scales, self)
         self.scale_combo_box = QComboBox(self)
+
+
+        self.scale_combo_box.setMaxVisibleItems(10)
+        self.scale_combo_box.setStyleSheet("QComboBox { combobox-popup: 0; }")
+
+
         s_names = self.music_scales.sorted_names
         self.items = list(filter(lambda n: len(n) < 48, s_names))
         self.scale_combo_box.addItems(self.items)
