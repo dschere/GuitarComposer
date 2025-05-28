@@ -151,7 +151,7 @@ class EffectsDialog(QDialog):
 
         self.effect_name_combo.setMaxVisibleItems(10)
         
-        self.effect_name_combo.setStyleSheet("QComboBox { combobox-popup: 0; }");        
+        self.effect_name_combo.setStyleSheet("QComboBox { combobox-popup: 0; }")      
 
         self.populate_effect_name_combo()
 

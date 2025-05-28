@@ -3,10 +3,11 @@
         {
             "name": "Linux",
             "includePath": [
-                "${workspaceFolder}/**",
-                "/usr/include/python3.11/",
+                "/usr/include/python3.11",
                 "/usr/include/glib-2.0",
-                "${workspaceFolder}/src/cmodules/gcsynth/"
+                "/usr/lib/x86_64-linux-gnu/glib-2.0/include",
+                "${workspaceFolder}/src/cmodules/gcsynth",
+                "${workspaceFolder}/**"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/clang",

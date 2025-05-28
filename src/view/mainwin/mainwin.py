@@ -19,9 +19,13 @@ from view.editor.trackEditorView import TrackEditorView
 import logging
 from controllers.editorcontroller import EditorController
 from view.player.playerView import PlayerView
+import signal
 
 
 class MainWindow(QMainWindow):
+
+
+
     def create_menubar(self):
         # Create the menu bar
         menu_bar : QMenuBar | None = self.menuBar()
@@ -186,7 +190,11 @@ class MainWindow(QMainWindow):
     def closeEvent(self, event):
         # Save window and splitter state before closing
         self.save_settings()
+        # instruct the os to send this process the a SIGNALRM
+        # in a second to make sure the app doesn't get stuck.
+        signal.alarm(1)
         super().closeEvent(event)
+        
 
     def save_settings(self):
         """Save the splitter sizes and window geometry."""
