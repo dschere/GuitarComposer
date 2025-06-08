@@ -16,7 +16,7 @@ from models.note import Note
 from models.song import Song
 from models.track import Track
 from view.events import Signals, StringBendEvent
-from util.projectRepo import ProjectRepo
+from services.projectMngr import ProjectManager
 from music.instrument import Instrument
 from view.config import LabelText
 
@@ -208,7 +208,7 @@ class AppController:
 
     def on_ready(self, app):
         # setup navigator, score editor
-        titles = self.projects.getTitles()
+        titles = self.projects.titles()
 
         if len(titles) == 0:
             sc = SongController("noname")
@@ -216,7 +216,7 @@ class AppController:
             self.song_ctrl[sc.title()] = sc
         else:
             for title in titles:
-                song_model = self.projects.load_song(title)
+                song_model = self.projects.open_song_using_title(title)
                 sc = SongController(title)
                 sc.load_model(song_model)
                 self.song_ctrl[sc.title()] = sc
@@ -240,7 +240,7 @@ class AppController:
         self.synth_service = synth_service
         self.editor_ctrl = None
 
-        self.projects = ProjectRepo()
+        self.projects = ProjectManager()
         self.active_song_titles = set()
         self.song_ctrl = {}
         self.preview_instr = Instrument("12-str.GT")

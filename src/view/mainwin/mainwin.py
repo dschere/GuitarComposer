@@ -2,7 +2,7 @@ import sys
 from PyQt6.QtCore import Qt, QSettings
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QToolBar, QTabWidget,
-    QWidget, QSplitter, QStatusBar, QVBoxLayout, 
+    QWidget, QSplitter, QStatusBar, QVBoxLayout, QFileDialog,
     QMenuBar, QMenu
 )
 from PyQt6.QtGui import QAction, QKeyEvent, QMouseEvent
@@ -12,6 +12,7 @@ from view.mainwin.fretboard_view import fretboard_view
 from view.events import Signals, EditorEvent
 from view.config import ORAGANIZATION, APP_NAME
 from view.config import EditorKeyMap
+from services.projectMngr import ProjectManager
 
 
 from view.widgets.projectNavigator.navigator import Navigator
@@ -23,8 +24,8 @@ import signal
 
 
 class MainWindow(QMainWindow):
-
-
+    projectManager = ProjectManager()
+    
 
     def create_menubar(self):
         # Create the menu bar
