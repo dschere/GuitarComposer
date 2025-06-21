@@ -6,6 +6,7 @@ from PyQt6.QtGui import QStandardItemModel
 from PyQt6.QtCore import QObject, QSettings
 from PyQt6.QtCore import Qt
 from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtWidgets import QFileDialog
 from singleton_decorator import singleton
 
 from models.measure import Measure, TabEvent
@@ -14,6 +15,7 @@ from models.param import EffectParameter
 from models.track import Track
 from models.effect import Effect, Effects
 from models.song import Song
+
 #from view.dialogs.effectsControlDialog.dialog import EffectChanges, EffectPreview
 
 
@@ -28,25 +30,6 @@ class ScaleSelectedEvent:
 
 class ClearScaleEvent:
     pass
-
-
-class NewSongEvent:
-    pass
-
-
-class CloseSongEvent:
-    pass
-
-
-class OpenSongEvent:
-    def __init__(self):
-        self.filename = None
-
-
-class SaveSongEvent:
-    def __init__(self):
-        self.filename = None
-
 
 class InstrumentSelectedEvent:
     def __init__(self):
@@ -153,10 +136,12 @@ class _Signals(QObject):
 
     instrument_selected = pyqtSignal(InstrumentSelectedEvent)
 
-    open_song = pyqtSignal(OpenSongEvent)
-    close_song = pyqtSignal(CloseSongEvent)
-    new_song = pyqtSignal(NewSongEvent)
-    save_song = pyqtSignal(SaveSongEvent)
+    # menu events
+    open_song = pyqtSignal()
+    close_song = pyqtSignal()
+    new_song = pyqtSignal()
+    save_song = pyqtSignal()
+    save_as_song = pyqtSignal()
 
     update_navigator = pyqtSignal(QStandardItemModel)
     fretboard_inst_select = pyqtSignal(object)

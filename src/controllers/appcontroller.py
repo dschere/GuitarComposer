@@ -16,7 +16,7 @@ from models.note import Note
 from models.song import Song
 from models.track import Track
 from view.events import Signals, StringBendEvent
-from util.projectRepo import ProjectRepo
+from services.projectMngr import ProjectManager
 from music.instrument import Instrument
 from view.config import LabelText
 
@@ -49,6 +49,15 @@ class SongController:
         if not self.song.poly_rythm_tracks:
             pass
 
+    def open_song(self):
+        saved_song = ProjectManager().open_song_using_title(self.song.title)
+        if not saved_song:
+            saved_song = ProjectManager().open_song_using_dialog()
+            
+        if saved_song:
+            self.song = saved_song
+
+
     def __init__(self, title):
         self.song = Song()
         self.song.title = title
@@ -56,7 +65,15 @@ class SongController:
         self.q_model = None
 
         Signals.track_update.connect(self.on_track_change)
+        Signals.open_song.connect(self.open_song)
 
+    def __del__(self):
+        try:
+            Signals.open_song.disconnect(self.open_song)
+            Signals.track_update.disconnect(self.on_track_change)
+        except RuntimeError:
+            # Possible that Signals has been deleted. 
+            pass
 
     def setTitle(self, title):
         self.song.title = title
@@ -208,7 +225,7 @@ class AppController:
 
     def on_ready(self, app):
         # setup navigator, score editor
-        titles = self.projects.getTitles()
+        titles = self.projects.titles()
 
         if len(titles) == 0:
             sc = SongController("noname")
@@ -216,7 +233,7 @@ class AppController:
             self.song_ctrl[sc.title()] = sc
         else:
             for title in titles:
-                song_model = self.projects.load_song(title)
+                song_model = self.projects.open_song_using_title(title)
                 sc = SongController(title)
                 sc.load_model(song_model)
                 self.song_ctrl[sc.title()] = sc
@@ -240,7 +257,7 @@ class AppController:
         self.synth_service = synth_service
         self.editor_ctrl = None
 
-        self.projects = ProjectRepo()
+        self.projects = ProjectManager()
         self.active_song_titles = set()
         self.song_ctrl = {}
         self.preview_instr = Instrument("12-str.GT")
