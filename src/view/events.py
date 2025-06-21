@@ -31,25 +31,6 @@ class ScaleSelectedEvent:
 class ClearScaleEvent:
     pass
 
-
-class NewSongEvent:
-    pass
-
-
-class CloseSongEvent:
-    pass
-
-
-class OpenSongEvent:
-    def __init__(self):
-        self.filename = None
-
-
-class SaveSongEvent:
-    def __init__(self):
-        self.filename = None
-
-
 class InstrumentSelectedEvent:
     def __init__(self):
         self.track = None
@@ -155,10 +136,12 @@ class _Signals(QObject):
 
     instrument_selected = pyqtSignal(InstrumentSelectedEvent)
 
-    open_song = pyqtSignal(OpenSongEvent)
-    close_song = pyqtSignal(CloseSongEvent)
-    new_song = pyqtSignal(NewSongEvent)
-    save_song = pyqtSignal(SaveSongEvent)
+    # menu events
+    open_song = pyqtSignal()
+    close_song = pyqtSignal()
+    new_song = pyqtSignal()
+    save_song = pyqtSignal()
+    save_as_song = pyqtSignal()
 
     update_navigator = pyqtSignal(QStandardItemModel)
     fretboard_inst_select = pyqtSignal(object)

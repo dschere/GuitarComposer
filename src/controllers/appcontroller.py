@@ -49,6 +49,15 @@ class SongController:
         if not self.song.poly_rythm_tracks:
             pass
 
+    def open_song(self):
+        saved_song = ProjectManager().open_song_using_title(self.song.title)
+        if not saved_song:
+            saved_song = ProjectManager().open_song_using_dialog()
+            
+        if saved_song:
+            self.song = saved_song
+
+
     def __init__(self, title):
         self.song = Song()
         self.song.title = title
@@ -56,7 +65,15 @@ class SongController:
         self.q_model = None
 
         Signals.track_update.connect(self.on_track_change)
+        Signals.open_song.connect(self.open_song)
 
+    def __del__(self):
+        try:
+            Signals.open_song.disconnect(self.open_song)
+            Signals.track_update.disconnect(self.on_track_change)
+        except RuntimeError:
+            # Possible that Signals has been deleted. 
+            pass
 
     def setTitle(self, title):
         self.song.title = title

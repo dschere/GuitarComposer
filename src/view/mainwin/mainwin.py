@@ -9,10 +9,9 @@ from PyQt6.QtGui import QAction, QKeyEvent, QMouseEvent
 
 from view.mainwin.fretboard_view import fretboard_view
 
-from view.events import Signals, EditorEvent
+from view.events import (Signals, EditorEvent)
 from view.config import ORAGANIZATION, APP_NAME
 from view.config import EditorKeyMap
-from services.projectMngr import ProjectManager
 
 
 from view.widgets.projectNavigator.navigator import Navigator
@@ -23,9 +22,21 @@ from view.player.playerView import PlayerView
 import signal
 
 
-class MainWindow(QMainWindow):
-    projectManager = ProjectManager()
-    
+class MainWindow(QMainWindow):    
+    def saveSong(self):
+        Signals.save_song.emit()
+
+    def saveAsSong(self):
+        Signals.save_as_song.emit()
+
+    def openSong(self):
+        Signals.open_song.emit()
+
+    def newSong(self):
+        Signals.new_song.emit()
+
+    def closeSong(self):
+        Signals.close_song.emit()        
 
     def create_menubar(self):
         # Create the menu bar
@@ -36,8 +47,17 @@ class MainWindow(QMainWindow):
         assert(file_menu)
 
         new_action = QAction("New", self)
+        new_action.triggered.connect(self.newSong)  
+
         open_action = QAction("Open", self)
+        open_action.triggered.connect(self.openSong) 
+
         save_action = QAction("Save", self)
+        save_action.triggered.connect(self.saveSong)   
+
+        save_action = QAction("SaveAs", self)
+        save_action.triggered.connect(self.saveAsSong)   
+
         exit_action = QAction("Exit", self)
         exit_action.triggered.connect(self.close)
 
