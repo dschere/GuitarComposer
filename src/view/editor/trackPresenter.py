@@ -20,8 +20,14 @@ class TrackPresenter(QWidget):
             self.track_model.current_moment()
         self.current_mp : MeasurePresenter = \
             self.mp_map[self.current_measure]
-        self.current_tep : TabEventPresenter = \
-            self.current_mp.tab_map[self.current_tab_event]
+        # carry over the value of the gstring which determines 
+        # where the cursor is drawn 
+        prior_string = None 
+        if self.current_tep:
+            prior_string = self.current_tep.get_string() 
+        self.current_tep = self.current_mp.tab_map[self.current_tab_event]
+        if prior_string is not None:
+            self.current_tep.set_string(prior_string)
         self.current_tep.cursor_on()
         self.current_tep.update() 
 
@@ -100,6 +106,7 @@ class TrackPresenter(QWidget):
         self.measure_layout.setContentsMargins(0, 0, 0, 0)
         self.measure_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         
+        self.current_tep : TabEventPresenter | None = None
         self.track_model = track_model
         self.mp_map = {}
 
@@ -133,14 +140,12 @@ class TrackPresenter(QWidget):
             
 
     def cursor_up(self):
-        te : TabEvent = self.current_tab_event
-        te.string = (te.string-1) % len(te.fret) 
-        self.current_tep.cursor_up()
+        if self.current_tep:
+            self.current_tep.cursor_up()
 
     def cursor_down(self):
-        te : TabEvent = self.current_tab_event
-        te.string = (te.string+1) % len(te.fret) 
-        self.current_tep.cursor_down()
+        if self.current_tep:
+            self.current_tep.cursor_down()
 
     def prev_moment(self):
         "switch cursor off on current tab, switch on previous"

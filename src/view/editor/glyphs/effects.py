@@ -68,7 +68,7 @@ class EffectsGlyph(QLabel):
 
         self.dialog = EffectsDialog(self, e)
         self.dialog.effect_preview.connect(self.on_eff_preview)
-        self.dialog.effect_update.connect(self.on_eff_update)
+        self.dialog.effect_updated.connect(self.on_eff_update)
         self.dialog.exec()
         self.dialog_being_shown = True
 

@@ -20,11 +20,17 @@ from view.editor.glyphs.common import STAFF_SYM_WIDTH
 
 
 class TabEventPresenter(QWidget):
+
+    def set_string(self, string):
+        self.tab_event.string = string
+
+    def get_string(self):
+        return self.tab_event.string
+
     def __init__(self, tab_event: TabEvent, measure: Measure, track: Track):
         super().__init__()
 
         self.tab_event = tab_event
-        self.gstring = tab_event.string
         # allow for navigation within the measure <-- -->
         self.prev : TabEventPresenter | None = None
         self.next : TabEventPresenter | None = None
@@ -84,27 +90,23 @@ class TabEventPresenter(QWidget):
 
     def cursor_up(self):
         # Up arrow pressed and move the cursor up or loop around
-        self.gstring = \
-            (self.gstring - 1) % len(self.tab_event.fret)
-        self.tab_p.set_cursor(self.gstring)
-        self.tab_event.string = self.gstring
+        self.tab_event.string = \
+            (self.tab_event.string - 1) % len(self.tab_event.fret)
+        self.tab_p.set_cursor(self.tab_event.string)
 
     def cursor_down(self):
         # Down arrow pressed and move the cursor up or loop around
-        self.gstring = \
-            (self.gstring + 1) % len(self.tab_event.fret)
-        self.tab_p.set_cursor(self.gstring)
-        self.tab_event.string = self.gstring
+        self.tab_event.string = \
+            (self.tab_event.string + 1) % len(self.tab_event.fret)
+        self.tab_p.set_cursor(self.tab_event.string)
 
     def set_fret(self, fret_value):
         # Number pressed, update the fret value
-        self.tab_event.fret[self.gstring] = fret_value
-        self.tab_p.set_tab_note(self.gstring, fret_value)
+        self.tab_event.fret[self.tab_event.string] = fret_value
+        self.tab_p.set_tab_note(self.tab_event.string, fret_value)
 
     def clear_fret(self):
         self.set_fret(-1)
-
-
 
 
 if __name__ == '__main__':
