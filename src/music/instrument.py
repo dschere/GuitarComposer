@@ -2,6 +2,7 @@ import os
 import json
 from typing import List
 import time
+import logging
 
 from singleton_decorator import singleton
 from services.synth.synthservice import synthservice
@@ -16,6 +17,7 @@ from view.dialogs.effectsControlDialog.dialog import EffectChanges
 from models.measure import TabEvent
 
 from util.gctimer import GcTimer
+
 
 
 @singleton
@@ -248,6 +250,10 @@ class Instrument:
 
     def note_event(self, n: Note, bpm=120, start_offset=0.0):
         "play note on potentially multiple channels"
+        if n.string is None:
+            logging.warning(f"note_event: Unexpected guitar string was None")
+            return
+        
         chan_mix = self.string_map[n.string] # type: ignore
         s = self.synth.getSequencer()
 
