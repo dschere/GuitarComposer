@@ -23,15 +23,10 @@ from view.config import LabelText
 from view.dialogs.effectsControlDialog.dialog import EffectPreview,\
     EffectChanges
 
+from view.events import Signals, TrackItem, PropertiesItem, SongItem
+
+
 FRETBOARD_CHANNEL = 0
-
-class TrackItem(QStandardItem):
-    pass 
-class PropertiesItem(QStandardItem):
-    pass
-
-class SongItem(QStandardItem):
-    pass
 
 
 class SongController:
@@ -115,6 +110,10 @@ class SongController:
         track_item.appendRow(properties_item)
         root.appendRow(track_item)
 
+        # publish event 
+        Signals.tree_item_added.emit(track_item)
+        Signals.tree_item_added.emit(properties_item)
+          
     def createQModel(self):
         "generate a tree structure for this song"
         root = SongItem(self.song.title)

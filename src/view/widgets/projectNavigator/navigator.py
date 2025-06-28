@@ -1,5 +1,5 @@
 from PyQt6.QtWidgets import QVBoxLayout, QTreeView, QWidget, QMenu
-from PyQt6.QtGui import QStandardItemModel, QAction
+from PyQt6.QtGui import QStandardItemModel, QAction, QStandardItem
 
 from view.widgets.projectNavigator.TrackTreeNode import TrackTreeDialog
 from view.events import Signals, EditorEvent
@@ -11,13 +11,33 @@ from PyQt6.QtCore import QModelIndex, Qt
 from controllers.appcontroller import TrackItem
 from controllers.appcontroller import PropertiesItem
 from controllers.appcontroller import SongItem
+from view.events import Signals, TrackItem, PropertiesItem, SongItem
 
 
 class Navigator(QWidget):
 
+    initial_tree_model_update = True
+
     def update_tree_model(self, model):
         self.tree_model = model
         self.tree_view.setModel(model)
+        if not self.initial_tree_model_update:
+            return
+        self.initial_tree_model_update = False
+        self.tree_view.expandAll()
+
+        # setup editing the first track
+        parent = model.invisibleRootItem()
+        if parent and model.rowCount() > 0:
+            item = parent.child(0)
+            if item:
+                song = item.data()
+                if song and len(song.tracks) > 0:
+                    track = song.tracks[0]
+                    evt = EditorEvent()
+                    evt.ev_type = EditorEvent.ADD_MODEL
+                    evt.model = track 
+                    Signals.editor_event.emit(evt)
 
     def on_tree_clicked(self, index: QModelIndex):
         # Get the clicked item
@@ -58,6 +78,10 @@ class Navigator(QWidget):
                 menu.addAction(action1)
                 menu.exec(self.tree_view.mapToGlobal(point))
 
+    def on_item_update(self, item : QStandardItem):
+        index = item.index() 
+        self.tree_view.expand(index)
+
     def __init__(self):
         super().__init__()
 
@@ -78,3 +102,4 @@ class Navigator(QWidget):
         self.setLayout(layout)
 
         Signals.update_navigator.connect(self.update_tree_model)
+        Signals.tree_item_added.connect(self.on_item_update)

@@ -2,7 +2,7 @@
 Central place for custom signals/slots for the application
 """
 from typing import Dict, List, Tuple
-from PyQt6.QtGui import QStandardItemModel
+from PyQt6.QtGui import QStandardItemModel, QStandardItem
 from PyQt6.QtCore import QObject, QSettings
 from PyQt6.QtCore import Qt
 from PyQt6.QtCore import pyqtSignal
@@ -117,6 +117,13 @@ class EffectPreview:
         self.repeat_note = False
         self.note_interval = 120        
 
+class TrackItem(QStandardItem):
+    pass 
+class PropertiesItem(QStandardItem):
+    pass
+
+class SongItem(QStandardItem):
+    pass
 
 
 @singleton
@@ -129,6 +136,8 @@ class _Signals(QObject):
     preview_play = pyqtSignal(Note)
     preview_stop = pyqtSignal(Note)
     preview_pitch_change = pyqtSignal(StringBendEvent)
+
+    tree_item_added = pyqtSignal(QStandardItem)
 
     startup = pyqtSignal(object)
     ready = pyqtSignal(object)  # all startup handlers have run app is up.
