@@ -158,6 +158,7 @@ class EditorToolbar(QToolBar):
             def on_apply(evt : StringBendEvent):
                 te.pitch_changes = evt.pitch_changes 
                 te.pitch_range = evt.pitch_range
+                te.pitch_bend_active = len(evt.pitch_changes) > 0
                 dialog.close()
                 self.update_staff_and_tab()
                 

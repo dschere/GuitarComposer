@@ -5,6 +5,8 @@ import atexit
 import threading
 from typing import Tuple
 from PyQt6.QtCore import QObject, QTimer, pyqtSignal, Qt
+import os
+import time
 
 from singleton_decorator import singleton
 
@@ -15,13 +17,25 @@ class GcTimer(QObject):
     timers = {}
     id_counter = 0
 
+    log = None 
+    if os.environ.get('GCTIMER_LOG','') == 'on':
+        log = open(os.environ['GCTIMER_LOGFILE'],'w')  
+    log_reftime = None
+
     def invoke(self, timer_id):
-        if timer_id in self.timers:
+        #print("timer.invoke timer_id " + str(self.timers.get(timer_id)))
+        if timer_id in self.timers:                
             (callback, args, t) = self.timers[timer_id]
             if timer_id in self.timers:
                 del self.timers[timer_id]
             # invoke callback
             callback( *args )
+            if self.log is not None and self.log_reftime is not None:
+                tm = time.time() - self.log_reftime
+                msg = f"{tm} {callback} {args}\n"
+                self.log.write(msg)
+                self.log.flush()
+
 
     def _on_shutdown(self):
         for (callback, args, t) in self.timers.values():
@@ -30,12 +44,14 @@ class GcTimer(QObject):
 
     def __init__(self):
         super().__init__()
-
         atexit.register(self._on_shutdown)
 
     def start(self, when : float, callback, args = ()):
         timer_id = self.id_counter 
         self.id_counter += 1
+
+        if self.log is not None and self.log_reftime is None:
+            self.log_reftime = time.time()
 
         t = threading.Timer(when, self.invoke, (timer_id,))
 

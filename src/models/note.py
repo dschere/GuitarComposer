@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple
 
 
 class Note:
@@ -22,4 +22,4 @@ class Note:
         # self.pitch_changes = [(when,pitch_change),...]
         # when -> decimal fraction (0-1.0) of duration
         # pitch_change -> float decimal fraction of pitch range.
-        self.pitch_changes : List[float] = []
+        self.pitch_changes : List[Tuple[float,float]] = []

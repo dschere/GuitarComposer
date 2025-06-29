@@ -599,7 +599,7 @@ static PyMethodDef GCSynthMethods[] = {
     {"filter_enable",py_gcsynth_channel_enable_filter, METH_VARARGS, "enable filter"},
     {"filter_disable",py_gcsynth_channel_disable_filter, METH_VARARGS, "disable filter"},
     {"pitchrange",py_gcsynth_sf_pitchrange, METH_VARARGS, "pitchrange(chan, semitones)"},
-    {"pitchwheel",py_gcsynth_sf_pitchrange, METH_VARARGS, "pitchwheel(chan, semitones)"},
+    {"pitchwheel",py_gcsynth_sf_pitchwheel, METH_VARARGS, "pitchwheel(chan, semitones)"},
 
     {"timer_event",py_gcsynth_event,METH_VARARGS,"send an event that gets executed in the future"},
 
