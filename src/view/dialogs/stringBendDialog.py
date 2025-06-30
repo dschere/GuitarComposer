@@ -21,6 +21,7 @@ from PyQt6.QtWidgets import (
     QSpinBox, QLabel, QListWidget, QButtonGroup, QPushButton, QStyle)
 from PyQt6.QtCore import pyqtSignal, Qt
 from PyQt6.QtGui import QPainter, QPen, QColor, QBrush
+from models.track import Track
 import view.config as cfg 
 
 from view.events import Signals, StringBendEvent
@@ -290,7 +291,7 @@ class StringBendDialog(QDialog):
     def cancel_clicked(self):
         self.close()        
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, initial_state : Track | None =None):
         super().__init__(parent) 
 
         layout = QVBoxLayout()

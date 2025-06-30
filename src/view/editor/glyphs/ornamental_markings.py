@@ -9,6 +9,7 @@ vibrato
 lagato/staccato
 
 """
+from view.dialogs.stringBendDialog import StringBendDialog
 from view.editor.glyphs.canvas import Canvas
 from view.editor.glyphs.common import (BEND_SYMBOL, ORNAMENT_ARTICULATION_Y, ORNAMENT_BEND_Y, ORNAMENT_FONT_SIZE, ORNAMENT_STROKE_Y, ORNAMENT_Y, 
                                        STAFF_SYM_WIDTH, 
@@ -18,6 +19,8 @@ from view.editor.glyphs.common import (BEND_SYMBOL, ORNAMENT_ARTICULATION_Y, ORN
 from models.track import TabEvent
 from PyQt6.QtGui import QPainter
 import math
+
+from view.events import StringBendEvent
 
 def draw_sine_wave(painter : QPainter, **conf):
     # Dimensions and scaling
@@ -54,6 +57,23 @@ class oramental_markings(Canvas):
     def __init__(self, tab_event: TabEvent):
         super().__init__(STAFF_SYM_WIDTH,ORNAMENT_MARKING_HEIGHT)
         self.tab_event = tab_event
+
+    def on_stringBendDialog_apply(self, evt : StringBendEvent):
+        self.tab_event.pitch_changes = evt.pitch_changes 
+        self.tab_event.pitch_range = evt.pitch_range
+        self.tab_event.pitch_bend_active = len(evt.pitch_changes) > 0
+
+    def mousePressEvent(self, event):
+        # Get the x, y coordinates of the mouse click
+        x = event.position().x()
+        y = event.position().y()
+
+        if y <= ORNAMENT_BEND_Y and self.tab_event.pitch_bend_active:
+            # mouse click over the bend sign.        
+            # create dialog allow it to manipulate 'te'
+            dialog = StringBendDialog(self)
+            dialog.string_bend_selected.connect(self.on_stringBendDialog_apply)
+            dialog.show()
 
     
     # def _draw_downstroke(self, painter: QPainter):
@@ -131,9 +151,7 @@ class oramental_markings(Canvas):
         
 
     # override to capture paint event
-    def canvas_paint_event(self, painter : QPainter):
-        #painter.font().setPointSize(ORNAMENT_FONT_SIZE)  # Set font size to 10
-        
+    def canvas_paint_event(self, painter : QPainter):        
         if self.tab_event.legato == True: 
             self._draw_marker(painter, LEGATO, ORNAMENT_ARTICULATION_Y)
         elif self.tab_event.staccato:
