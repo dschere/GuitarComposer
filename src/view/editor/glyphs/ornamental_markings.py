@@ -1,14 +1,17 @@
 """ 
 draws the squiggly lines for vibrato, the updown arrows for chords strokes
-along with other musical graphic oddities ...
+along with other musical graphic indicators
 
 
 dynamic change
 hand effect / stroke
+vibrato
+lagato/staccato
 
 """
+from view.dialogs.stringBendDialog import StringBendDialog
 from view.editor.glyphs.canvas import Canvas
-from view.editor.glyphs.common import (ORNAMENT_Y, 
+from view.editor.glyphs.common import (BEND_SYMBOL, ORNAMENT_ARTICULATION_Y, ORNAMENT_BEND_Y, ORNAMENT_FONT_SIZE, ORNAMENT_STROKE_Y, ORNAMENT_Y, 
                                        STAFF_SYM_WIDTH, 
                                        ORNAMENT_MARKING_HEIGHT, 
                                        LEGATO, 
@@ -16,6 +19,8 @@ from view.editor.glyphs.common import (ORNAMENT_Y,
 from models.track import TabEvent
 from PyQt6.QtGui import QPainter
 import math
+
+from view.events import StringBendEvent
 
 def draw_sine_wave(painter : QPainter, **conf):
     # Dimensions and scaling
@@ -38,7 +43,6 @@ def draw_sine_wave(painter : QPainter, **conf):
             y = int(y)
             points.append((x, y))
 
-
     # Draw the wave using the points
     for i in range(len(points) - 1):
         painter.drawLine(points[i][0], points[i][1], points[i+1][0], points[i+1][1])
@@ -53,6 +57,24 @@ class oramental_markings(Canvas):
     def __init__(self, tab_event: TabEvent):
         super().__init__(STAFF_SYM_WIDTH,ORNAMENT_MARKING_HEIGHT)
         self.tab_event = tab_event
+
+    def on_stringBendDialog_apply(self, evt : StringBendEvent):
+        self.tab_event.pitch_changes = evt.pitch_changes 
+        self.tab_event.pitch_range = evt.pitch_range
+        self.tab_event.points = evt.points # type: ignore
+        self.tab_event.pitch_bend_active = len(evt.pitch_changes) > 0
+
+    def mousePressEvent(self, event):
+        # Get the x, y coordinates of the mouse click
+        x = event.position().x()
+        y = event.position().y()
+
+        if y <= ORNAMENT_BEND_Y and self.tab_event.pitch_bend_active:
+            # mouse click over the bend sign.        
+            # create dialog allow it to manipulate 'te'
+            dialog = StringBendDialog(self, self.tab_event)
+            dialog.string_bend_selected.connect(self.on_stringBendDialog_apply)
+            dialog.show()
 
     
     # def _draw_downstroke(self, painter: QPainter):
@@ -90,50 +112,56 @@ class oramental_markings(Canvas):
             wavelength=13
         )
 
-    def _draw_bend(self, painter: QPainter):
-        """
-        Draw a curve based on the pitch bend histogram.
+    # def _draw_bend(self, painter: QPainter):
+    #     """
+    #     Draw a curve based on the pitch bend histogram.
 
-        Use the high/low to scale the curve. 
+    #     Use the high/low to scale the curve. 
 
 
-        tab_event.pitch_changes = [(0-1.0,0-<pitch_range>),...]
-        """
-        high = self.tab_event.pitch_changes[0]
-        low = high
-        points = []
+    #     tab_event.pitch_changes = [(0-1.0,0-<pitch_range>),...]
+    #     """
+    #     high = None
+    #     low = None
+    #     points = []
 
-        for (when_r, semitones) in self.tab_event.pitch_changes[1:]:
-            if semitones > high:
-                high = semitones
-            if semitones < low:
-                low = semitones
+    #     for (when_r, semitones) in self.tab_event.pitch_changes:
+    #         if high is None:
+    #             high = semitones
+    #             low = semitones
+    #         else:
+    #             if semitones > high:
+    #                 high = semitones
+    #             if semitones < low:
+    #                 low = semitones
 
-        span = (high - low)
-        n = STAFF_SYM_WIDTH / len(self.tab_event.pitch_changes) 
-        for (when_r,semitones) in enumerate(self.tab_event.pitch_changes):
-            x = when_r * STAFF_SYM_WIDTH
-            y = ((high - semitones) / span) * ORNAMENT_MARKING_HEIGHT
-            points.append((x,y))
+    #     assert(high)
+    #     assert(low)
+    #     span = (high - low)
+    #     n = STAFF_SYM_WIDTH / len(self.tab_event.pitch_changes) 
+    #     for (when_r,semitones) in enumerate(self.tab_event.pitch_changes):
+    #         x = when_r * STAFF_SYM_WIDTH
+    #         y = ((high - semitones) / span) * ORNAMENT_MARKING_HEIGHT
+    #         points.append((x,y))
 
-        for i in range(len(points) - 1):
-            painter.drawLine(points[i][0], points[i][1], points[i+1][0], points[i+1][1])
+    #     for i in range(len(points) - 1):
+    #         painter.drawLine(points[i][0], points[i][1], points[i+1][0], points[i+1][1])
 
-    def _draw_marker(self, painter: QPainter, text):
-        self.draw_symbol(painter, text, x=10, y=ORNAMENT_Y, draw_lines=False) 
+    def _draw_marker(self, painter: QPainter, text, y):
+        self.draw_symbol(painter, text, x=10, y=y, draw_lines=False) 
         
 
     # override to capture paint event
-    def canvas_paint_event(self, painter):
+    def canvas_paint_event(self, painter : QPainter):        
         if self.tab_event.legato == True: 
-            self._draw_marker(painter, LEGATO)
+            self._draw_marker(painter, LEGATO, ORNAMENT_ARTICULATION_Y)
         elif self.tab_event.staccato:
-            self._draw_marker(painter, STACCATO)
+            self._draw_marker(painter, STACCATO, ORNAMENT_ARTICULATION_Y)
 
         if self.tab_event.pitch_bend_active:
-            self._draw_bend(painter)
+            self._draw_marker(painter, BEND_SYMBOL, ORNAMENT_BEND_Y)
         elif self.tab_event.downstroke:
-            self._draw_marker(painter, DOWNSTROKE) 
+            self._draw_marker(painter, DOWNSTROKE, ORNAMENT_STROKE_Y) 
         elif self.tab_event.upstroke:
-            self._draw_marker(painter, UPSTROKE)
+            self._draw_marker(painter, UPSTROKE, ORNAMENT_STROKE_Y)
         

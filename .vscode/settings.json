@@ -1,0 +1,43 @@
+{
+    // Path to the Python interpreter inside the virtual environment
+    "python.pythonPath": "${workspaceFolder}/venv/bin/python",
+    // Additional paths for the Python analyzer (e.g., src or lib directories in your project)
+    "python.analysis.extraPaths": [
+        "${workspaceFolder}/src",
+        "${workspaceFolder}/lib",
+        "${workspaceFolder}/src/cmodules/gcsynth",
+        "./typings"
+    ],
+    // Type checking mode: basic or strict for better error detection
+    "python.analysis.typeCheckingMode": "basic",
+    // Enable Pylance as the language server for IntelliSense and improved symbol detection
+    "python.languageServer": "Pylance",
+    // Automatically activate the virtual environment in the integrated terminal
+    "python.terminal.activateEnvironment": true,
+    // Specify Flake8 as the linter
+    "python.linting.enabled": true,
+    "python.linting.flake8Enabled": true,
+    // Path to Flake8 (in the virtual environment)
+    "python.linting.flake8Path": "${workspaceFolder}/venv/bin/flake8",
+    // Optional: Set linting arguments (e.g., max line length)
+    "python.linting.flake8Args": [
+        "--max-line-length=88", // Adjust line length as needed
+        "--ignore=E203,W503" // Customize as needed
+    ],
+    // Disable other linters to avoid conflicts
+    "python.linting.pylintEnabled": false,
+    // Enable format on save (optional)
+    //"editor.formatOnSave": true
+    // Compiler options for C++ (e.g. ['-std=c++11'])
+    "clang.cxxflags": [
+        "/usr/lib/gcc/x86_64-linux-gnu/12/include",
+        "/usr/local/include",
+        "/usr/include/x86_64-linux-gnu",
+        "/usr/include",
+        "${workspaceFolder}/src/cmodules/gcsynth/",
+        "/usr/include/glib-2.0",
+        "/usr/lib/x86_64-linux-gnu/glib-2.0/include"
+    ],
+    "clang.arguments": ["--header-insertion=never"],
+    "clang.serverCompletionRanking": true,
+}
