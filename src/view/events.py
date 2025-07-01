@@ -44,6 +44,7 @@ class StringBendEvent:
         self.pitch_range = 2
         self.channel = 0
         self.preview = True
+        self.points = []
 
 class EditorEvent:
     UNINITIALIZED = -1
@@ -128,7 +129,6 @@ class SongItem(QStandardItem):
 
 @singleton
 class _Signals(QObject):
-    preview_pitch_change = pyqtSignal(StringBendEvent)
     scale_selected = pyqtSignal(ScaleSelectedEvent)
     clear_scale = pyqtSignal(ClearScaleEvent)
     load_settings = pyqtSignal(QSettings)

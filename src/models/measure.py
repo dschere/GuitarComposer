@@ -56,8 +56,8 @@ class TabEvent:
         """
 
         # visual representation in ornament widget 
-        self.pitch_bend_histogram = [0] * self.BEND_PERIODS
         self.pitch_bend_active = False
+        self.points = None 
 
         # pitch_changes -> (when_r, semitones)
         self.pitch_changes = []

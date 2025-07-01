@@ -13,6 +13,7 @@ whammy bar.
 
 
 """
+import copy
 import math
 from typing import List, Tuple
 
@@ -21,6 +22,7 @@ from PyQt6.QtWidgets import (
     QSpinBox, QLabel, QListWidget, QButtonGroup, QPushButton, QStyle)
 from PyQt6.QtCore import pyqtSignal, Qt
 from PyQt6.QtGui import QPainter, QPen, QColor, QBrush
+from models.measure import TabEvent
 from models.track import Track
 import view.config as cfg 
 
@@ -87,7 +89,7 @@ class BendGraph(QWidget):
         self.update()
 
     def update_bend_points(self, points):
-        self.points = points 
+        self.points = copy.deepcopy(points) 
         self.update()
 
     def paintEvent(self, event):
@@ -131,11 +133,16 @@ class BendGraph(QWidget):
         Map the points to pitch changes
         """
         r = StringBendEvent()
+        r.points = self.points
         r.pitch_range = self.ysteps
         for (x,y) in self.points: 
             when_r, semitones = xy_2_data(x,y-self.margin,self.ysteps)
             r.pitch_changes.append((when_r, semitones)) 
         return r
+    
+    def updatePoints(self, points):
+        self.points = points 
+        self.update()
 
     def mousePressEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:
@@ -172,20 +179,20 @@ class BendGraphControlView(QWidget):
 
         # Save Button
         save_btn = QPushButton()
-        save_btn.setIcon(QApplication.style().standardIcon(QStyle.StandardPixmap.SP_DialogSaveButton))
+        save_btn.setIcon(QApplication.style().standardIcon(QStyle.StandardPixmap.SP_DialogSaveButton)) # type: ignore
         save_btn.setToolTip("Save")
         self.button_group.addButton(save_btn)
         layout.addWidget(save_btn)
 
         preview_btn = QPushButton() 
-        preview_btn.setIcon(QApplication.style().standardIcon(QStyle.StandardPixmap.SP_MediaVolume)) 
+        preview_btn.setIcon(QApplication.style().standardIcon(QStyle.StandardPixmap.SP_MediaVolume))  # type: ignore
         preview_btn.setToolTip("preview")
         self.button_group.addButton(preview_btn) 
         layout.addWidget(preview_btn)
 
         # Delete Button
         delete_btn = QPushButton()
-        delete_btn.setIcon(QApplication.style().standardIcon(QStyle.StandardPixmap.SP_TrashIcon))
+        delete_btn.setIcon(QApplication.style().standardIcon(QStyle.StandardPixmap.SP_TrashIcon)) # type: ignore
         delete_btn.setToolTip("Delete")
         self.button_group.addButton(delete_btn)
         layout.addWidget(delete_btn)
@@ -254,8 +261,9 @@ class StringBendDialog(QDialog):
 
 
     def on_apply(self):
-        evt = self.graph.create_string_bend_event() 
+        evt = self.graph.create_string_bend_event()  # type: ignore
         self.string_bend_selected.emit(evt)
+        self.close()
 
     def add_presets(self):
         "Load pre-made bend patterns from a json file" 
@@ -286,12 +294,12 @@ class StringBendDialog(QDialog):
         self.btn_apply.clicked.connect(self.on_apply)
 
     def clear_clicked(self):
-        self.graph.update_bend_points([])
+        self.graph.update_bend_points([]) # type: ignore
 
     def cancel_clicked(self):
         self.close()        
 
-    def __init__(self, parent=None, initial_state : Track | None =None):
+    def __init__(self, parent=None, initial_state : TabEvent | None =None):
         super().__init__(parent) 
 
         layout = QVBoxLayout()
@@ -300,6 +308,11 @@ class StringBendDialog(QDialog):
         
         self.graph = BendGraph()
         self.bctrl_view = BendGraphControlView(self.graph)
+
+        if initial_state is not None and initial_state.points is not None: 
+            self.graph.update_bend_points(initial_state.points)
+
+
         content_layout.addWidget(self.graph)
         content_layout.addWidget(self.bctrl_view) 
 

@@ -61,6 +61,7 @@ class oramental_markings(Canvas):
     def on_stringBendDialog_apply(self, evt : StringBendEvent):
         self.tab_event.pitch_changes = evt.pitch_changes 
         self.tab_event.pitch_range = evt.pitch_range
+        self.tab_event.points = evt.points # type: ignore
         self.tab_event.pitch_bend_active = len(evt.pitch_changes) > 0
 
     def mousePressEvent(self, event):
@@ -71,7 +72,7 @@ class oramental_markings(Canvas):
         if y <= ORNAMENT_BEND_Y and self.tab_event.pitch_bend_active:
             # mouse click over the bend sign.        
             # create dialog allow it to manipulate 'te'
-            dialog = StringBendDialog(self)
+            dialog = StringBendDialog(self, self.tab_event)
             dialog.string_bend_selected.connect(self.on_stringBendDialog_apply)
             dialog.show()
 
