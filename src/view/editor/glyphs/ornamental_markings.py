@@ -9,9 +9,10 @@ vibrato
 lagato/staccato
 
 """
+from music.constants import Dynamic
 from view.dialogs.stringBendDialog import StringBendDialog
 from view.editor.glyphs.canvas import Canvas
-from view.editor.glyphs.common import (BEND_SYMBOL, ORNAMENT_ARTICULATION_Y, ORNAMENT_BEND_Y, ORNAMENT_FONT_SIZE, ORNAMENT_STROKE_Y, ORNAMENT_Y, 
+from view.editor.glyphs.common import (BEND_SYMBOL, ORNAMENT_ARTICULATION_Y, ORNAMENT_BEND_Y, ORNAMENT_DYNAMIC_Y, ORNAMENT_FONT_SIZE, ORNAMENT_STROKE_Y, ORNAMENT_Y, 
                                        STAFF_SYM_WIDTH, 
                                        ORNAMENT_MARKING_HEIGHT, 
                                        LEGATO, 
@@ -160,8 +161,12 @@ class oramental_markings(Canvas):
 
         if self.tab_event.pitch_bend_active:
             self._draw_marker(painter, BEND_SYMBOL, ORNAMENT_BEND_Y)
-        elif self.tab_event.downstroke:
+
+        if self.tab_event.downstroke:
             self._draw_marker(painter, DOWNSTROKE, ORNAMENT_STROKE_Y) 
         elif self.tab_event.upstroke:
             self._draw_marker(painter, UPSTROKE, ORNAMENT_STROKE_Y)
         
+        if self.tab_event.render_dynamic:
+            t = Dynamic.short_text(self.tab_event.dynamic)
+            self._draw_marker(painter, t, ORNAMENT_DYNAMIC_Y)

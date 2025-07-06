@@ -1,4 +1,4 @@
-import time
+import time, copy
 
 from models.song import Song
 from models.track import Track

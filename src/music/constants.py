@@ -22,6 +22,7 @@ class _Dynamic:
     F = 96
     FF = 112
     FFF = 127
+    DEF = -1 # use the default for the track or MP
 
     def tooltip(self, v):
         return {
@@ -34,6 +35,18 @@ class _Dynamic:
             self.PP : "pianissimo: very quiet",
             self.PPP: "pianississimo: very very quiet"
         }.get(v,f"midi {v} value")
+    
+    def short_text(self, v):
+        return {
+            self.FFF: "fff",
+            self.FF : "ff",
+            self.F  : "f",
+            self.MF : "mf",
+            self.MP : "mp",
+            self.P  : "p",
+            self.PP : "pp",
+            self.PPP: "ppp"
+        }.get(v,str(v))
     
 
 Dynamic = _Dynamic()

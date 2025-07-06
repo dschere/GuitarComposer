@@ -64,7 +64,19 @@ class TrackPresenter(QWidget):
     def set_double_dotted(self, state: bool):
         self.current_tab_event.dotted = not state
         self.current_tab_event.double_dotted = state
-        self.setup() 
+        self.setup()
+
+    def set_articulation(self, articulation):
+        """ 
+        Apply staccato, legato or none to the current momement and all subsiquent
+        momements unless unless if there is a change 
+        """
+
+    def set_dynamic(self, dynamic):
+        """
+        Apply the dynamic to current momemnt and all subsiquent moments until a different
+        dynamic encountered. 
+        """    
 
     def insert_tab_copy(self):
         # create a copy of the current tab and insert
@@ -128,8 +140,12 @@ class TrackPresenter(QWidget):
             mp = self.mp_map.get(m)
             if not mp:
                 return
-            tp : TabEventPresenter | None = mp.tab_map.get(tab_event)
-        
+            tp : TabEventPresenter | None = None # mp.tab_map.get(tab_event)
+            for te in mp.tab_map:
+                if te.uuid == tab_event.uuid:
+                    tp = mp.tab_map.get(te)
+                    break
+
             # switch playing highlight on/off
             if not tp:
                 pass
