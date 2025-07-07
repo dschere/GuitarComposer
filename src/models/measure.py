@@ -6,6 +6,7 @@ from music.durationtypes import (WHOLE,
 from models.effect import Effects 
 import logging
 import math
+import uuid
 
 class TimeSig:
     def __init__(self):
@@ -38,6 +39,10 @@ class TabEvent:
     def __init__(self, num_gstrings):
         super().__init__()
 
+        # because the player does a copy of the tab events we need
+        # a uuid for the track.find_tab_measure to work.
+        self.uuid = str(uuid.uuid4())
+
         self.duration = QUARTER
         self.string = num_gstrings - 1  # current string being edited
         self.fret = [-1] * num_gstrings  # current fret value
@@ -65,11 +70,13 @@ class TabEvent:
 
         self.dotted = False
         self.double_dotted = False
-        self.dynamic = Dynamic.MP
+    
+        self.render_dynamic = False 
+        self.dynamic : int | None = None
         self.triplet = False
         self.quintuplet = False
-        self.legato = False
-        self.staccato = False
+        self.legato : bool | None = None
+        self.staccato : bool | None = None
         self.upstroke = False
         self.downstroke = False
         self.stroke_duration = SIXTEENTH

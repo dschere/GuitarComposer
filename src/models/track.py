@@ -10,8 +10,9 @@
 # import json
 
 from models.measure import Measure, TimeSig, TabEvent 
-from typing import List, Optional, Tuple
+from typing import Callable, List, Optional, Tuple
 from models.effect import Effects
+from music.constants import Dynamic
 from services.effectRepo import EffectRepository
 
 class Track:
@@ -82,7 +83,6 @@ class Track:
         # effects to be applied to this track
         self.effects = EffectRepository().create_effects()
 
-
     def append_measure(self, **kwargs):
         m = self.blank_measure(**kwargs)
         self.measures.append(m)   
@@ -124,7 +124,7 @@ class Track:
 
     def find_tab_measure(self, tab_event: TabEvent) -> Measure | None:
         for m in self.measures:
-            if tab_event in m.tab_events:
+            if tab_event.uuid in [te.uuid for te in m.tab_events]:
                 return m
     
     def get_effects(self, te: TabEvent) -> Effects | None:

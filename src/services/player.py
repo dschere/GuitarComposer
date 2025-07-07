@@ -12,6 +12,7 @@ from models.track import Track
 from PyQt6.QtCore import QObject, QTimer, QThread, pyqtSignal
 import copy
 import time
+from music.constants import Dynamic
 from music.instrument import Instrument
 from threading import Event as thread_event
 from threading import Lock
@@ -50,7 +51,7 @@ def PlayMoment(track: Track, instrument: Instrument):
 
 
 
-def compile_track(track: Track, m_idx=0):
+def compile_track(track: Track, m_idx=0) -> List[Tuple[TabEvent,Measure]]:
     """ 
     Walk through track and generate a list of tab events, unravel all repeat loops
     so that we have a single vector that the player can walk through.
@@ -74,7 +75,8 @@ def compile_track(track: Track, m_idx=0):
             r = repeat_item(start=m.measure_number)
             repeat_stack = [r] + repeat_stack
 
-        for te in m.tab_events:
+        for _te in m.tab_events:
+            te = copy.deepcopy(_te)
             if len(repeat_stack) == 0:
                 result.append((te, m))
             else:
@@ -100,6 +102,30 @@ def compile_track(track: Track, m_idx=0):
     # for (te,m) in result:
     #     print((te.fret, m.measure_number))
     # print("-----------------------------------------")
+
+    # walk the track applying dynamics and articulations, when encountered they change
+    # the settings for the current and all subsiquent tab events until a new one 
+    # encountered.
+    dynamic = Dynamic.MF
+    legato = False 
+    staccato = False
+
+    for te,m in result:
+        if te.dynamic is None:
+            te.dynamic = dynamic
+        else:
+            dynamic = te.dynamic
+
+        if te.legato is None:
+            legato = te.legato
+        else:
+            te.legato = legato 
+
+        if te.staccato is None:
+            te.staccato = staccato 
+        else:
+            staccato = te.staccato
+
 
     return result    
 

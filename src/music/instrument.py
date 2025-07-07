@@ -5,6 +5,7 @@ import time
 import logging
 
 from singleton_decorator import singleton
+from music.constants import Dynamic
 from services.synth.synthservice import synthservice
 from services.synth import sequencer as SeqEvt
 
@@ -199,7 +200,7 @@ class Instrument:
             n = Note()
             n.rest = True
             n.duration = ev_dur
-            self.note_event(n, bpm)
+            self.noteoff_event(n, bpm)
 
         elif te_type == te.NOTE or (te_type == te.CHORD and no_stroke):
             # Either a single note or in the case of a chord with no stroke
@@ -231,7 +232,8 @@ class Instrument:
                 fret_data.reverse()
             start_offset_inc = te.stroke_duration / len(te.fret)
             start_offset = 0
-            for (string,fret_val) in fret_data:
+            has_stroke = te.downstroke or te.upstroke
+            for (n,(string,fret_val)) in enumerate(fret_data):
                 # a new note is to be played.
                 if fret_val != -1 and te.tied_notes[string] == -1:
                     n = Note()
@@ -241,21 +243,44 @@ class Instrument:
                     n.midi_code = self.tuning[string] + fret_val 
                     n.pitch_changes = te.pitch_changes
                     n.velocity = te.dynamic
+                    # slightly decay velocity as we pick through the strings 
+                    if has_stroke:
+                        n.velocity -= (n*2) # type: ignore
                     n.duration = ev_dur
                     self.note_event(n, bpm, start_offset)
                     start_offset += start_offset_inc
                 
         return ev_dur
 
+    def noteoff_event(self, n: Note, bpm=120, start_offset=0.0):
+        "turn off a note for specific strings or all strings"
+        s = self.synth.getSequencer()
+        if n.string is None:
+            for s in range(len(self.tuning)):
+                n.string = s 
+                self.noteoff_event(n, bpm, start_offset)
+            return
+
+        chan_mix = self.string_map[n.string]
+        midicode_in_use = self.string_playing[n.string]
+        if midicode_in_use:       
+            for (chan, _) in chan_mix:            
+                self.synth.noteoff(chan, midicode_in_use)
+
+                timer_ids = self.timer_inflight.get((chan,n.string),[])
+                for timer_id in timer_ids:
+                    self.timer.cancel(timer_id)
+
 
     def note_event(self, n: Note, bpm=120, start_offset=0.0):
+
         "play note on potentially multiple channels"
         if n.string is None:
             logging.warning(f"note_event: Unexpected guitar string was None")
             return
         
-        chan_mix = self.string_map[n.string] # type: ignore
         s = self.synth.getSequencer()
+        chan_mix = self.string_map[n.string] # type: ignore
 
         # If we are already playing a note on this string
         # then perform a noteoff.

@@ -4,7 +4,7 @@ from models.track import TabEvent
 from view.config import EditorKeyMap
 from view.events import Signals, EditorEvent
 
-from music import dynamic
+from music.constants import Dynamic as dynamic
 
 
 
