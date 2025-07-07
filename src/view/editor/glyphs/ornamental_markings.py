@@ -12,7 +12,7 @@ lagato/staccato
 from music.constants import Dynamic
 from view.dialogs.stringBendDialog import StringBendDialog
 from view.editor.glyphs.canvas import Canvas
-from view.editor.glyphs.common import (BEND_SYMBOL, ORNAMENT_ARTICULATION_Y, ORNAMENT_BEND_Y, ORNAMENT_DYNAMIC_Y, ORNAMENT_FONT_SIZE, ORNAMENT_STROKE_Y, ORNAMENT_Y, 
+from view.editor.glyphs.common import (BEND_SYMBOL, NO_ARTICULATION, ORNAMENT_ARTICULATION_Y, ORNAMENT_BEND_Y, ORNAMENT_DYNAMIC_Y, ORNAMENT_FONT_SIZE, ORNAMENT_STROKE_Y, ORNAMENT_Y, 
                                        STAFF_SYM_WIDTH, 
                                        ORNAMENT_MARKING_HEIGHT, 
                                        LEGATO, 
@@ -154,10 +154,13 @@ class oramental_markings(Canvas):
 
     # override to capture paint event
     def canvas_paint_event(self, painter : QPainter):        
-        if self.tab_event.legato == True: 
+        if self.tab_event.legato: 
             self._draw_marker(painter, LEGATO, ORNAMENT_ARTICULATION_Y)
         elif self.tab_event.staccato:
             self._draw_marker(painter, STACCATO, ORNAMENT_ARTICULATION_Y)
+        elif self.tab_event.render_clear_articulation:
+            self.draw_symbol(painter, NO_ARTICULATION, x=20, draw_lines=False, 
+                    y=ORNAMENT_ARTICULATION_Y, size=16)
 
         if self.tab_event.pitch_bend_active:
             self._draw_marker(painter, BEND_SYMBOL, ORNAMENT_BEND_Y)

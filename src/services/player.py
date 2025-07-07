@@ -117,9 +117,9 @@ def compile_track(track: Track, m_idx=0) -> List[Tuple[TabEvent,Measure]]:
             dynamic = te.dynamic
 
         if te.legato is None:
-            legato = te.legato
-        else:
             te.legato = legato 
+        else:
+            legato = te.legato 
 
         if te.staccato is None:
             te.staccato = staccato 
