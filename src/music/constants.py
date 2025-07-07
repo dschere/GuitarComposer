@@ -1,5 +1,4 @@
 from singleton_decorator import singleton
-
 @singleton
 class _Duration:
     "duration in beats"
@@ -37,15 +36,16 @@ class _Dynamic:
         }.get(v,f"midi {v} value")
     
     def short_text(self, v):
+        from view.editor.glyphs.common import FORTE_SYMBOL, MEZZO_SYMBOL, PIANO_SYMBOL
         return {
-            self.FFF: "fff",
-            self.FF : "ff",
-            self.F  : "f",
-            self.MF : "mf",
-            self.MP : "mp",
-            self.P  : "p",
-            self.PP : "pp",
-            self.PPP: "ppp"
+            self.FFF: FORTE_SYMBOL * 3,
+            self.FF : FORTE_SYMBOL * 2,
+            self.F  : FORTE_SYMBOL,
+            self.MF : MEZZO_SYMBOL + FORTE_SYMBOL,
+            self.MP : MEZZO_SYMBOL + PIANO_SYMBOL,
+            self.P  : PIANO_SYMBOL,
+            self.PP : PIANO_SYMBOL * 2,
+            self.PPP: PIANO_SYMBOL * 3
         }.get(v,str(v))
     
 

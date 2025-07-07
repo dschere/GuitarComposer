@@ -71,7 +71,7 @@ class TabEvent:
         self.dotted = False
         self.double_dotted = False
     
-        self.render_dynamic = False
+        self.render_dynamic = False 
         self.dynamic : int | None = None
         self.triplet = False
         self.quintuplet = False

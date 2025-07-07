@@ -133,6 +133,9 @@ class Canvas(QLabel):
         if opts.get('bold'):
             font.setBold(True)
 
+        if opts.get('italic') is not None:
+            font.setItalic(True)    
+
         rgb = opts.get("color")
         if rgb:
             color = QtGui.QColor(*rgb)

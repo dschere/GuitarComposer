@@ -184,7 +184,7 @@ class Instrument:
         # schedule events.
         s.play() 
         
-    def tab_event(self, te: TabEvent, bpm: int, beat_duration: float, dynamic = Dynamic.MP):
+    def tab_event(self, te: TabEvent, bpm: int, beat_duration: float):
         """
             generate a series of notes, effects etc in response to tab
             return the floating point number of seconds for the duration
@@ -214,7 +214,7 @@ class Instrument:
                     n.string = string
                     n.midi_code = self.tuning[string] + fret_val 
                     n.pitch_changes = te.pitch_changes
-                    n.velocity = dynamic
+                    n.velocity = te.dynamic
                     n.duration = ev_dur
 
                     # in the case of a bend of a single string
@@ -242,7 +242,7 @@ class Instrument:
                     n.string = string
                     n.midi_code = self.tuning[string] + fret_val 
                     n.pitch_changes = te.pitch_changes
-                    n.velocity = dynamic
+                    n.velocity = te.dynamic
                     # slightly decay velocity as we pick through the strings 
                     if has_stroke:
                         n.velocity -= (n*2) # type: ignore

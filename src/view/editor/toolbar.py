@@ -52,6 +52,7 @@ class ToolbarButton(QPushButton):
         self._value = v
         self._parent = parent
         self.setFixedWidth(40)
+        self.label = label
    
     def pvalue(self):
         return self._value
@@ -128,6 +129,7 @@ class EditorToolbar(QToolBar):
         (te,_) = self.track_model.current_moment()
         if btn.pname() == "dynamic":
             te.dynamic = btn.pvalue()
+            te.render_dynamic = True
         self.update_staff_and_tab()
 
     def _articulation_selected(self, btn: ToolbarButton):
@@ -244,14 +246,14 @@ class EditorToolbar(QToolBar):
         # set dynamic
         self._dyn_grp = MutuallyExclusiveButtonGroup()
         self._dyn_btns = ( 
-            ToolbarButton(self, FORTE_SYMBOL * 3, Dynamic.tooltip(Dynamic.FFF), Dynamic.FFF),
-            ToolbarButton(self, FORTE_SYMBOL * 2, Dynamic.tooltip(Dynamic.FF), Dynamic.FF),
-            ToolbarButton(self, FORTE_SYMBOL, Dynamic.tooltip(Dynamic.F), Dynamic.F),
-            ToolbarButton(self, MEZZO_SYMBOL + FORTE_SYMBOL, Dynamic.tooltip(Dynamic.MF), Dynamic.MF),
-            ToolbarButton(self, MEZZO_SYMBOL + PIANO_SYMBOL, Dynamic.tooltip(Dynamic.MP), Dynamic.MP),
-            ToolbarButton(self, PIANO_SYMBOL, Dynamic.tooltip(Dynamic.P), Dynamic.P),
-            ToolbarButton(self, PIANO_SYMBOL * 2, Dynamic.tooltip(Dynamic.PP), Dynamic.PP),
-            ToolbarButton(self, PIANO_SYMBOL * 3, Dynamic.tooltip(Dynamic.PPP), Dynamic.PPP)
+            ToolbarButton(self, FORTE_SYMBOL * 3, Dynamic.tooltip(Dynamic.FFF), "dynamic", Dynamic.FFF),
+            ToolbarButton(self, FORTE_SYMBOL * 2, Dynamic.tooltip(Dynamic.FF), "dynamic",Dynamic.FF),
+            ToolbarButton(self, FORTE_SYMBOL, Dynamic.tooltip(Dynamic.F), "dynamic",Dynamic.F),
+            ToolbarButton(self, MEZZO_SYMBOL + FORTE_SYMBOL, Dynamic.tooltip(Dynamic.MF), "dynamic",Dynamic.MF),
+            ToolbarButton(self, MEZZO_SYMBOL + PIANO_SYMBOL, Dynamic.tooltip(Dynamic.MP), "dynamic",Dynamic.MP),
+            ToolbarButton(self, PIANO_SYMBOL, Dynamic.tooltip(Dynamic.P), "dynamic",Dynamic.P),
+            ToolbarButton(self, PIANO_SYMBOL * 2, Dynamic.tooltip(Dynamic.PP), "dynamic",Dynamic.PP),
+            ToolbarButton(self, PIANO_SYMBOL * 3, Dynamic.tooltip(Dynamic.PPP), "dynamic",Dynamic.PPP)
         )
         for btn in self._dyn_btns:
             self._dyn_grp.addButton(btn) 

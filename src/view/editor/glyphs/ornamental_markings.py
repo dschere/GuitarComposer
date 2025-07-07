@@ -18,7 +18,7 @@ from view.editor.glyphs.common import (BEND_SYMBOL, ORNAMENT_ARTICULATION_Y, ORN
                                        LEGATO, 
                                        STACCATO, DOWNSTROKE, UPSTROKE)
 from models.track import TabEvent
-from PyQt6.QtGui import QPainter
+from PyQt6.QtGui import QPainter, QFont
 import math
 
 from view.events import StringBendEvent
@@ -169,4 +169,7 @@ class oramental_markings(Canvas):
         
         if self.tab_event.render_dynamic:
             t = Dynamic.short_text(self.tab_event.dynamic)
-            self._draw_marker(painter, t, ORNAMENT_DYNAMIC_Y)
+            self.draw_symbol(painter, t, x=20, y=ORNAMENT_DYNAMIC_Y, 
+                draw_lines=False, size=10, italic=True, color=(255, 215, 0)) 
+            
+            
