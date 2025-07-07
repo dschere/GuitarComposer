@@ -10,6 +10,7 @@ Track editor toolbars
 """
 from view.dialogs.stringBendDialog import StringBendDialog
 from view.editor.glyphs.common import (
+    NO_ARTICULATION,
     WHOLE_NOTE,
     HALF_NOTE,
     QUATER_NOTE,
@@ -138,6 +139,7 @@ class EditorToolbar(QToolBar):
         if btn.pname() == "clear-articulation":
             te.legato = False
             te.staccato = False
+            te.render_clear_articulation = True
         elif btn.pname() == "legato":
             te.legato = True
             te.staccato = False
@@ -264,7 +266,7 @@ class EditorToolbar(QToolBar):
         
         self._articulation_group = MutuallyExclusiveButtonGroup()
         self._articulation_btns = (
-            ToolbarButton(self, " ", "no articulation", "clear-articulation"),
+            ToolbarButton(self, NO_ARTICULATION, "no articulation", "clear-articulation"),
             ToolbarButton(self, LEGATO, "legato", "legato"),
             ToolbarButton(self, STACCATO, "staccato", "staccato")
         )

@@ -200,7 +200,7 @@ class Instrument:
             n = Note()
             n.rest = True
             n.duration = ev_dur
-            self.noteoff_event(n, bpm)
+            self.noteoff_events(n, bpm)
 
         elif te_type == te.NOTE or (te_type == te.CHORD and no_stroke):
             # Either a single note or in the case of a chord with no stroke
@@ -215,7 +215,7 @@ class Instrument:
                     n.midi_code = self.tuning[string] + fret_val 
                     n.pitch_changes = te.pitch_changes
                     n.velocity = te.dynamic
-                    n.duration = ev_dur
+                    n.set_duration(te, ev_dur)  
 
                     # in the case of a bend of a single string
                     # or multiple strings using the 'whammy' bar.
@@ -246,19 +246,19 @@ class Instrument:
                     # slightly decay velocity as we pick through the strings 
                     if has_stroke:
                         n.velocity -= (n*2) # type: ignore
-                    n.duration = ev_dur
+                    n.set_duration(te, ev_dur)  
                     self.note_event(n, bpm, start_offset)
                     start_offset += start_offset_inc
                 
         return ev_dur
 
-    def noteoff_event(self, n: Note, bpm=120, start_offset=0.0):
+    def noteoff_events(self, n: Note, bpm=120, start_offset=0.0):
         "turn off a note for specific strings or all strings"
         s = self.synth.getSequencer()
         if n.string is None:
             for s in range(len(self.tuning)):
                 n.string = s 
-                self.noteoff_event(n, bpm, start_offset)
+                self.noteoff_events(n, bpm, start_offset)
             return
 
         chan_mix = self.string_map[n.string]
@@ -330,7 +330,7 @@ class Instrument:
                         self.synth.pitch_change, (chan,semitones))
                     timer_ids.add(timer_id)
 
-            if n.duration and n.duration > 0:
+            if n.duration is not None and n.duration > 0:
                 # schedule a noteoff event in the future
                 when = ((n.duration-start_offset) * bpm/60.0)
                 timer_id = self.timer.start(when,

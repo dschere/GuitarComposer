@@ -77,6 +77,7 @@ class TabEvent:
         self.quintuplet = False
         self.legato : bool | None = None
         self.staccato : bool | None = None
+        self.render_clear_articulation = False
         self.upstroke = False
         self.downstroke = False
         self.stroke_duration = SIXTEENTH

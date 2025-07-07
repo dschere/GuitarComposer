@@ -1,5 +1,7 @@
 from typing import List, Tuple
 
+from models.measure import TabEvent
+
 
 class Note:
     DEFAULT_PITCH_RANGE = 2.0
@@ -23,3 +25,11 @@ class Note:
         # when -> decimal fraction (0-1.0) of duration
         # pitch_change -> float decimal fraction of pitch range.
         self.pitch_changes : List[Tuple[float,float]] = []
+
+    def set_duration(self, te: TabEvent, dur: float):
+        if te.legato:
+            self.duration = None # don't schedule a noteoff event
+        elif te.staccato:
+            self.duration = dur * 0.5 # ensure a rest encompasses 1/2 the duration
+        else:
+            self.duration = dur
