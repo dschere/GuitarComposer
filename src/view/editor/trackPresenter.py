@@ -1,3 +1,6 @@
+import copy, logging
+import uuid
+
 from PyQt6.QtWidgets import (QWidget, QHBoxLayout, QScrollArea)
 from PyQt6.QtCore import Qt
 
@@ -8,9 +11,9 @@ from view.editor.tabEventPresenter import TabEventPresenter
 from models.measure import Measure, TabEvent
 from models.track import Track
 
-import copy
 
 from view.events import PlayerVisualEvent, Signals
+
 
 class TrackPresenter(QWidget):
 
@@ -49,7 +52,8 @@ class TrackPresenter(QWidget):
         self.current_mp.beat_error_check()
 
     def set_fret(self, n : int):
-        self.current_tep.set_fret(n)
+        if self.current_tep is not None:
+            self.current_tep.set_fret(n)
         self.setup() 
 
     def set_duration(self, d: float):
@@ -82,6 +86,8 @@ class TrackPresenter(QWidget):
         # create a copy of the current tab and insert
         # a neew tab event after the current one in the measure.
         new_tab = copy.deepcopy(self.current_tab_event)
+        new_tab.uuid = str(uuid.uuid4())
+        
         self.current_measure.insert_after_current(new_tab)
         #self.current_measure.tab_events
         self.current_mp.reset_presentation()
@@ -150,8 +156,10 @@ class TrackPresenter(QWidget):
             if not tp:
                 pass
             elif evt.ev_type == evt.TABEVENT_HIGHLIGHT_ON:
+                #logging.info("set_play_line tp id %ld" % id(tp))
                 tp.set_play_line()
             elif evt.ev_type == evt.TABEVENT_HIGHLIGHT_OFF:
+                #logging.info("clear_play_line tp id %ld" % id(tp))
                 tp.clear_play_line()
             
 
@@ -166,7 +174,7 @@ class TrackPresenter(QWidget):
     def prev_moment(self):
         "switch cursor off on current tab, switch on previous"
         (prev_tab, _) = self.track_model.prev_moment()
-        if prev_tab:
+        if prev_tab and self.current_tep is not None:
             self.current_tep.cursor_off()
             # update current_tp
             self.setup()
@@ -192,7 +200,7 @@ class TrackPresenter(QWidget):
         """
         (next_tab, curr_measure) = self.track_model.next_moment()
         # are there still tabs?
-        if next_tab:
+        if next_tab and self.current_tep is not None:
             self.current_tep.cursor_off()
             # update current_tp
             self.setup()

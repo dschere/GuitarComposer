@@ -102,7 +102,6 @@ class PlayerVisualEvent:
     def __init__(self, ev_type : int, tab_event : TabEvent ):
         self.ev_type = ev_type
         self.tab_event : TabEvent = tab_event
-        self.msg_seq = MsgSeqCounter().get()        
         self.measure : Measure | None = None
 
 global _toolbar_button_update

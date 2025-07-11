@@ -69,9 +69,11 @@ class TabEventPresenter(QWidget):
 
     def set_play_line(self):
         self.staff_p.set_play_line()
+        self.update()
 
     def clear_play_line(self):
-        self.staff_p.clear_play_line()    
+        self.staff_p.clear_play_line() 
+        self.update()
 
     def beat_overflow_error(self):
         self.staff_p.beat_overflow_error()    

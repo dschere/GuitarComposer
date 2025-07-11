@@ -1,3 +1,4 @@
+import logging
 from view.editor.glyphs.common import (STAFF_SYM_WIDTH, STAFF_HEIGHT,
     STAFF_HEADER_WIDTH, STAFF_LINE_SPACING, STAFF_ABOVE_LINES, QUATER_NOTE, TREBLE_CLEFF,
     SymFontSize, KeyMidiCodeTable, SHARP_SIGN, FLAT_SIGN, STAFF_NUMBER_OF_LINES,
@@ -76,7 +77,7 @@ class StaffGlyph(Canvas):
     def _draw_play_line(self, painter):
         # STAFF_SYM_WIDTH, STAFF_HEIGHT
         saved_pen = painter.pen()
-        painter.setPen(QPen(Qt.GlobalColor.red, 1, Qt.PenStyle.DashLine))
+        painter.setPen(QPen(Qt.GlobalColor.red, 3, Qt.PenStyle.DashLine))
                     
         x = int(STAFF_SYM_WIDTH / 2)  # Center of the widget
         painter.drawLine(x, 0, x, STAFF_HEIGHT)    
@@ -84,25 +85,11 @@ class StaffGlyph(Canvas):
 
     def set_play_line(self):
         self.play_line = True    
-        self.update()
+        
 
     def clear_play_line(self):
         self.play_line = False
-        self.update()
         
-    """
-    def setup(self, m: Measure, te: TabEvent, tuning):
-        self.te = te
-        self.m = m
-        self.tuning = tuning
-
-        if m.key in ['F','Bb','Eb','Ab','Db','Gb']:
-            self.accent = FLAT_SIGN
-        else:
-            self.accent = SHARP_SIGN
-        # schedule a refresh
-        self.update()  
-    """
         
     def _get_renderer(self):
         tc : TabEvent = self.te
@@ -178,6 +165,7 @@ class StaffHeaderGlyph(Canvas):
 
     # use the draw_ ... commands
     def canvas_paint_event(self, painter):
+        
         # draw background lines
         self.draw_staff_background(painter)
 

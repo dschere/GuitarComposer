@@ -197,26 +197,32 @@ class track_player_api(QObject):
             evt.measure = measure
             Signals.player_visual_event.emit(evt)
 
+            
+
+            if i > 0:
+                (prev_tab_event, prev_measure) = linear_tabs[i-1]
+                p_evt = PlayerVisualEvent(PlayerVisualEvent.TABEVENT_HIGHLIGHT_OFF, prev_tab_event)
+                p_evt.measure = prev_measure 
+                Signals.player_visual_event.emit(p_evt)
+
             beat_duration = ts.beat_duration()
             duration = self.intrument.tab_event(tab_event, bpm, beat_duration)
-
+            
             # call next moment 
             self.timer_id = self.timer.start(duration, 
                 self._play_loop, (i+1,linear_tabs))
+            
+        elif i == len(linear_tabs) and len(linear_tabs) > 0:
+            (prev_tab_event, prev_measure) = linear_tabs[i-1]
+            p_evt = PlayerVisualEvent(PlayerVisualEvent.TABEVENT_HIGHLIGHT_OFF, prev_tab_event)
+            p_evt.measure = prev_measure 
+            Signals.player_visual_event.emit(p_evt)
 
-            class off_highlight:
-                def __init__(self, evt):
-                    self.off_evt = copy.copy(evt)
-                    self.off_evt.ev_type = PlayerVisualEvent.TABEVENT_HIGHLIGHT_OFF 
-                def __call__(self, *args):
-                    Signals.player_visual_event.emit(self.off_evt)
-
-            # remove highlight line
-            self.timer.start(duration, off_highlight(evt), ())
 
         elif self.timer_id != -1:
             self.timer.cancel(self.timer_id)
             self.timer_id = -1
+
             
          
     def play(self):
