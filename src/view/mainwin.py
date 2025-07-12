@@ -7,14 +7,14 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtGui import QAction, QKeyEvent, QMouseEvent
 
-from view.mainwin.fretboard_view import fretboard_view
+from view.fretboard_view import fretboard_view
 
 from view.events import (Signals, EditorEvent)
 from view.config import ORAGANIZATION, APP_NAME
 from view.config import EditorKeyMap
 
 
-from view.widgets.projectNavigator.navigator import Navigator
+from view.projectNavigator.navigator import Navigator
 from view.editor.trackEditorView import TrackEditorView
 import logging
 from controllers.editorcontroller import EditorController

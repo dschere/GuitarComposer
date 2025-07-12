@@ -1,7 +1,7 @@
 from PyQt6.QtWidgets import QVBoxLayout, QTreeView, QWidget, QMenu
 from PyQt6.QtGui import QStandardItemModel, QAction, QStandardItem
 
-from view.widgets.projectNavigator.TrackTreeNode import TrackTreeDialog
+from .TrackTreeNode import TrackTreeDialog
 from view.events import Signals, EditorEvent
 from controllers.appcontroller import SongController
 from view.config import LabelText

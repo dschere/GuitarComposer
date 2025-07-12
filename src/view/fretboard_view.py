@@ -1,7 +1,7 @@
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QGroupBox
 
-from view.widgets.fretboardControls import FretboardControls
-from view.widgets.fretboard import GuitarFretboard
+from view.fretboardControls import FretboardControls
+from view.fretboard import GuitarFretboard
 
 from view.config import LabelText
 

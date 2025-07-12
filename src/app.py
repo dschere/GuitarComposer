@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from view.events import Signals
-from view.mainwin.mainwin import MainWindow
+from view.mainwin import MainWindow
 from controllers.appcontroller import AppController
 from controllers.editorcontroller import EditorController
 from controllers.playercontroller import PlayerController
