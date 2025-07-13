@@ -25,9 +25,10 @@ from view.dialogs.effectsControlDialog.dialog import EffectPreview,\
 
 from view.events import Signals, TrackItem, PropertiesItem, SongItem
 
+from view.dialogs.msgboxes import alert
+
 
 FRETBOARD_CHANNEL = 0
-
 
 class SongController:
 
@@ -252,6 +253,15 @@ class AppController:
         self.preview_instr.free_resources()
         self.preview_instr = Instrument(instrument_name)
 
+    def on_save_song(self):
+        """ saves all opened songs.
+        """
+        for (title,sc) in self.song_ctrl.items():
+            try:
+                self.projects.save_song(sc.song)
+            except Exception as e:
+                alert(str(e), title=type(e).__name__)
+
     def __init__(self, synth_service):
         self.synth_service = synth_service
         self.editor_ctrl = None
@@ -274,6 +284,7 @@ class AppController:
         Signals.save_settings.connect(self.on_load_settings)
 
         Signals.ready.connect(self.on_ready)
+        Signals.save_song.connect(self.on_save_song)
 
         n = Note()
         n.string = 4

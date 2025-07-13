@@ -55,8 +55,8 @@ class MainWindow(QMainWindow):
         save_action = QAction("Save", self)
         save_action.triggered.connect(self.saveSong)   
 
-        save_action = QAction("SaveAs", self)
-        save_action.triggered.connect(self.saveAsSong)   
+        saveas_action = QAction("SaveAs", self)
+        saveas_action.triggered.connect(self.saveAsSong)   
 
         exit_action = QAction("Exit", self)
         exit_action.triggered.connect(self.close)
@@ -64,6 +64,7 @@ class MainWindow(QMainWindow):
         file_menu.addAction(new_action)
         file_menu.addAction(open_action)
         file_menu.addAction(save_action)
+        file_menu.addAction(saveas_action)
         file_menu.addSeparator()  # Adds a separator line
         file_menu.addAction(exit_action)
 
