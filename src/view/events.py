@@ -1,6 +1,7 @@
 """
 Central place for custom signals/slots for the application
 """
+import queue
 from typing import Dict, List, Tuple
 from PyQt6.QtGui import QStandardItemModel, QStandardItem
 from PyQt6.QtCore import QObject, QSettings
@@ -15,6 +16,7 @@ from models.param import EffectParameter
 from models.track import Track
 from models.effect import Effect, Effects
 from models.song import Song
+ 
 
 #from view.dialogs.effectsControlDialog.dialog import EffectChanges, EffectPreview
 
@@ -125,9 +127,44 @@ class PropertiesItem(QStandardItem):
 class SongItem(QStandardItem):
     pass
 
+class QueryMessage:
+    def __init__(self, ident: str, **kwargs):
+        self.ident = ident 
+        self.kwargs = kwargs
+        self.resp_queue = queue.Queue() 
 
+class QueryResult:
+    def __init__(self):
+        self.track : Track | None = None  
+        self.measure_num = -1 
+        self.tab_num = -1
+                        
 @singleton
 class _Signals(QObject):
+
+    query_slot = pyqtSignal(QueryMessage) 
+
+    def set_query_reactor(self, ident: str, callback):
+        class handler(QObject):
+            def __init__(self, ident, cb):
+                super().__init__()
+                self.cb = cb 
+                self.ident = ident 
+
+            def __call__(self, msg: QueryMessage):
+                if msg.ident == self.ident:
+                    result = self.cb(msg.ident, **msg.kwargs)
+                    msg.resp_queue.put(result)
+
+        self.query_slot.connect(handler(ident, callback))
+
+    def query(self, ident: str, **kwargs):
+        msg = QueryMessage(ident, **kwargs)
+        self.query_slot.emit(msg)
+        if 'timeout' in kwargs:
+            return msg.resp_queue.get(timeout=kwargs['timeout'])
+        return msg.resp_queue.get()
+
     scale_selected = pyqtSignal(ScaleSelectedEvent)
     clear_scale = pyqtSignal(ClearScaleEvent)
     load_settings = pyqtSignal(QSettings)
@@ -165,6 +202,8 @@ class _Signals(QObject):
 
     player_event = pyqtSignal(PlayerEvent)
     player_visual_event = pyqtSignal(PlayerVisualEvent)
+
+
 
 Signals = _Signals()
 
