@@ -178,26 +178,23 @@ class AppController:
     settings_key = __name__+".active_song_titles"
 
     def on_song_title_changed(self, item):
-        new_text = item.text()
-        s_ctl = item.data()
+        new_title = item.text()
+        song_inst : Song = item.data()
 
-        is_song_ctl = False
-        try:
-            if isinstance(s_ctl, SongController):
-                is_song_ctl = True
-        except TypeError:
-            pass
-
-        if is_song_ctl:
-            if new_text == s_ctl.getTitle():
-                pass  # no-op we didn't change anything
-            # user has edited the song title, check for collissions
-            elif new_text in self.song_ctrl:
+        if new_title in self.song_ctrl:
+            potential_dup = self.song_ctrl[new_title]
+            if potential_dup is not song_inst:
+                # this is a dup then we already have a song with that title
                 QMessageBox.critical(None,
-                                     "Error", f"{new_text} already exists!",
-                                     QMessageBox.StandardButton.Ok)
-            else:
-                s_ctl.setTitle(new_text)
+                    "Error", f"{new_title} song title already in use by another song!",
+                        QMessageBox.StandardButton.Ok)
+                return
+        
+        sc = self.song_ctrl[song_inst.title]
+        del self.song_ctrl[song_inst.title]
+        song_inst.title = new_title
+        self.song_ctrl[song_inst.title] = sc
+
 
     def update_navigator(self):
         "construct a QModel for the treeView"

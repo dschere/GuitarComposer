@@ -36,12 +36,15 @@ class ProjectManager(QObject):
         settings.setValue(self.opened_projects_key, s)
 
 
-    def save_as_dialog(self, song: Song):
-        file_name, _ = QFileDialog.getOpenFileName(
-            None,
-            "Select a song name",
-            self.project_dir,  # Initial directory (empty = current directory)
-            "All Files (*);;"  # File filters
+    def save_using_dialog(self, song: Song) -> bool:
+        """ 
+        Save the song object, return true is the user actually saved.
+        """
+        title_as_filename = song.title.replace(" ",'-')+".gc"
+        file_name, _ = QFileDialog.getSaveFileName(
+            caption=f"Save {song.title}",
+            directory=self.project_dir+os.sep+title_as_filename, 
+            filter="*.gc"
         )
         if len(file_name) > 0:
             try:
@@ -58,14 +61,16 @@ class ProjectManager(QObject):
             finally:
                 song.filename = file_name
                 self.project_dir = os.path.dirname(file_name)
-                self.opened_projects[song.title] = song.filename 
+                self.opened_projects[song.title] = song.filename
+                return True
+        return False 
 
     def save_song(self, song: Song):
         if len(song.filename) > 0:
             with open(song.filename, 'wb') as file:  
                 pickle.dump(song, file)
         else:
-            self.save_as_dialog(song)
+            self.save_using_dialog(song)
 
     def delete_song(self, song: Song):
         if os.access(song.filename, os.F_OK):
