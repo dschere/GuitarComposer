@@ -65,11 +65,11 @@ class ProjectManager(QObject):
                 return True
         return False 
 
-    def save_song(self, song: Song):
+    def save_song(self, song: Song, allow_dialog=True):
         if len(song.filename) > 0:
             with open(song.filename, 'wb') as file:  
                 pickle.dump(song, file)
-        else:
+        elif allow_dialog:
             self.save_using_dialog(song)
 
     def delete_song(self, song: Song):

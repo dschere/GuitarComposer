@@ -21,9 +21,9 @@ class Navigator(QWidget):
     def update_tree_model(self, model):
         self.tree_model = model
         self.tree_view.setModel(model)
-        if not self.initial_tree_model_update:
-            return
-        self.initial_tree_model_update = False
+        #if not self.initial_tree_model_update:
+        #    return
+        #self.initial_tree_model_update = False
         self.tree_view.expandAll()
 
         # setup editing the first track

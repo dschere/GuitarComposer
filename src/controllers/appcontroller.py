@@ -28,6 +28,7 @@ from view.events import Signals, TrackItem, PropertiesItem, SongItem
 from view.dialogs.msgboxes import alert
 
 
+
 FRETBOARD_CHANNEL = 0
 
 class SongController:
@@ -83,6 +84,9 @@ class SongController:
             instrument = Instrument(track.instrument_name)
             self.instruments[track] = instrument
 
+    def save_model(self, allow_dialog=False):
+        if isinstance(self.song, Song):
+            ProjectManager().save_song(self.song, allow_dialog)
 
     def title(self):
         return self.song.title
@@ -178,6 +182,9 @@ class AppController:
     settings_key = __name__+".active_song_titles"
 
     def on_song_title_changed(self, item):
+        if not isinstance(item.data(), Song):
+            return
+
         new_title = item.text()
         song_inst : Song = item.data()
 
@@ -195,18 +202,47 @@ class AppController:
         song_inst.title = new_title
         self.song_ctrl[song_inst.title] = sc
 
+    def upsert_song_to_navigator(self, song: Song):
+        """
+        add or replace a song in the navigator
+        """
+        # update song_ctrl then call update navigator to build
+        # a new model.
+        existing_sc = None 
+        for sc in self.song_ctrl.values():
+            if sc.song.filename == song.filename:
+                existing_sc = sc 
+            elif sc.song.title == song.title:
+                msg = f"Song {sc.song.filename} has the same title, it will be closed"
+                sc.save_model()
+                alert(msg)
 
-    def update_navigator(self):
+        if existing_sc:
+            existing_sc.load_model(song) 
+        else:
+            sc = SongController(song.title)
+            sc.load_model(song)
+            self.song_ctrl[song.title] = sc
+
+        self.update_navigator(selected=song)
+
+    def on_open_song(self):
+        """ handle open song signal from mainwin """
+        s = ProjectManager().open_song_using_dialog()
+        if s is not None:
+            self.upsert_song_to_navigator(s)    
+
+    def update_navigator(self, **kw_args):
         "construct a QModel for the treeView"
         root = QStandardItemModel()
         root.itemChanged.connect(self.on_song_title_changed)
         root.setHorizontalHeaderLabels(["Guitar Composer"])
-        default_song_selected = None
+        selected = kw_args.get('selected')
 
         for title in sorted(self.song_ctrl):
             sc = self.song_ctrl[title]
-            if not default_song_selected:
-                default_song_selected = sc.song 
+            if not selected:
+                selected = sc.song 
                 
             song_item = sc.createQModel()
             root.appendRow(song_item)
@@ -218,7 +254,7 @@ class AppController:
 
         # send to navigator widget
         Signals.update_navigator.emit(root)
-        Signals.song_selected.emit(default_song_selected)
+        Signals.song_selected.emit(selected)
 
     def on_ready(self, app):
         # setup navigator, score editor
@@ -262,6 +298,7 @@ class AppController:
     def __init__(self, synth_service):
         self.synth_service = synth_service
         self.editor_ctrl = None
+        
 
         self.projects = ProjectManager()
         self.active_song_titles = set()
@@ -282,6 +319,7 @@ class AppController:
 
         Signals.ready.connect(self.on_ready)
         Signals.save_song.connect(self.on_save_song)
+        Signals.open_song.connect(self.on_open_song)
 
         n = Note()
         n.string = 4

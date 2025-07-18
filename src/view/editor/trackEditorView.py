@@ -29,7 +29,6 @@ class TrackEditorData:
         return self.active_track_model
 
 
-
 class TrackEditorView(QScrollArea):
 
     def _update_track_editor_content(self):
@@ -49,8 +48,18 @@ class TrackEditorView(QScrollArea):
 
     def set_track_model(self, track_model: Track):
         (tab_event, _) = track_model.current_moment()
-        # main layout for toolbar and scrolling area 
-        main_layout = QVBoxLayout(self)
+        # main layout for toolbar and scrolling area
+            
+        main_layout = self.layout()
+        if main_layout:
+            while main_layout.count():
+                item = main_layout.takeAt(0)
+                if widget := item.widget(): # type: ignore
+                    widget.deleteLater()
+        else:
+            main_layout = QVBoxLayout(self)
+            self.setLayout(main_layout)
+
         main_layout.setSpacing(0)
         main_layout.setContentsMargins(0, 0, 0, 0)
 
@@ -66,10 +75,7 @@ class TrackEditorView(QScrollArea):
         scroll_area.setWidget(self.track_presenter)
         scroll_area.setWidgetResizable(False)  # Important for custom-size canvas
         
-        
         main_layout.addWidget(scroll_area)
-
-        self.setLayout(main_layout)
         self.track_model = track_model
 
         # make this model accessible 
