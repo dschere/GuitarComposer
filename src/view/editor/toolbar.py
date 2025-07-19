@@ -10,7 +10,9 @@ Track editor toolbars
 """
 from view.dialogs.stringBendDialog import StringBendDialog
 from view.editor.glyphs.common import (
+    DOWNSTROKE,
     NO_ARTICULATION,
+    UPSTROKE,
     WHOLE_NOTE,
     HALF_NOTE,
     QUATER_NOTE,
@@ -27,7 +29,7 @@ from view.editor.glyphs.common import (
     LEGATO
     )
 from PyQt6.QtWidgets import (QToolBar, QPushButton, 
-    QSizePolicy, QWidget, QGroupBox, QHBoxLayout)
+    QSizePolicy, QWidget, QGroupBox, QHBoxLayout, QComboBox)
 from PyQt6.QtCore import pyqtSignal, QObject
 from PyQt6.QtCore import QPointF
 from PyQt6.QtGui import QPainter, QPainterPath, QColor
@@ -42,6 +44,22 @@ TRIPLET = "3"
 QUINTIPLET = "5"
 DURATION = "duration"
 DYNAMIC = "dynamic"
+StrokeDurationMap = {
+    "all": 1.0,
+    "3/4": 0.75,
+    "2/3": 0.66,
+    "1/2": 0.5,
+    "1/3": 0.33,
+    "1/4": 0.25,
+    "1/8": 0.125
+}
+DefaultStrokeDuration = "1/2"
+NO_STROKE_ID_VAL  = 0
+UPSTROKE_ID_VAL   = 1
+DOWNSTROKE_ID_VAL = -1
+
+
+
 
 class ToolbarButton(QPushButton):
     
@@ -159,6 +177,23 @@ class EditorToolbar(QToolBar):
             te.render_dynamic = True
         self.update_staff_and_tab()
 
+    def _on_stroke_direction_selected(self, *args):
+        (te,_) = self.track_model.current_moment()
+        t = self._stroke_duration.currentText()
+        m = StrokeDurationMap.get(t)
+        if m:
+            # stroke duration in beats
+            te.stroke_duration = te.duration * m
+
+    def _on_stroke_selected(self, btn: ToolbarButton):
+        (te,_) = self.track_model.current_moment()
+        if btn.pname() == "stroke":
+            (te.upstroke,te.downstroke) = btn.pvalue()  # type: ignore
+            if te.upstroke or te.downstroke:
+                self._on_stroke_direction_selected()
+            self.update_staff_and_tab()
+
+
     def _articulation_selected(self, btn: ToolbarButton):
         (te,_) = self.track_model.current_moment()
 
@@ -210,6 +245,11 @@ class EditorToolbar(QToolBar):
             btn = self._dur_btns[i]
             self._dur_grp.check_btn(btn) 
 
+        for btn in self._stroke_btns:
+            te = tab_event
+            if btn.pvalue() == (te.upstroke,te.downstroke):
+                self._stroke_grp.check_btn(btn)    
+
         # set dot
         if tab_event.dotted:
             dotted_index = 1
@@ -258,6 +298,28 @@ class EditorToolbar(QToolBar):
         self.addWidget(dur_container) 
 
         self._dur_grp.selected.connect(self._on_duration_selected)
+        self.addSeparator()
+
+        stroke_container = ButtonGroupContainer("Chord Stroke")
+        self._stroke_grp = MutuallyExclusiveButtonGroup()
+        self._stroke_btns = (
+            ToolbarButton(self, "", "no stroke", "stroke", (False,False)),
+            ToolbarButton(self, UPSTROKE, "upstroke", "stroke", (True,False)),
+            ToolbarButton(self, DOWNSTROKE, "downstroke", "stroke", (False,True))
+        )
+        self._stroke_duration = QComboBox()
+        self._stroke_duration.setFixedWidth(60)
+        opts = list(StrokeDurationMap.keys())
+        self._stroke_duration.setToolTip('Stroke duration as a fraction of the note chord duration')
+        self._stroke_duration.addItems(opts)
+        self._stroke_duration.setCurrentIndex(opts.index(DefaultStrokeDuration))
+        self._stroke_duration.currentIndexChanged.connect(self._on_stroke_direction_selected)
+        for btn in self._stroke_btns:
+            self._stroke_grp.addButton(btn)
+            stroke_container.add_item(btn) 
+        stroke_container.add_item(self._stroke_duration)    
+        self.addWidget(stroke_container)
+        self._stroke_grp.selected.connect(self._on_stroke_selected)
         self.addSeparator()
 
         # dotted notes that alter standard note durations
@@ -309,10 +371,6 @@ class EditorToolbar(QToolBar):
             art_container.add_item(btn)
         self.addWidget(art_container)
         self._articulation_group.selected.connect(self._articulation_selected)    
-
-        (te,_) = self.track_model.current_moment()
-
-        self.setTabEvent(te)
         self.addSeparator()
 
         gest_container = ButtonGroupContainer("Hand efects")        
@@ -327,6 +385,11 @@ class EditorToolbar(QToolBar):
         self.addWidget(gest_container) 
         self._hand_effects_group.selected.connect(self._hand_effect_selected)
        
+        (te,_) = self.track_model.current_moment()
+
+        self.setTabEvent(te)
+        self.addSeparator()
+
 
 
 
