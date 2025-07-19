@@ -26,7 +26,8 @@ from view.editor.glyphs.common import (
     STACCATO,
     LEGATO
     )
-from PyQt6.QtWidgets import QToolBar, QPushButton, QSizePolicy
+from PyQt6.QtWidgets import (QToolBar, QPushButton, 
+    QSizePolicy, QWidget, QGroupBox, QHBoxLayout)
 from PyQt6.QtCore import pyqtSignal, QObject
 from PyQt6.QtCore import QPointF
 from PyQt6.QtGui import QPainter, QPainterPath, QColor
@@ -95,6 +96,31 @@ class MutuallyExclusiveButtonGroup(QObject):
             def __call__(self):
                 self.p.on_selected(self.btn)
         btn.clicked.connect(selector(self, btn))
+
+class ButtonGroupContainer(QWidget):
+    def __init__(self, label):
+        super().__init__()
+        group_box = QGroupBox(label)
+        group_box.setStyleSheet("""
+            QGroupBox {
+                border: 2px solid gray;
+                border-radius: 5px; margin-top: 10px;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin; padding: 0 3px;
+            }
+        """)
+        self.item_layout = QHBoxLayout()
+        group_box.setLayout(self.item_layout)
+
+        group_layout = QHBoxLayout()
+        group_layout.addWidget(group_box)
+        self.setLayout(group_layout)
+
+    def add_item(self, w):
+        self.item_layout.addWidget(w)    
+        
+
 
 
 class EditorToolbar(QToolBar):
@@ -211,9 +237,11 @@ class EditorToolbar(QToolBar):
                                          
         self._lookup = {}
         self.update_staff_and_tab = update_staff_and_tab
-        self.setFixedHeight(30)
+        self.setFixedHeight(90)
 
         # not duration whole -> 64th  
+        
+        dur_container = ButtonGroupContainer("Duration")
         self._dur_grp = MutuallyExclusiveButtonGroup()    
         self._dur_btns = (
             ToolbarButton(self, WHOLE_NOTE, "whole note", "duration", 4.0),
@@ -226,11 +254,14 @@ class EditorToolbar(QToolBar):
         )
         for btn in self._dur_btns:
             self._dur_grp.addButton(btn)
-            self.addWidget(btn)
+            dur_container.add_item(btn)
+        self.addWidget(dur_container) 
+
         self._dur_grp.selected.connect(self._on_duration_selected)
         self.addSeparator()
 
         # dotted notes that alter standard note durations
+        dot_dur_container = ButtonGroupContainer("Dotted Duration")
         self._dot_grp = MutuallyExclusiveButtonGroup()
         self._dot_btns = (
             ToolbarButton(self, " ", "no dot", "clear-dots"),
@@ -241,11 +272,13 @@ class EditorToolbar(QToolBar):
         )
         for btn in self._dot_btns:
             self._dot_grp.addButton(btn)
-            self.addWidget(btn)
+            dot_dur_container.add_item(btn)
+        self.addWidget(dot_dur_container)
         self._dot_grp.selected.connect(self._dot_selected) 
         self.addSeparator()
 
         # set dynamic
+        dyn_container = ButtonGroupContainer("Dynamic")
         self._dyn_grp = MutuallyExclusiveButtonGroup()
         self._dyn_btns = ( 
             ToolbarButton(self, FORTE_SYMBOL * 3, Dynamic.tooltip(Dynamic.FFF), "dynamic", Dynamic.FFF),
@@ -259,11 +292,12 @@ class EditorToolbar(QToolBar):
         )
         for btn in self._dyn_btns:
             self._dyn_grp.addButton(btn) 
-            self.addWidget(btn) 
+            dyn_container.add_item(btn)
+        self.addWidget(dyn_container) 
         self._dyn_grp.selected.connect(self._dyn_selected)    
         self.addSeparator()
 
-        
+        art_container = ButtonGroupContainer("Articulation")        
         self._articulation_group = MutuallyExclusiveButtonGroup()
         self._articulation_btns = (
             ToolbarButton(self, NO_ARTICULATION, "no articulation", "clear-articulation"),
@@ -272,7 +306,8 @@ class EditorToolbar(QToolBar):
         )
         for btn in self._articulation_btns:
             self._articulation_group.addButton(btn) 
-            self.addWidget(btn)
+            art_container.add_item(btn)
+        self.addWidget(art_container)
         self._articulation_group.selected.connect(self._articulation_selected)    
 
         (te,_) = self.track_model.current_moment()
@@ -280,6 +315,7 @@ class EditorToolbar(QToolBar):
         self.setTabEvent(te)
         self.addSeparator()
 
+        gest_container = ButtonGroupContainer("Hand efects")        
         self._hand_effects_group = MutuallyExclusiveButtonGroup() 
         self._hand_effects_btns = ( 
             ToolbarButton(self, " ", "no effects", "clear-hand-effects"),
@@ -287,7 +323,8 @@ class EditorToolbar(QToolBar):
         )
         for btn in self._hand_effects_btns:
             self._hand_effects_group.addButton(btn) 
-            self.addWidget(btn) 
+            gest_container.add_item(btn)
+        self.addWidget(gest_container) 
         self._hand_effects_group.selected.connect(self._hand_effect_selected)
        
 
