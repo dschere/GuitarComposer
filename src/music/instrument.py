@@ -245,7 +245,7 @@ class Instrument:
                     n.velocity = te.dynamic
                     # slightly decay velocity as we pick through the strings 
                     if has_stroke:
-                        n.velocity -= (n*2) # type: ignore
+                        n.velocity -= 2 # type: ignore
                     n.set_duration(te, ev_dur)  
                     self.note_event(n, bpm, start_offset)
                     start_offset += start_offset_inc

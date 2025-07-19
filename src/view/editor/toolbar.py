@@ -54,6 +54,11 @@ StrokeDurationMap = {
     "1/8": 0.125
 }
 DefaultStrokeDuration = "1/2"
+NO_STROKE_ID_VAL  = 0
+UPSTROKE_ID_VAL   = 1
+DOWNSTROKE_ID_VAL = -1
+
+
 
 
 class ToolbarButton(QPushButton):
@@ -172,8 +177,22 @@ class EditorToolbar(QToolBar):
             te.render_dynamic = True
         self.update_staff_and_tab()
 
+    def _on_stroke_direction_selected(self, *args):
+        (te,_) = self.track_model.current_moment()
+        t = self._stroke_duration.currentText()
+        m = StrokeDurationMap.get(t)
+        if m:
+            # stroke duration in beats
+            te.stroke_duration = te.duration * m
+
     def _on_stroke_selected(self, btn: ToolbarButton):
-        pass    
+        (te,_) = self.track_model.current_moment()
+        if btn.pname() == "stroke":
+            (te.upstroke,te.downstroke) = btn.pvalue()  # type: ignore
+            if te.upstroke or te.downstroke:
+                self._on_stroke_direction_selected()
+            self.update_staff_and_tab()
+
 
     def _articulation_selected(self, btn: ToolbarButton):
         (te,_) = self.track_model.current_moment()
@@ -225,6 +244,11 @@ class EditorToolbar(QToolBar):
             i = dlist.index(tab_event.duration)
             btn = self._dur_btns[i]
             self._dur_grp.check_btn(btn) 
+
+        for btn in self._stroke_btns:
+            te = tab_event
+            if btn.pvalue() == (te.upstroke,te.downstroke):
+                self._stroke_grp.check_btn(btn)    
 
         # set dot
         if tab_event.dotted:
@@ -279,9 +303,9 @@ class EditorToolbar(QToolBar):
         stroke_container = ButtonGroupContainer("Chord Stroke")
         self._stroke_grp = MutuallyExclusiveButtonGroup()
         self._stroke_btns = (
-            ToolbarButton(self, "", "no stroke", "stroke", 0),
-            ToolbarButton(self, UPSTROKE, "upstroke", "stroke", 1),
-            ToolbarButton(self, DOWNSTROKE, "downstroke", "stroke", -1)
+            ToolbarButton(self, "", "no stroke", "stroke", (False,False)),
+            ToolbarButton(self, UPSTROKE, "upstroke", "stroke", (True,False)),
+            ToolbarButton(self, DOWNSTROKE, "downstroke", "stroke", (False,True))
         )
         self._stroke_duration = QComboBox()
         self._stroke_duration.setFixedWidth(60)
@@ -289,6 +313,7 @@ class EditorToolbar(QToolBar):
         self._stroke_duration.setToolTip('Stroke duration as a fraction of the note chord duration')
         self._stroke_duration.addItems(opts)
         self._stroke_duration.setCurrentIndex(opts.index(DefaultStrokeDuration))
+        self._stroke_duration.currentIndexChanged.connect(self._on_stroke_direction_selected)
         for btn in self._stroke_btns:
             self._stroke_grp.addButton(btn)
             stroke_container.add_item(btn) 
