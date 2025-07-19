@@ -141,7 +141,7 @@ class TabletureGlyph(Canvas):
             painter.eraseRect(x+1, y+1, width-1, width-1)
 
     def draw_tab_notes(self, painter, gstring, fret, opts):
-        x = int(self.c_width/4)
+        x = int(self.c_width/4) + 10
         width = int(self.c_width/2)
         y = gstring * TABLATURE_LINE_SPACE
         painter.eraseRect(x+1, y+1, width-1, width-1)
