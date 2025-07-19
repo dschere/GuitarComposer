@@ -81,6 +81,7 @@ class TabEvent:
         self.upstroke = False
         self.downstroke = False
         self.stroke_duration = SIXTEENTH
+        self.stroke_duration_index : int | None = None
         self.effects : Effects | None = None
         self.num_gstrings = num_gstrings
 

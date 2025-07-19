@@ -54,6 +54,8 @@ StrokeDurationMap = {
     "1/8": 0.125
 }
 DefaultStrokeDuration = "1/2"
+DefaultStrokeDurationIdx = 3
+
 NO_STROKE_ID_VAL  = 0
 UPSTROKE_ID_VAL   = 1
 DOWNSTROKE_ID_VAL = -1
@@ -184,13 +186,12 @@ class EditorToolbar(QToolBar):
         if m:
             # stroke duration in beats
             te.stroke_duration = te.duration * m
+            te.stroke_duration_index = self._stroke_duration.currentIndex()
 
     def _on_stroke_selected(self, btn: ToolbarButton):
         (te,_) = self.track_model.current_moment()
         if btn.pname() == "stroke":
             (te.upstroke,te.downstroke) = btn.pvalue()  # type: ignore
-            if te.upstroke or te.downstroke:
-                self._on_stroke_direction_selected()
             self.update_staff_and_tab()
 
 
@@ -248,7 +249,13 @@ class EditorToolbar(QToolBar):
         for btn in self._stroke_btns:
             te = tab_event
             if btn.pvalue() == (te.upstroke,te.downstroke):
-                self._stroke_grp.check_btn(btn)    
+                self._stroke_grp.check_btn(btn)
+
+        if hasattr(te,"stroke_duration_index") and te.stroke_duration_index is not None:
+            self._stroke_duration.setCurrentIndex(te.stroke_duration_index)   
+        else:
+            self._stroke_duration.setCurrentIndex(DefaultStrokeDurationIdx)
+            te.stroke_duration_index = DefaultStrokeDurationIdx
 
         # set dot
         if tab_event.dotted:
