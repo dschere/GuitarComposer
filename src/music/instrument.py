@@ -242,7 +242,7 @@ class Instrument:
                     n.string = string
                     n.midi_code = self.tuning[string] + fret_val 
                     n.pitch_changes = te.pitch_changes
-                    n.velocity = te.dynamic
+                    n.velocity = te.getDynamic()
                     # slightly decay velocity as we pick through the strings 
                     if has_stroke:
                         n.velocity -= 2 # type: ignore

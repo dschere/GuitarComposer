@@ -85,6 +85,11 @@ class TabEvent:
         self.effects : Effects | None = None
         self.num_gstrings = num_gstrings
 
+    def getDynamic(self):
+        if self.dynamic:
+            return self.dynamic
+        return Dynamic.MF    
+
     def getEffects(self) -> Effects | None:
         return self.effects
 

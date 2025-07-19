@@ -250,12 +250,19 @@ class EditorToolbar(QToolBar):
             te = tab_event
             if btn.pvalue() == (te.upstroke,te.downstroke):
                 self._stroke_grp.check_btn(btn)
+                break
 
         if hasattr(te,"stroke_duration_index") and te.stroke_duration_index is not None:
             self._stroke_duration.setCurrentIndex(te.stroke_duration_index)   
         else:
             self._stroke_duration.setCurrentIndex(DefaultStrokeDurationIdx)
             te.stroke_duration_index = DefaultStrokeDurationIdx
+
+        if te.render_dynamic: 
+            for btn in self._dyn_btns:
+                if btn.pvalue() == te.getDynamic():    
+                    self._dyn_grp.check_btn(btn)
+                    break
 
         # set dot
         if tab_event.dotted:
@@ -270,12 +277,12 @@ class EditorToolbar(QToolBar):
             no_dot_index = 0
             self._dot_grp.check_btn(self._dot_btns[no_dot_index])
 
-        dyn_list = [Dynamic.FFF,Dynamic.FF,Dynamic.F,Dynamic.MF,
-                    Dynamic.MP,Dynamic.P,Dynamic.PP,Dynamic.PPP]
-        if tab_event.dynamic in dyn_list:
-            i = dyn_list.index(tab_event.dynamic)
-            btn = self._dyn_btns[i]
-            self._dyn_grp.check_btn(btn)
+        # dyn_list = [Dynamic.FFF,Dynamic.FF,Dynamic.F,Dynamic.MF,
+        #             Dynamic.MP,Dynamic.P,Dynamic.PP,Dynamic.PPP]
+        # if tab_event.dynamic in dyn_list:
+        #     i = dyn_list.index(tab_event.dynamic)
+        #     btn = self._dyn_btns[i]
+        #     self._dyn_grp.check_btn(btn)
 
 
     def __init__(self, track_model: Track, update_staff_and_tab):
