@@ -40,6 +40,9 @@ class TrackEditorView(QScrollArea):
         self.track_presenter.update()
         # set the focus of the cursor
         self.track_presenter.setFocus()
+
+        if hasattr(self,"track_model"):
+            Signals.redo_undo_update.emit(self.track_model)
         
     """ 
     API for the editorcontroller
@@ -47,7 +50,7 @@ class TrackEditorView(QScrollArea):
     """    
 
     def set_track_model(self, track_model: Track):
-        (tab_event, _) = track_model.current_moment()
+        (tab_event, _) = track_model.current_moment() # type: ignore
         # main layout for toolbar and scrolling area
             
         main_layout = self.layout()

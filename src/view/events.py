@@ -56,6 +56,8 @@ class EditorEvent:
     TUNING_CHANGE = 3
     MEASURE_CLICKED = 4
     BEND_EVENT = 5
+    UNDO_EVENT = 6
+    REDO_EVENT = 7
 
     # applied to the measure at the current moment
     MEASURE_REPEAT_START_KEY = 6
@@ -141,7 +143,7 @@ class QueryResult:
                         
 @singleton
 class _Signals(QObject):
-
+    redo_undo_update = pyqtSignal(Track)
     query_slot = pyqtSignal(QueryMessage) 
 
     def set_query_reactor(self, ident: str, callback):
