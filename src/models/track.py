@@ -1,19 +1,11 @@
-# import logging
-# from music.constants import Dynamic
-# from typing import List, Optional
-# from music.durationtypes import (WHOLE, 
-#         HALF, QUARTER, SIXTEENTH, THIRTYSECOND, SIXTYFORTH)
-# from collections import OrderedDict
-# import copy
-# from singleton_decorator.decorator import singleton
-# from bisect import bisect_left
-# import json
+import uuid
 
 from models.measure import Measure, TimeSig, TabEvent 
 from typing import Callable, List, Optional, Tuple
 from models.effect import Effects
 from music.constants import Dynamic
 from services.effectRepo import EffectRepository
+
 
 class Track:
     FIRST_NOTE_COLUMN = 2
@@ -53,6 +45,7 @@ class Track:
         return (ts, bpm, key, cleff)
 
     def __init__(self, cleff = None):
+        self.track_edit_id = ""
         self.instrument_name = "Acoustic Guitar"
         # instrument currently allocated for this track.
         self.tuning = [
@@ -81,7 +74,8 @@ class Track:
         self.measures : List[Measure] = [m]
 
         # effects to be applied to this track
-        self.effects = EffectRepository().create_effects()
+        #self.effects = EffectRepository().create_effects()
+        self.effects = []
 
     def append_measure(self, **kwargs):
         m = self.blank_measure(**kwargs)

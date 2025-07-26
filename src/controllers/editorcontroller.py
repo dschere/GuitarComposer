@@ -6,8 +6,10 @@ track is displayed as a TrackView widget that allows
 for track events to be rendered.  
 """
 import logging
+import uuid
 from PyQt6.QtCore import Qt
 
+from services.redoUndo import RedoUndoProcessor
 from view.config import EditorKeyMap
 from view.events import Signals, EditorEvent, StringBendEvent
 from models.track import Track
@@ -28,6 +30,8 @@ class EditorController:
         for that track.
         """
         if tmodel and editor:
+            # track editing session id used for undo/redo
+            tmodel.track_edit_id = str(uuid.uuid4())
             editor.set_track_model(tmodel)
             
     def add_model(self, evt: EditorEvent):
@@ -115,6 +119,24 @@ class EditorController:
             tedit.toggle_measure_end_repeat()
 
 
+    def propagate_undo_redo_model_change(self, track: Track):
+        assert(self.track_editor_view is not None)
+        self.rup.disable_updates()
+        self.track_model = track 
+        self.track_editor_view.set_track_model(self.track_model)
+        self.rup.enable_updates()
+
+    def undo_event(self, evt: EditorEvent): 
+        new_model = self.rup.undo(self.track_model)
+        if new_model:
+            self.propagate_undo_redo_model_change(new_model)    
+
+    def redo_event(self, evt: EditorEvent): 
+        new_model = self.rup.redo(self.track_model)
+        if new_model:
+            self.propagate_undo_redo_model_change(new_model)    
+
+
     dispatch = {
         EditorEvent.ADD_MODEL: add_model,
         EditorEvent.ADD_TRACK_EDITOR: add_editor,
@@ -123,7 +145,9 @@ class EditorController:
         EditorEvent.MEASURE_CLICKED: measure_clicked,
         EditorEvent.BEND_EVENT: string_bend_event,
         EditorEvent.MEASURE_REPEAT_START_KEY: toggle_measure_start_repeat,
-        EditorEvent.MEASURE_REPEAT_END_KEY: toggle_measure_end_repeat
+        EditorEvent.MEASURE_REPEAT_END_KEY: toggle_measure_end_repeat,
+        EditorEvent.UNDO_EVENT: undo_event,
+        EditorEvent.REDO_EVENT: redo_event
     }
 
     def editor_event(self, evt: EditorEvent):
@@ -136,6 +160,7 @@ class EditorController:
             raise RuntimeError(text)
 
     def __init__(self):
+        self.rup = RedoUndoProcessor()
         self.keymap = EditorKeyMap()
         self.track_model = None
         self.track_editor_view = None

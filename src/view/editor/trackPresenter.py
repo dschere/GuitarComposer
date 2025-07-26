@@ -18,6 +18,8 @@ from view.events import PlayerVisualEvent, Signals
 class TrackPresenter(QWidget):
 
     def setup(self):
+        if self.track_model is None: return 
+
         "precalculate variables needed for operations"
         (self.current_tab_event, self.current_measure) = \
             self.track_model.current_moment()
@@ -39,6 +41,8 @@ class TrackPresenter(QWidget):
             mp = self.mp_map[measure]
             width += int(mp.width())
         self.setMinimumWidth(width)
+
+        Signals.redo_undo_update.emit(self.track_model)
 
     def update_measure_repeat(self, m: Measure):
         "update the measure line for at the end of measure"

@@ -57,6 +57,11 @@ class EditorKeyMap:
     THRITY_SECOND_NOTE = ord('T')
     SIXTY_FORTH_NOTE = ord('S')
 
+    # plus control key.
+    UNDO = ord('Z')
+    REDO = ord('Y')
+
+
     dur_lookup = {
         WHOLE_NOTE: 4.0,
         HALF_NOTE: 2.0,
@@ -92,6 +97,7 @@ class EditorKeyMap:
             result = False
 
         return result
+            
 
 
 @singleton

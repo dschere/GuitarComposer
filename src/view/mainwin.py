@@ -36,7 +36,15 @@ class MainWindow(QMainWindow):
         Signals.new_song.emit()
 
     def closeSong(self):
-        Signals.close_song.emit()        
+        Signals.close_song.emit()   
+
+    def undoEdit(self):
+        evt = EditorEvent(EditorEvent.UNDO_EVENT)
+        Signals.editor_event.emit(evt)
+        
+    def redoEdit(self):
+        evt = EditorEvent(EditorEvent.REDO_EVENT)
+        Signals.editor_event.emit(evt)
 
     def create_menubar(self):
         # Create the menu bar
@@ -73,7 +81,10 @@ class MainWindow(QMainWindow):
         assert(edit_menu)
 
         undo_action = QAction("Undo", self)
+        undo_action.triggered.connect(self.undoEdit)
         redo_action = QAction("Redo", self)
+        redo_action.triggered.connect(self.redoEdit)
+
         cut_action = QAction("Cut", self)
         copy_action = QAction("Copy", self)
         paste_action = QAction("Paste", self)
@@ -110,11 +121,11 @@ class MainWindow(QMainWindow):
         tools_menu.addAction(options_action)
 
 
-
     _shift_key = False
     _arrow_keys = (Qt.Key.Key_Left, Qt.Key.Key_Right, Qt.Key.Key_Up, Qt.Key.Key_Down)
 
     def keyReleaseEvent(self, event: QKeyEvent) -> None:
+        editor_keymap = EditorKeyMap()
         key = event.key()
         if Qt.Key.Key_Shift == key:
             self._shift_key = False
@@ -124,6 +135,12 @@ class MainWindow(QMainWindow):
             e_evt.ev_type = EditorEvent.KEY_EVENT
             e_evt.key = key
             Signals.editor_event.emit(e_evt) 
+        elif event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+            if key == editor_keymap.UNDO:
+                self.undoEdit()
+            elif key == editor_keymap.REDO:
+                self.redoEdit()    
+            
 
         return super().keyReleaseEvent(event)
 
