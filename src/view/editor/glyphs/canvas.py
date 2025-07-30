@@ -47,6 +47,7 @@ class Canvas(QLabel):
 
     def __init__(self, width, height):
         super().__init__()
+        self._highlight_background = False
         self.c_width = width
         self.c_height = height
         canvas = QtGui.QPixmap(width, height)
@@ -91,13 +92,21 @@ class Canvas(QLabel):
     def draw_note(self, painter, x, midi_code):
         pass
 
+    def set_highlight(self):
+        self._highlight_background = True
+        self.update()
+
+    def clear_highlight(self):
+        self._highlight_background = False
+        self.update()
+
     def paintEvent(self, event):
         painter = QtGui.QPainter()
         painter.begin(self)
         painter.eraseRect(0, 0, self.c_width, self.c_height)
 
-        #useful to see where the margins are.
-        #painter.fillRect(0, 0, self.c_width, self.c_height,QColor(60,60,60))
+        if self._highlight_background:
+            painter.fillRect(0, 0, self.c_width, self.c_height,QColor(60,60,60))     
        
         self.canvas_paint_event(painter)
         self.draw_beat_error(painter)

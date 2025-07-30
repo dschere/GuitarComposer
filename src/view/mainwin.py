@@ -120,13 +120,18 @@ class MainWindow(QMainWindow):
         tools_menu.addAction(settings_action)
         tools_menu.addAction(options_action)
 
-
+    _ctrl_key_pressed = False
     _shift_key = False
     _arrow_keys = (Qt.Key.Key_Left, Qt.Key.Key_Right, Qt.Key.Key_Up, Qt.Key.Key_Down)
 
     def keyReleaseEvent(self, event: QKeyEvent) -> None:
         editor_keymap = EditorKeyMap()
         key = event.key()
+        mod = event.modifiers()
+        
+        if mod == Qt.KeyboardModifier.NoModifier:
+            self._ctrl_key_pressed = False
+        
         if Qt.Key.Key_Shift == key:
             self._shift_key = False
         # generate key event for right/left arrows on key release
@@ -134,19 +139,26 @@ class MainWindow(QMainWindow):
             e_evt = EditorEvent()
             e_evt.ev_type = EditorEvent.KEY_EVENT
             e_evt.key = key
+            e_evt.control_key_pressed = self._ctrl_key_pressed
             Signals.editor_event.emit(e_evt) 
-        elif event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+        
+        elif mod & Qt.KeyboardModifier.ControlModifier:
             if key == editor_keymap.UNDO:
                 self.undoEdit()
             elif key == editor_keymap.REDO:
                 self.redoEdit()    
-            
 
+
+            
         return super().keyReleaseEvent(event)
 
     def keyPressEvent(self, event: QKeyEvent):
         editor_keymap = EditorKeyMap()
-        if editor_keymap.isEditorInput(event):
+        if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+            self._ctrl_key_pressed = True
+        elif event.modifiers() & Qt.KeyboardModifier.AltModifier:
+            pass
+        else:
             key = event.key()
             if key in self._arrow_keys:
                 pass
@@ -159,6 +171,7 @@ class MainWindow(QMainWindow):
                 e_evt = EditorEvent()
                 e_evt.ev_type = EditorEvent.KEY_EVENT
                 e_evt.key = key
+                e_evt.control_key_pressed = self._ctrl_key_pressed
                 Signals.editor_event.emit(e_evt)
 
     def __init__(self, ec: EditorController ):

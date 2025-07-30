@@ -12,6 +12,7 @@ effect changes.
 
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout)
 from models.measure import Measure, TabEvent
+from PyQt6.QtGui import QColor, QPalette
 
 from view.editor import glyphs 
 from models.track import Track
@@ -27,8 +28,21 @@ class TabEventPresenter(QWidget):
     def get_string(self):
         return self.tab_event.string
 
+    def set_copy_highlight(self):
+        self.staff_p.set_highlight()
+        self.update()
+
+    def clear_copy_highlight(self):
+        self.staff_p.clear_highlight()
+        self.update()
+
+    def get_tab_event(self) -> TabEvent:
+        return self.tab_event    
+
     def __init__(self, tab_event: TabEvent, measure: Measure, track: Track):
         super().__init__()
+
+        self.original_palette = self.palette()
 
         self.tab_event = tab_event
         # allow for navigation within the measure <-- -->

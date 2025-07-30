@@ -104,7 +104,6 @@ class track_change_entry:
             self.current = open(fn,'rb').read()
             result = pickle.loads(self.current)
              
-
         return result
 
     def redo(self) -> Track | None:
