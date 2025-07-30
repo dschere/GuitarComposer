@@ -131,14 +131,14 @@ class TrackEditorView(QScrollArea):
                 mp.update_measure_line()
             
 
-    def arrow_left_key(self):
+    def arrow_left_key(self, ctrl_pressed: bool):
         "-> move cursor to next moment, append to track if its the end."
-        self.track_presenter.prev_moment()
+        self.track_presenter.prev_moment(ctrl_pressed)
         self.update_toolbar_track_event()
 
-    def arrow_right_key(self):
+    def arrow_right_key(self, ctrl_pressed: bool):
         "<- move cursor to prev moment"
-        self.track_presenter.next_moment()
+        self.track_presenter.next_moment(ctrl_pressed)
         self.update_toolbar_track_event()
 
     def arrow_up_key(self):

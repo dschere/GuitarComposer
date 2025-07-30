@@ -11,6 +11,7 @@ from PyQt6.QtCore import Qt
 
 from services.redoUndo import RedoUndoProcessor
 from view.config import EditorKeyMap
+from view.editor.pastebuffer import PasteBufferSingleton
 from view.events import Signals, EditorEvent, StringBendEvent
 from models.track import Track
 from view.editor.trackEditorView import TrackEditorView
@@ -56,6 +57,10 @@ class EditorController:
         if not tedit: return
         if not tmodel: return   
 
+        paste_buffer = PasteBufferSingleton()
+        if not evt.control_key_pressed and not paste_buffer.isEmpty():
+            paste_buffer.clear()
+
         # Check for arrow keys
         if key == Qt.Key.Key_Up:
             tedit.arrow_up_key()
@@ -63,9 +68,9 @@ class EditorController:
             tedit.arrow_down_key()
             #self._updown_key(self.track_model, -1)
         elif key == Qt.Key.Key_Left:
-            tedit.arrow_left_key()
+            tedit.arrow_left_key(evt.control_key_pressed)
         elif key == Qt.Key.Key_Right:
-            tedit.arrow_right_key()
+            tedit.arrow_right_key(evt.control_key_pressed)
         elif key == Qt.Key.Key_Insert:
             tedit.insert_key()   
         elif key == Qt.Key.Key_Delete:

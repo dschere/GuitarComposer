@@ -88,15 +88,6 @@ class EditorKeyMap:
     BEND = ord('b')
     SLIDE = ord('/')
     VIBRATO = ord('v')
-
-    def isEditorInput(self, event: QKeyEvent):
-        result = True
-        if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
-            result = False
-        elif event.modifiers() & Qt.KeyboardModifier.AltModifier:
-            result = False
-
-        return result
             
 
 

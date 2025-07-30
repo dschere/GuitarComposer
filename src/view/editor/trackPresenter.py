@@ -13,7 +13,7 @@ from models.track import Track
 
 
 from view.events import PlayerVisualEvent, Signals
-
+from view.editor.pastebuffer import PasteBufferSingleton
 
 class TrackPresenter(QWidget):
 
@@ -175,8 +175,10 @@ class TrackPresenter(QWidget):
         if self.current_tep:
             self.current_tep.cursor_down()
 
-    def prev_moment(self):
+    def prev_moment(self, ctrl_pressed = False):
         "switch cursor off on current tab, switch on previous"
+        paste_buffer = PasteBufferSingleton()
+
         (prev_tab, _) = self.track_model.prev_moment()
         if prev_tab and self.current_tep is not None:
             self.current_tep.cursor_off()
@@ -184,6 +186,10 @@ class TrackPresenter(QWidget):
             self.setup()
             # set the prev tab event presenter to show the cursor 
             self.current_tep.cursor_on()
+            if ctrl_pressed:
+                self.current_tep.set_copy_highlight()
+                paste_buffer.append(self.current_tep)
+            
 
     def update_tab(self, new_te: TabEvent):
         # update the tab event inside the current tab event presentor
@@ -194,7 +200,7 @@ class TrackPresenter(QWidget):
         self.current_mp.beat_error_check()
         self.update()
 
-    def next_moment(self):
+    def next_moment(self, ctrl_pressed = False):
         """
         switch cursor off on current tab, switch on next
 
@@ -202,6 +208,8 @@ class TrackPresenter(QWidget):
         blank measure and position cursor at the start of the 
         new measure.  
         """
+        paste_buffer = PasteBufferSingleton()
+
         (next_tab, curr_measure) = self.track_model.next_moment()
         # are there still tabs?
         if next_tab and self.current_tep is not None:
@@ -210,6 +218,10 @@ class TrackPresenter(QWidget):
             self.setup()
             # set the next tab event presenter to show the cursor 
             self.current_tep.cursor_on()
+            if ctrl_pressed:
+                self.current_tep.set_copy_highlight()
+                paste_buffer.append(self.current_tep)
+                
         else:
             # we reached the end we need to create a new measure
             # and position the cursor at the start of the measure.
@@ -224,7 +236,7 @@ class TrackPresenter(QWidget):
             # add to layout
             self.measure_layout.addWidget(mp)
 
-            self.next_moment() # recursive call 
+            self.next_moment(ctrl_pressed) # recursive call 
 
 
 if __name__ == '__main__':

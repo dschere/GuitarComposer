@@ -71,7 +71,7 @@ class EditorEvent:
         self.tuning = None
         self.measure = 1
         self.bend_event : StringBendEvent | None = None  
-
+        self.control_key_pressed = False
 
 class PlayerEvent:
     UNINITIALIZED = -1
