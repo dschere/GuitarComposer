@@ -75,6 +75,11 @@ class EditorController:
             tedit.insert_key()   
         elif key == Qt.Key.Key_Delete:
             tedit.delete_key()
+        elif evt.control_key_pressed:
+            if key == ord('v'):
+                print("paste")
+            elif key == ord('x'):
+                print("cut")    
         else:
             # get the tab event at the current moment
             #te : TabEvent = tmodel.getTabEvent()

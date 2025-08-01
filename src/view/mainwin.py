@@ -147,8 +147,6 @@ class MainWindow(QMainWindow):
                 self.undoEdit()
             elif key == editor_keymap.REDO:
                 self.redoEdit()    
-
-
             
         return super().keyReleaseEvent(event)
 
