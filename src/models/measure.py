@@ -35,6 +35,15 @@ class TabEvent:
                     break
         return result
         
+    def __setstate__(self, state):
+        # support migration
+        self.__dict__.update(state)
+
+        # Fix old data
+        if not hasattr(self, 'fret_ypos'):
+            self.note_ypos = [-1] * self.num_gstrings
+        if type(self.tied_notes) == type(-1):
+            self.tied_notes = [False] * self.num_gstrings        
     
     def __init__(self, num_gstrings):
         super().__init__()
@@ -46,7 +55,9 @@ class TabEvent:
         self.duration = QUARTER
         self.string = num_gstrings - 1  # current string being edited
         self.fret = [-1] * num_gstrings  # current fret value
-        self.tied_notes = [-1] * num_gstrings 
+        self.tied_notes = [False] * num_gstrings
+
+        self.note_ypos = [-1] * num_gstrings  
         """ 
         tied_notes indicate that a note from a prevent tab event will 
         continue playing for a given string in this event. 

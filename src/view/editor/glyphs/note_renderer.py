@@ -184,12 +184,14 @@ class note_renderer:
                 painter.drawLine(x-3, line_y, x+25, line_y)
                 line_y += STAFF_LINE_SPACING
 
+        return y
+
     def draw_notehead(self, painter, midi_code, accent, dtype):
         # Note: accent is used because we need to know if we are
         # rendering sharps or flats since the same note can be in
         # different staff positions depending on which it is.
         # line_spacing = conf.line_spacing
-        self.draw_note(painter, midi_code, accent, dtype, True)
+        return self.draw_note(painter, midi_code, accent, dtype, True)
 
     def draw_stem_line(self, painter, midi_code_list, accent):
         # draw a line connecting the notes is dtype is not
