@@ -108,31 +108,35 @@ class StaffGlyph(Canvas):
                 tuning = self.track_model.tuning
                 base_midi_code = tuning[gstring]
                 midi_code = midi_codes.midi_code(base_midi_code) + fret
-                r.draw_note(painter, midi_code, self.accent, te.duration)
+                y = r.draw_note(painter, midi_code, self.accent, te.duration)
+                te.note_ypos[gstring] = y
                 break
 
     def _render_chord(self, painter):
         r : note_renderer = self._get_renderer()
-        tc : TabEvent = self.te
+        te : TabEvent = self.te
         # collect and and sort midi codes
         midi_code_collection = set()
-        for (gstring,fret) in enumerate(tc.fret):
+        for (gstring,fret) in enumerate(te.fret):
             if fret != -1:
                 tuning = self.track_model.tuning
                 base_midi_code = tuning[gstring]
                 midi_code = midi_codes.midi_code(base_midi_code) + fret
+                y = r.get_y_coord(midi_code, self.accent)
+                te.note_ypos[gstring] = y 
+
                 midi_code_collection.add(midi_code)
         midi_list = sorted(list(midi_code_collection))
 
         # draw note heads
         for midi_code in midi_list:
-            r.draw_notehead(painter, midi_code, self.accent, tc.duration)
-
+            r.draw_notehead(painter, midi_code, self.accent, te.duration)
+             
         # if duration quarter or smaller draw connecting line.
         # the greated midi note is drawn as a quarter note with its staff 
-        if tc.duration != 4.0:
+        if te.duration != 4.0:
             r.draw_stem_line(painter, midi_list, self.accent)        
-            r.draw_note(painter, midi_list[-1], self.accent, tc.duration)    
+            r.draw_note(painter, midi_list[-1], self.accent, te.duration)    
 
 
     def _render_rest(self, painter):

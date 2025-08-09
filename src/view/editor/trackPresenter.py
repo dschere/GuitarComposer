@@ -2,7 +2,7 @@ import copy, logging
 import uuid
 
 from PyQt6.QtWidgets import (QWidget, QHBoxLayout, QScrollArea)
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QPointF
 
 from view.editor.measurePresenter import MeasurePresenter
 from view.editor.tabEventPresenter import TabEventPresenter
@@ -14,8 +14,12 @@ from models.track import Track
 
 from view.events import PlayerVisualEvent, Signals
 from view.editor.pastebuffer import PasteBufferSingleton
+from .overlay import OverlayWidget
+
+         
 
 class TrackPresenter(QWidget):
+        
 
     def setup(self):
         if self.track_model is None: return 
@@ -41,6 +45,9 @@ class TrackPresenter(QWidget):
             mp = self.mp_map[measure]
             width += int(mp.width())
         self.setMinimumWidth(width)
+
+        # draw tied notes etc.
+        self.overlay.setup(self.track_model, self.mp_map)
 
         Signals.redo_undo_update.emit(self.track_model)
 
@@ -136,6 +143,9 @@ class TrackPresenter(QWidget):
             mp = MeasurePresenter(measure, track_model)
             self.mp_map[measure] = mp 
             self.measure_layout.addWidget(mp)
+
+        # for drawing on top of staff
+        self.overlay = OverlayWidget(self)
 
         Signals.player_visual_event.connect(self.play_visual_event)        
         self.setup()
