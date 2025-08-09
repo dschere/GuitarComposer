@@ -207,7 +207,7 @@ class Instrument:
             # were we are plucking the strings usinga finger picking techinique
             for (string,fret_val) in enumerate(te.fret):
                 # a new note is to be played.
-                if fret_val != -1 and te.tied_notes[string] == -1:
+                if fret_val != -1 and te.tied_notes[string] == False:
                     n = Note()
                     n.rest = False
                     n.fret = fret_val 
@@ -235,7 +235,7 @@ class Instrument:
             has_stroke = te.downstroke or te.upstroke
             for (n,(string,fret_val)) in enumerate(fret_data):
                 # a new note is to be played.
-                if fret_val != -1 and te.tied_notes[string] == -1:
+                if fret_val != -1 and te.tied_notes[string] == False:
                     n = Note()
                     n.rest = False
                     n.fret = fret_val 
