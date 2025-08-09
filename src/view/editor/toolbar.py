@@ -73,7 +73,8 @@ class ToolbarButton(QPushButton):
         self._param = p
         self._value = v
         self._parent = parent
-        self.setFixedWidth(40)
+        self.setFixedSize(32,32)
+        
         self.label = label
    
     def pvalue(self):
@@ -123,8 +124,10 @@ class ButtonGroupContainer(QWidget):
         group_box = QGroupBox(label)
         group_box.setStyleSheet("""
             QGroupBox {
+                padding: 0px;
+                margin: 0px;
                 border: 2px solid gray;
-                border-radius: 5px; margin-top: 10px;
+                border-radius: 5px; margin-top: 5px;
             }
             QGroupBox::title {
                 subcontrol-origin: margin; padding: 0 3px;
@@ -291,7 +294,8 @@ class EditorToolbar(QToolBar):
                                          
         self._lookup = {}
         self.update_staff_and_tab = update_staff_and_tab
-        self.setFixedHeight(90)
+        self.setFixedHeight(75)
+        self.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
 
         # not duration whole -> 64th  
         
@@ -312,6 +316,23 @@ class EditorToolbar(QToolBar):
         self.addWidget(dur_container) 
 
         self._dur_grp.selected.connect(self._on_duration_selected)
+        self.addSeparator()
+
+        # dotted notes that alter standard note durations
+        dot_dur_container = ButtonGroupContainer("Special Duration")
+        self._dot_grp = MutuallyExclusiveButtonGroup()
+        self._dot_btns = (
+            ToolbarButton(self, " ", "no dot", "clear-dots"),
+            ToolbarButton(self, DOTTED, "dotted note", "dotted"),
+            ToolbarButton(self, DOUBLE_DOTTED, "double dotted", "double-dotted"),
+            ToolbarButton(self, "3" + QUATER_NOTE, "triplet", "triplet"),
+            ToolbarButton(self, "5" + QUATER_NOTE, "quintuplet", "quintuplet")
+        )
+        for btn in self._dot_btns:
+            self._dot_grp.addButton(btn)
+            dot_dur_container.add_item(btn)
+        self.addWidget(dot_dur_container)
+        self._dot_grp.selected.connect(self._dot_selected) 
         self.addSeparator()
 
         stroke_container = ButtonGroupContainer("Chord Stroke")
@@ -336,22 +357,6 @@ class EditorToolbar(QToolBar):
         self._stroke_grp.selected.connect(self._on_stroke_selected)
         self.addSeparator()
 
-        # dotted notes that alter standard note durations
-        dot_dur_container = ButtonGroupContainer("Dotted Duration")
-        self._dot_grp = MutuallyExclusiveButtonGroup()
-        self._dot_btns = (
-            ToolbarButton(self, " ", "no dot", "clear-dots"),
-            ToolbarButton(self, DOTTED, "dotted note", "dotted"),
-            ToolbarButton(self, DOUBLE_DOTTED, "double dotted", "double-dotted"),
-            ToolbarButton(self, "3" + QUATER_NOTE, "triplet", "triplet"),
-            ToolbarButton(self, "5" + QUATER_NOTE, "quintuplet", "quintuplet")
-        )
-        for btn in self._dot_btns:
-            self._dot_grp.addButton(btn)
-            dot_dur_container.add_item(btn)
-        self.addWidget(dot_dur_container)
-        self._dot_grp.selected.connect(self._dot_selected) 
-        self.addSeparator()
 
         # set dynamic
         dyn_container = ButtonGroupContainer("Dynamic")

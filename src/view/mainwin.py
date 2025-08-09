@@ -182,19 +182,13 @@ class MainWindow(QMainWindow):
 
         self.create_menubar()
 
-        # Create a toolbar
-        toolbar = QToolBar("Main Toolbar")
-        self.addToolBar(toolbar)
-        pv = PlayerView(self) 
-        toolbar.addWidget(pv) 
-
-
         # Create a status bar
         status_bar = QStatusBar()
         self.setStatusBar(status_bar)
 
         # Create the tree view for the left pane
         # self.tree_view = QTreeView()
+         
         self.tree_view = Navigator()
 
         # Create the tab widget for the top-right pane
@@ -212,7 +206,16 @@ class MainWindow(QMainWindow):
 
         # Create the vertical splitter for the left and right panes
         self.vertical_splitter = QSplitter(Qt.Orientation.Horizontal)
-        self.vertical_splitter.addWidget(self.tree_view)
+
+        nav_player_layout = QVBoxLayout()
+        pv = PlayerView(self)
+        nav_player_layout.addWidget(pv)
+        nav_player_layout.addWidget(self.tree_view)
+
+        #self.vertical_splitter.addWidget(self.tree_view)
+        w = QWidget()
+        w.setLayout(nav_player_layout)
+        self.vertical_splitter.addWidget(w) 
 
         # Create the horizontal splitter for the right pane (top and bottom)
         self.horizontal_splitter = QSplitter(Qt.Orientation.Vertical)

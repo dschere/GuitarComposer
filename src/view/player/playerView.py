@@ -32,7 +32,7 @@ class PlayerView(QToolBar):
         
         button = QPushButton()
         button.setIcon(icon)
-        button.setIconSize(QSize(16, 16))
+        button.setIconSize(QSize(12, 12))
         button.clicked.connect(click_handler(evt))
         button.setToolTip(tooltip)
 
@@ -59,11 +59,11 @@ class PlayerView(QToolBar):
         self.play_btn = self.create_btn("media-playback-start", \
             PlayerEvent.PLAY ,"play")
         self.pause_btn = self.create_btn("media-playback-pause",\
-            PlayerEvent.PAUSE,"pause")
-        self.forward_btn = self.create_btn("media-seek-forward", \
-            PlayerEvent.SKIP_FORWARD_MEASURE ,"skip forward")
-        self.backward_btn = self.create_btn("media-seek-backward", 
-            PlayerEvent.SKIP_BACKWARD_MEASURE, "skip backward")
+             PlayerEvent.PAUSE,"pause")
+        # self.forward_btn = self.create_btn("media-seek-forward", \
+        #     PlayerEvent.SKIP_FORWARD_MEASURE ,"skip forward")
+        # self.backward_btn = self.create_btn("media-seek-backward", 
+        #     PlayerEvent.SKIP_BACKWARD_MEASURE, "skip backward")
         self.stop_btn = self.create_btn("media-playback-stop", 
             PlayerEvent.STOP ,"stop")
         self.play_moment_btn = self.create_btn("text-x-preview",
@@ -76,7 +76,7 @@ class PlayerView(QToolBar):
         icon = self.settings_btn.style().standardIcon(\
             self.settings_btn.style().StandardPixmap.SP_FileDialogDetailedView)
         self.settings_btn.setIcon(icon)
-        self.settings_btn.setIconSize(QSize(32, 32))
+        self.settings_btn.setIconSize(QSize(12, 12))
         self.settings_btn.setToolTip("settings")
         
         self.play_moment_event = PlayerEvent(PlayerEvent.PLAY_CURRENT_MOMENT)
