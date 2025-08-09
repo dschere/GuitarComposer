@@ -42,7 +42,7 @@ class TabEvent:
         # Fix old data
         if not hasattr(self, 'fret_ypos'):
             self.note_ypos = [-1] * self.num_gstrings
-        if type(self.tied_notes) == type(-1):
+        if type(self.tied_notes[0]) == type(-1):
             self.tied_notes = [False] * self.num_gstrings        
     
     def __init__(self, num_gstrings):

@@ -16,44 +16,6 @@ from view.events import PlayerVisualEvent, Signals
 from view.editor.pastebuffer import PasteBufferSingleton
 from .overlay import OverlayWidget
 
-
-def setup_overlay(track_model: Track, mp_map, overlay: OverlayWidget):
-
-    
-    def draw_tied_note(y, tp_start: TabEventPresenter, tp_end: TabEventPresenter):
-        start = tp_start.mapTo(overlay, QPointF(0,y))
-        ctrl1 = tp_start.mapTo(overlay, QPointF(15,y-15))
-        end = tp_end.mapTo(overlay, QPointF(0, y))
-        ctrl2 = tp_end.mapTo(overlay, QPointF(-15, y-15))
-
-        overlay.add_beizer_line2(start, end, ctrl1, ctrl2)    
-
-    # clear chache of points 
-    overlay.clear_beizer_lines()
-
-    start_tied : TabEvent | None = None 
-    for measure in track_model.measures:
-        mp : MeasurePresenter = mp_map[measure]
-        for te in measure.tab_events:
-            tab_event : TabEvent = te 
-            if start_tied is None:
-                if sum(tab_event.tied_notes) != 0:
-                    start_tied = tab_event
-                continue 
-            
-            tp_start = mp.tab_map[start_tied] 
-            tp_end = mp.tab_map[tab_event]
-            for (gstr, tied) in enumerate(start_tied.tied_notes):
-                if tied:
-                    y = start_tied.note_ypos[gstr]
-                    # add beizer line that ties two notes.
-                    draw_tied_note(y, tp_start, tp_end)
-            
-            if sum(tab_event.tied_notes) != 0:
-                start_tied = tab_event
-            else:
-                start_tied = None
-
          
 
 class TrackPresenter(QWidget):
@@ -83,6 +45,9 @@ class TrackPresenter(QWidget):
             mp = self.mp_map[measure]
             width += int(mp.width())
         self.setMinimumWidth(width)
+
+        # draw tied notes etc.
+        self.overlay.setup(self.track_model, self.mp_map)
 
         Signals.redo_undo_update.emit(self.track_model)
 
