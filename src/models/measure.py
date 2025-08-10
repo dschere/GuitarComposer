@@ -45,6 +45,12 @@ class TabEvent:
         if type(self.tied_notes[0]) == type(-1):
             self.tied_notes = [False] * self.num_gstrings        
     
+    def toggle_tied(self):
+        if self.tied_notes[self.string]:
+            self.tied_notes[self.string] = False
+        else:
+            self.tied_notes[self.string] = True
+
     def __init__(self, num_gstrings):
         super().__init__()
 

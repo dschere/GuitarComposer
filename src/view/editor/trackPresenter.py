@@ -150,6 +150,10 @@ class TrackPresenter(QWidget):
         Signals.player_visual_event.connect(self.play_visual_event)        
         self.setup()
 
+    def resizeEvent(self, event):
+        self.overlay.resize(self.size())    
+        super().resizeEvent(event)
+
     def play_visual_event(self, evt : PlayerVisualEvent):
         tab_event = evt.tab_event 
         # get the measure presenter for this tab event
@@ -172,6 +176,7 @@ class TrackPresenter(QWidget):
             elif evt.ev_type == evt.TABEVENT_HIGHLIGHT_ON:
                 #logging.info("set_play_line tp id %ld" % id(tp))
                 tp.set_play_line()
+                self.overlay.setup(self.track_model, self.mp_map)
             elif evt.ev_type == evt.TABEVENT_HIGHLIGHT_OFF:
                 #logging.info("clear_play_line tp id %ld" % id(tp))
                 tp.clear_play_line()
