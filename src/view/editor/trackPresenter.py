@@ -176,6 +176,7 @@ class TrackPresenter(QWidget):
             elif evt.ev_type == evt.TABEVENT_HIGHLIGHT_ON:
                 #logging.info("set_play_line tp id %ld" % id(tp))
                 tp.set_play_line()
+                self.overlay.setup(self.track_model, self.mp_map)
             elif evt.ev_type == evt.TABEVENT_HIGHLIGHT_OFF:
                 #logging.info("clear_play_line tp id %ld" % id(tp))
                 tp.clear_play_line()
