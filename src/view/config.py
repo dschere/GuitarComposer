@@ -78,6 +78,7 @@ class EditorKeyMap:
     TRIPLET_NOTES = ord('t')
     QUINTUPLIT_NOTES = ord('Q')
     REST = ord('r')
+    TIED_NOTE = ord('i')
 
     START_REPEAT = ord('[')
     END_REPEAT = ord(']')

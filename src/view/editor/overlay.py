@@ -11,6 +11,7 @@ from PyQt6.QtGui import QPainter, QPen, QPalette, QPainterPath
 
 from PyQt6.QtWidgets import (QWidget, QHBoxLayout, QScrollArea)
 from PyQt6.QtCore import Qt, QPointF
+from PyQt6.QtGui import QColor
 
 from view.editor.measurePresenter import MeasurePresenter
 from view.editor.tabEventPresenter import TabEventPresenter
@@ -18,42 +19,41 @@ from view.editor.tabEventPresenter import TabEventPresenter
 
 from models.measure import Measure, TabEvent
 from models.track import Track
+from view.config import GuitarFretboardStyle
+
+from view.editor.glyphs.common import STAFF_SYM_WIDTH
 
 
 class TiedNoteRederer:
-    def __init__(self, overlay: 'OverlayWidget'):
-        self.start_tied : TabEvent | None = None
+    def __init__(self, overlay: 'OverlayWidget'): 
         self.overlay = overlay 
+        self.prev_te : TabEvent | None = None
+        self.prev_mp : MeasurePresenter | None = None 
 
     def draw_tied_note(self, y, tp_start: TabEventPresenter, tp_end: TabEventPresenter):
         w : QWidget = self.overlay.parent   # type: ignore
 
-        start = tp_start.mapTo(w, QPointF(0,y))
-        ctrl1 = tp_start.mapTo(w, QPointF(15,y-15))
-        end   = tp_end.mapTo(w, QPointF(0, y))
-        ctrl2 = tp_end.mapTo(w, QPointF(-15, y-15))
+        start = tp_start.mapTo(w, QPointF(STAFF_SYM_WIDTH/2,y-10))
+        ctrl1 = tp_start.mapTo(w, QPointF(STAFF_SYM_WIDTH/2+15,y-25))
+        end   = tp_end.mapTo(w, QPointF(STAFF_SYM_WIDTH/2, y-10))
+        ctrl2 = tp_end.mapTo(w, QPointF(STAFF_SYM_WIDTH/2-15, y-25))
 
         self.overlay.add_beizer_line2(start, end, ctrl1, ctrl2)    
 
     def on_tab_event(self, tab_event: TabEvent, mp: MeasurePresenter):
-        if self.start_tied is None:
-            if sum(tab_event.tied_notes) != 0:
-                self.start_tied = tab_event
-        else:
-            tp_start = mp.tab_map[self.start_tied] 
-            tp_end = mp.tab_map[tab_event]
-            for (gstr, tied) in enumerate(self.start_tied.tied_notes):
+        if self.prev_te is not None and \
+           self.prev_mp is not None and \
+           sum(tab_event.tied_notes) != 0:
+            tp_start = self.prev_mp.tab_map[self.prev_te]
+            tp_end = mp.tab_map[tab_event] 
+            for (gstr, tied) in enumerate(tab_event.tied_notes):
                 if tied:
-                    y = self.start_tied.note_ypos[gstr]
+                    y = tab_event.note_ypos[gstr]
                     # add beizer line that ties two notes.
                     self.draw_tied_note(y, tp_start, tp_end)
-            
-            if sum(tab_event.tied_notes) != 0:
-                start_tied = tab_event
-            else:
-                start_tied = None
-            
-            
+        
+        self.prev_te = tab_event
+        self.prev_mp = mp 
 
 
 class OverlayWidget(QWidget):
@@ -69,8 +69,7 @@ class OverlayWidget(QWidget):
         self.parent = parent
 
         # todo make this configurable.
-        palette = self.palette()
-        self.pen_color = palette.color(QPalette.ColorRole.WindowText)
+        self.pen_color = QColor(*GuitarFretboardStyle.string_color_rgb)
 
         # list of beizer lines to be drawn to represent tied 
         # notes or legato 
@@ -128,3 +127,4 @@ class OverlayWidget(QWidget):
         
 
         painter.end()
+        self.clear_beizer_lines()

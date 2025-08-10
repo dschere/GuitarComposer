@@ -326,7 +326,8 @@ class EditorToolbar(QToolBar):
             ToolbarButton(self, DOTTED, "dotted note", "dotted"),
             ToolbarButton(self, DOUBLE_DOTTED, "double dotted", "double-dotted"),
             ToolbarButton(self, "3" + QUATER_NOTE, "triplet", "triplet"),
-            ToolbarButton(self, "5" + QUATER_NOTE, "quintuplet", "quintuplet")
+            ToolbarButton(self, "5" + QUATER_NOTE, "quintuplet", "quintuplet"),
+            ToolbarButton(self, u'\u1D17', "tied note", "tied-note")
         )
         for btn in self._dot_btns:
             self._dot_grp.addButton(btn)
