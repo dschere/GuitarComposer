@@ -162,6 +162,8 @@ class EditorToolbar(QToolBar):
         elif n == "double-dotted":
             te.dotted = False
             te.double_dotted = True
+        elif n == "tied-note":
+            te.tied_notes[te.string] = btn.isChecked()
         else:
             # not a dot selected event.
             return    
@@ -268,7 +270,10 @@ class EditorToolbar(QToolBar):
                     break
 
         # set dot
-        if tab_event.dotted:
+        if tab_event.tied_notes[tab_event.string]:
+            btn = self._dot_btns[5]
+            self._dot_grp.check_btn(btn)
+        elif tab_event.dotted:
             dotted_index = 1
             btn = self._dot_btns[dotted_index]        
             self._dot_grp.check_btn(btn) 
@@ -279,6 +284,7 @@ class EditorToolbar(QToolBar):
         else:
             no_dot_index = 0
             self._dot_grp.check_btn(self._dot_btns[no_dot_index])
+
 
         # dyn_list = [Dynamic.FFF,Dynamic.FF,Dynamic.F,Dynamic.MF,
         #             Dynamic.MP,Dynamic.P,Dynamic.PP,Dynamic.PPP]
