@@ -49,7 +49,7 @@ class TabEventPresenter(QWidget):
         self.prev : TabEventPresenter | None = None
         self.next : TabEventPresenter | None = None
 
-        layout = QVBoxLayout(self)
+        layout = QVBoxLayout()
         layout.setSpacing(0)
         layout.setContentsMargins(0, 0, 0, 0)
 
@@ -75,11 +75,10 @@ class TabEventPresenter(QWidget):
         layout.addWidget(pad)
 
         self.setLayout(layout)
-
         self.staff_p = staff_presentation
         self.ornamental_p = ornamental_presentation
         self.tab_p = tab_presentation
-        self.effects_p = effects_presentation
+        self.effects_p = effects_presentation        
 
     def set_play_line(self):
         self.staff_p.set_play_line()

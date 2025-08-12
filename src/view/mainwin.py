@@ -205,7 +205,7 @@ class MainWindow(QMainWindow):
         self.bottom_widget = fretboard_view()
 
         # Create the vertical splitter for the left and right panes
-        self.vertical_splitter = QSplitter(Qt.Orientation.Horizontal)
+        self.horizontal_splitter = QSplitter(Qt.Orientation.Horizontal)
 
         nav_player_layout = QVBoxLayout()
         pv = PlayerView(self)
@@ -215,23 +215,26 @@ class MainWindow(QMainWindow):
         #self.vertical_splitter.addWidget(self.tree_view)
         w = QWidget()
         w.setLayout(nav_player_layout)
-        self.vertical_splitter.addWidget(w) 
+        self.horizontal_splitter.addWidget(w) 
 
         # Create the horizontal splitter for the right pane (top and bottom)
-        self.horizontal_splitter = QSplitter(Qt.Orientation.Vertical)
-        self.horizontal_splitter.setHandleWidth(0)
+        self.vertical_splitter = QSplitter(Qt.Orientation.Vertical)
+        self.vertical_splitter.setHandleWidth(0)
         
-        self.horizontal_splitter.addWidget(self.track_editor)
-        self.horizontal_splitter.addWidget(self.bottom_widget)
-        self.horizontal_splitter.setSizes([300, 100])  # Set initial sizes
+        self.track_editor.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.track_editor.verticalScrollBar().setEnabled(False)
+        
+        self.vertical_splitter.addWidget(self.track_editor)
+        self.vertical_splitter.addWidget(self.bottom_widget)
+        #self.vertical_splitter.setSizes([300, 100])  # Set initial sizes
 
         # Add the right pane splitter to the vertical splitter
-        self.vertical_splitter.addWidget(self.horizontal_splitter)
+        self.horizontal_splitter.addWidget(self.vertical_splitter)
 
         # Set the central widget
         central_widget = QWidget()
         layout = QVBoxLayout()
-        layout.addWidget(self.vertical_splitter)
+        layout.addWidget(self.horizontal_splitter)
         central_widget.setLayout(layout)
         self.setCentralWidget(central_widget)
 
@@ -254,24 +257,24 @@ class MainWindow(QMainWindow):
         settings = QSettings(ORAGANIZATION, APP_NAME)
         # Save window size and position
         settings.setValue("geometry", self.saveGeometry())
-        settings.setValue("vertical_splitter_state",
-                          self.vertical_splitter.saveState())
         settings.setValue("horizontal_splitter_state",
                           self.horizontal_splitter.saveState())
+        settings.setValue("vertical_splitter_state",
+                          self.vertical_splitter.saveState())
 
         Signals.save_settings.emit(settings)
-
+    
     def load_settings(self):
         """Restore the splitter sizes and window geometry."""
         settings = QSettings(ORAGANIZATION, APP_NAME)
         if settings.contains("geometry"):
             self.restoreGeometry(settings.value("geometry"))
-        if settings.contains("vertical_splitter_state"):
-            self.vertical_splitter.restoreState(
-                settings.value("vertical_splitter_state"))
         if settings.contains("horizontal_splitter_state"):
             self.horizontal_splitter.restoreState(
                 settings.value("horizontal_splitter_state"))
+        if settings.contains("vertical_splitter_state"):
+            self.vertical_splitter.restoreState(
+                settings.value("vertical_splitter_state"))
 
         Signals.load_settings.emit(settings)
 
