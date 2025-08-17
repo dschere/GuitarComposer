@@ -71,7 +71,7 @@
             "name": "Python Debugger: One file",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/src/view/dialogs/effectsControlDialog/dialog.py",
+            "program": "${file}",
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}"
         }

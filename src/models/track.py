@@ -1,3 +1,4 @@
+import copy
 import uuid
 
 from models.measure import Measure, TimeSig, TabEvent 
@@ -25,6 +26,54 @@ class Track:
             measure.append(tab_event)
         return measure
     
+    def remove_tab_events(self, remList: List[TabEvent]):
+        uids = set([te.uuid for te in remList])
+        empty_measures = []
+        for m in self.measures:
+            for (i,te) in enumerate(m.tab_events):
+                if te.uuid in uids:
+                    del m.tab_events[i]
+                    if len(m.tab_events) == 0:
+                        empty_measures.append(m)
+
+        # remove empty measures 
+        while len(empty_measures) > 0:
+            m = empty_measures.pop()
+            idx = self.measures.index(m)
+            del self.measures[idx]
+        
+        # re-assign current measure, tab if needed.
+        if self.current_measure > len(self.measures):
+            self.current_measure = len(self.measures)-1
+        m = self.measures[self.current_measure]
+        if m.current_tab_event > len(m.tab_events):
+            m.current_tab_event = len(m.tab_events) - 1
+
+                
+
+    
+    def insert_tab_events(self, insList: List[TabEvent]):
+        c_te, c_m = self.current_moment()
+        ts, _, _, _ = self.getMeasureParams(c_m)
+
+        teList = c_m.tab_events[:c_m.current_tab_event] + insList + c_m.tab_events[c_m.current_tab_event:]
+        c_m.tab_events = []
+        beats = 0
+        m = c_m
+        midx = self.current_measure+1
+        for te in teList:
+            b = te.beats(ts.beat_duration())
+            if beats+b <= ts.beats_per_measure:
+                m.tab_events.append(te)
+                beats += b
+            else:
+                m = Measure()
+                self.measures = self.measures[:midx] + [m] + self.measures[midx:]   
+                beats = b
+                m.tab_events.append(te)
+                midx += 1
+        
+
     def getMeasureParams(self, m : Measure) -> Tuple[TimeSig, int, str, str]:
         ts = self.measures[0].timesig
         bpm = self.measures[0].bpm

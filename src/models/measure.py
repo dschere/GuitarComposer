@@ -43,7 +43,9 @@ class TabEvent:
         if not hasattr(self, 'fret_ypos'):
             self.note_ypos = [-1] * self.num_gstrings
         if type(self.tied_notes[0]) == type(-1):
-            self.tied_notes = [False] * self.num_gstrings        
+            self.tied_notes = [False] * self.num_gstrings    
+        if not hasattr(self, "actual_duration"):
+            self.actual_duration = -1        
     
     def toggle_tied(self):
         if self.tied_notes[self.string]:
@@ -102,6 +104,7 @@ class TabEvent:
         self.effects : Effects | None = None
         self.num_gstrings = num_gstrings
 
+
     def getDynamic(self):
         if self.dynamic:
             return self.dynamic
@@ -127,12 +130,10 @@ class TabEvent:
             if self.double_dotted:
                 beats *= 1.75
             if self.triplet:
-                beats *= 0.66666
+                beats *= 0.6666
             if self.quintuplet:
                 beats *= 0.2
-        return beats
-
-
+        return round(beats, 4)
 
 
 
