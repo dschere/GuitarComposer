@@ -58,7 +58,9 @@ class EditorController:
         if not tmodel: return   
 
         paste_buffer = PasteBufferSingleton()
-        if not evt.control_key_pressed and not paste_buffer.isEmpty():
+        if not evt.control_key_pressed and \
+            not paste_buffer.isEmpty() and \
+                not key in [Qt.Key.Key_Left,Qt.Key.Key_Right]:
             paste_buffer.clear()
 
         # Check for arrow keys
@@ -144,16 +146,18 @@ class EditorController:
     def paste_event(self, evt: EditorEvent):
         tmodel : Track | None = self.track_model
         tedit : TrackEditorView | None = self.track_editor_view
-        paste_buffer = PasteBufferSingleton()
-        paste_buffer.paste(tmodel, tedit)
+        if tmodel is not None and tedit is not None: 
+            paste_buffer = PasteBufferSingleton()
+            paste_buffer.paste(tmodel, tedit)
+            tedit.model_updated()
 
     def cut_event(self, evt: EditorEvent):
         tmodel : Track | None = self.track_model
         tedit : TrackEditorView | None = self.track_editor_view
-        paste_buffer = PasteBufferSingleton()
-        paste_buffer.cut(tmodel, tedit)
-
-
+        if tmodel is not None and tedit is not None: 
+            paste_buffer = PasteBufferSingleton()
+            paste_buffer.cut(tmodel, tedit)
+            tedit.model_updated()
 
     dispatch = {
         EditorEvent.ADD_MODEL: add_model,

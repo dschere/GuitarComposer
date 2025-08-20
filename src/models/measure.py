@@ -7,6 +7,7 @@ from models.effect import Effects
 import logging
 import math
 import uuid
+import copy
 
 class TimeSig:
     def __init__(self):
@@ -52,6 +53,11 @@ class TabEvent:
             self.tied_notes[self.string] = False
         else:
             self.tied_notes[self.string] = True
+
+    def clone(self):
+        r = copy.deepcopy(self)
+        r.uuid = str(uuid.uuid4())
+        return r
 
     def __init__(self, num_gstrings):
         super().__init__()

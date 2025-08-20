@@ -84,6 +84,9 @@ class TrackEditorView(QScrollArea):
         # make this model accessible 
         TrackEditorData().set_active_track_model(track_model)
 
+    def model_updated(self):
+        self.track_presenter.model_updated()
+
     def get_track_model(self):
         return self.track_model
 

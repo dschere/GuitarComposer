@@ -61,11 +61,11 @@ class EditorEvent:
     
 
     # applied to the measure at the current moment
-    MEASURE_REPEAT_START_KEY = 6
-    MEASURE_REPEAT_END_KEY = 7
-    COPY_EVENT = 8
-    PASTE_EVENT = 9
-    CUT_EVENT = 10
+    MEASURE_REPEAT_START_KEY = 8
+    MEASURE_REPEAT_END_KEY = 9
+    COPY_EVENT = 10
+    PASTE_EVENT = 11
+    CUT_EVENT = 12
 
     def __init__(self, evt_type = -1):
         self.ev_type = evt_type
