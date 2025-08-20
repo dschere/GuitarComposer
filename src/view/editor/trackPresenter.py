@@ -150,6 +150,31 @@ class TrackPresenter(QWidget):
         Signals.player_visual_event.connect(self.play_visual_event)        
         self.setup()
 
+    def _clear_layout(self):
+        layout = self.measure_layout
+        while layout.count():
+            item = layout.takeAt(0)   # remove from layout
+            if item is not None:
+                widget = item.widget()
+                if widget is not None:
+                    widget.setParent(None)  
+
+
+    def model_updated(self):
+        self._clear_layout()
+
+        # update measure presenters
+        self.mp_map = {}
+        for measure in self.track_model.measures:
+            mp = MeasurePresenter(measure, self.track_model)
+            self.mp_map[measure] = mp 
+            self.measure_layout.addWidget(mp)
+
+        # update overlat size
+        self.overlay.resize(self.size())
+
+        self.setup()
+
     def resizeEvent(self, event):
         self.overlay.resize(self.size())    
         super().resizeEvent(event)

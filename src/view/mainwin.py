@@ -152,7 +152,18 @@ class MainWindow(QMainWindow):
 
     def keyPressEvent(self, event: QKeyEvent):
         editor_keymap = EditorKeyMap()
-        if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+        e_evt = EditorEvent()
+
+
+        if event.key() == Qt.Key.Key_V and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+            e_evt.ev_type = EditorEvent.PASTE_EVENT
+            Signals.editor_event.emit(e_evt)
+
+        elif event.key() == Qt.Key.Key_X and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+            e_evt.ev_type = EditorEvent.CUT_EVENT
+            Signals.editor_event.emit(e_evt)
+
+        elif event.modifiers() & Qt.KeyboardModifier.ControlModifier:
             self._ctrl_key_pressed = True
         elif event.modifiers() & Qt.KeyboardModifier.AltModifier:
             pass
@@ -166,7 +177,6 @@ class MainWindow(QMainWindow):
                 if not self._shift_key and ord('Z') >= key >= ord('A'):     
                     key += 32 # make lower case
 
-                e_evt = EditorEvent()
                 e_evt.ev_type = EditorEvent.KEY_EVENT
                 e_evt.key = key
                 e_evt.control_key_pressed = self._ctrl_key_pressed

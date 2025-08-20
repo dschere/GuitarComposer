@@ -58,7 +58,9 @@ class EditorController:
         if not tmodel: return   
 
         paste_buffer = PasteBufferSingleton()
-        if not evt.control_key_pressed and not paste_buffer.isEmpty():
+        if not evt.control_key_pressed and \
+            not paste_buffer.isEmpty() and \
+                not key in [Qt.Key.Key_Left,Qt.Key.Key_Right]:
             paste_buffer.clear()
 
         # Check for arrow keys
@@ -75,11 +77,6 @@ class EditorController:
             tedit.insert_key()   
         elif key == Qt.Key.Key_Delete:
             tedit.delete_key()
-        elif evt.control_key_pressed:
-            if key == ord('v'):
-                print("paste")
-            elif key == ord('x'):
-                print("cut")    
         else:
             # get the tab event at the current moment
             #te : TabEvent = tmodel.getTabEvent()
@@ -146,6 +143,21 @@ class EditorController:
         if new_model:
             self.propagate_undo_redo_model_change(new_model)    
 
+    def paste_event(self, evt: EditorEvent):
+        tmodel : Track | None = self.track_model
+        tedit : TrackEditorView | None = self.track_editor_view
+        if tmodel is not None and tedit is not None: 
+            paste_buffer = PasteBufferSingleton()
+            paste_buffer.paste(tmodel, tedit)
+            tedit.model_updated()
+
+    def cut_event(self, evt: EditorEvent):
+        tmodel : Track | None = self.track_model
+        tedit : TrackEditorView | None = self.track_editor_view
+        if tmodel is not None and tedit is not None: 
+            paste_buffer = PasteBufferSingleton()
+            paste_buffer.cut(tmodel, tedit)
+            tedit.model_updated()
 
     dispatch = {
         EditorEvent.ADD_MODEL: add_model,
@@ -157,7 +169,9 @@ class EditorController:
         EditorEvent.MEASURE_REPEAT_START_KEY: toggle_measure_start_repeat,
         EditorEvent.MEASURE_REPEAT_END_KEY: toggle_measure_end_repeat,
         EditorEvent.UNDO_EVENT: undo_event,
-        EditorEvent.REDO_EVENT: redo_event
+        EditorEvent.REDO_EVENT: redo_event,
+        EditorEvent.PASTE_EVENT: paste_event,
+        EditorEvent.CUT_EVENT: cut_event
     }
 
     def editor_event(self, evt: EditorEvent):

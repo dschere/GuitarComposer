@@ -2,7 +2,9 @@ from typing import List
 from models.measure import TabEvent
 from view.editor.tabEventPresenter import TabEventPresenter
 from singleton_decorator import singleton
+from models.track import Track
 
+from PyQt6.QtWidgets import QWidget
 
 @singleton
 class PasteBufferSingleton:
@@ -35,6 +37,18 @@ class PasteBufferSingleton:
     def isActive(self):
         return self.active    
     
+    def paste(self, track: Track, track_view : QWidget):
+        teList = self.get_tab_events()
+        track.insert_tab_events(teList)
+        self.clear()
+        track_view.update()
+        
+    def cut(self, track: Track, track_view: QWidget):
+        teList = self.get_tab_events()
+        track.remove_tab_events(teList)
+        self.clear()
+        track_view.update()
+
 
 
 

@@ -1,3 +1,4 @@
+import copy
 import uuid
 
 from models.measure import Measure, TimeSig, TabEvent 
@@ -25,6 +26,69 @@ class Track:
             measure.append(tab_event)
         return measure
     
+    def _reassemble(self, teList: List[TabEvent], ts: TimeSig, m_num: int):
+        """
+        Reassemble measures starting with the measure 'm_num'  
+        """
+        beats = 0
+        self.measures[m_num].tab_events = []
+        for te in teList:
+            b = te.beats(ts.beat_duration())
+            if beats+b <= ts.beats_per_measure:
+                self.measures[m_num].tab_events.append(te.clone())
+                beats += b
+            else:
+                m_num += 1
+                beats = b
+                if m_num < len(self.measures):
+                    self.measures[m_num].tab_events = [te.clone()]
+                    _ts = self.measures[m_num].timesig
+                    if _ts is not None:
+                        ts = _ts
+                else:
+                    m = Measure(measure_number=m_num+1)
+                    self.measures.append(m)
+                    self.measures[m_num].tab_events = [te.clone()]
+
+    def remove_tab_events(self, remList: List[TabEvent]):
+        if len(remList) == 0: return 
+
+        uids = set([te.uuid for te in remList])
+        teList = []
+        for m in self.measures:
+            for te in m.tab_events:
+                if te.uuid not in uids:
+                    teList.append(te)
+
+        ts, _, _, _ = self.getMeasureParams(self.measures[0])
+        m_num = 0
+        self._reassemble(teList, ts, m_num)
+
+        # re-assign current measure, tab if needed.
+        if self.current_measure >= len(self.measures):
+            self.current_measure = len(self.measures)-1
+        m = self.measures[self.current_measure]
+        if m.current_tab_event >= len(m.tab_events):
+            m.current_tab_event = len(m.tab_events) - 1
+
+
+    def insert_tab_events(self, insList: List[TabEvent]):
+        if len(insList) == 0: return
+
+        c_te, c_m = self.current_moment()
+        ts, _, _, _ = self.getMeasureParams(c_m)
+
+        teList = c_m.tab_events[:c_m.current_tab_event] + insList + c_m.tab_events[c_m.current_tab_event:]
+        midx = self.current_measure + 1
+        while midx < len(self.measures):
+            teList += self.measures[midx].tab_events
+            midx += 1
+        m_num = self.current_measure
+
+        # adjust the current tab event and current measure. 
+        self._reassemble(teList, ts, m_num)
+                  
+
     def getMeasureParams(self, m : Measure) -> Tuple[TimeSig, int, str, str]:
         ts = self.measures[0].timesig
         bpm = self.measures[0].bpm

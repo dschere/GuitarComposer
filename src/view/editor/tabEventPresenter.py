@@ -46,13 +46,12 @@ class TabEventPresenter(QWidget):
 
         self.tab_event = tab_event
         # allow for navigation within the measure <-- -->
-        self.prev : TabEventPresenter | None = None
-        self.next : TabEventPresenter | None = None
+        # self.prev : TabEventPresenter | None = None
+        # self.next : TabEventPresenter | None = None
 
         layout = QVBoxLayout()
         layout.setSpacing(0)
         layout.setContentsMargins(0, 0, 0, 0)
-
 
         staff_presentation      = glyphs.StaffGlyph(self.tab_event, measure, track)
         ornamental_presentation = glyphs.oramental_markings(self.tab_event)
