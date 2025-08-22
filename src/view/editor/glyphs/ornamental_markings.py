@@ -20,6 +20,7 @@ from view.editor.glyphs.common import (BEND_SYMBOL, NO_ARTICULATION, ORNAMENT_AR
 from models.track import TabEvent
 from PyQt6.QtGui import QPainter, QFont
 import math
+from view.config import GuitarFretboardStyle
 
 from view.events import StringBendEvent
 
@@ -58,6 +59,7 @@ class oramental_markings(Canvas):
     def __init__(self, tab_event: TabEvent):
         super().__init__(STAFF_SYM_WIDTH,ORNAMENT_MARKING_HEIGHT)
         self.tab_event = tab_event
+        self.stroke_color = GuitarFretboardStyle.string_color_rgb
 
     def on_stringBendDialog_apply(self, evt : StringBendEvent):
         self.tab_event.pitch_changes = evt.pitch_changes 
@@ -166,9 +168,11 @@ class oramental_markings(Canvas):
             self._draw_marker(painter, BEND_SYMBOL, ORNAMENT_BEND_Y)
 
         if self.tab_event.downstroke:
-            self._draw_marker(painter, DOWNSTROKE, ORNAMENT_STROKE_Y) 
+            self.draw_symbol(painter, DOWNSTROKE,x=10, 
+                    y=ORNAMENT_STROKE_Y, draw_lines=False, color=self.stroke_color) 
         elif self.tab_event.upstroke:
-            self._draw_marker(painter, UPSTROKE, ORNAMENT_STROKE_Y)
+            self.draw_symbol(painter, UPSTROKE,x=10, 
+                    y=ORNAMENT_STROKE_Y, draw_lines=False, color=self.stroke_color) 
         
         if self.tab_event.render_dynamic:
             t = Dynamic.short_text(self.tab_event.dynamic)
