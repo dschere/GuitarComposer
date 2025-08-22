@@ -5,6 +5,8 @@ from PyQt6.QtGui import QKeyEvent
 from PyQt6.QtCore import Qt
 from PyQt6 import QtCore
 
+from PyQt6.QtCore import QObject, QEvent
+
 from models.measure import TabEvent
 from view.editor.trackPresenter import TrackPresenter
 from view.editor.toolbar import EditorToolbar
@@ -28,6 +30,15 @@ class TrackEditorData:
     def get_active_track_model(self) -> Track | None:
         return self.active_track_model
 
+class BlockKeys(QObject):
+    def eventFilter(self, obj, event):
+        if event.type() == QEvent.Type.KeyPress:
+            if event.key() in (Qt.Key.Key_Up, Qt.Key.Key_Down,
+                               Qt.Key.Key_PageUp, Qt.Key.Key_PageDown,
+                               Qt.Key.Key_Home, Qt.Key.Key_End):
+                print("Blocked:", event.key())
+                return True  # block
+        return super().eventFilter(obj, event)
 
 class TrackEditorView(QScrollArea):
 
@@ -43,7 +54,9 @@ class TrackEditorView(QScrollArea):
 
         if hasattr(self,"track_model"):
             Signals.redo_undo_update.emit(self.track_model)
-        
+
+
+
     """ 
     API for the editorcontroller
     
@@ -77,8 +90,14 @@ class TrackEditorView(QScrollArea):
         scroll_area = QScrollArea()
         scroll_area.setWidget(self.track_presenter)
         scroll_area.setWidgetResizable(False)  # Important for custom-size canvas
-        
         main_layout.addWidget(scroll_area)
+        
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        w = scroll_area.viewport()
+        if w:
+            w.setFixedHeight(self.track_presenter.height())
+
         self.track_model = track_model
 
         # make this model accessible 
@@ -196,7 +215,6 @@ class TrackEditorView(QScrollArea):
         evt.ev_type = EditorEvent.ADD_TRACK_EDITOR
         evt.track_editor = self # type: ignore
         Signals.editor_event.emit(evt)
-
 
 
 def unittest():

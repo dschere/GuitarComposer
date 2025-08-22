@@ -24,7 +24,9 @@ class StaffMeasureBarlines(Canvas):
     END_REPEAT = 3
     END_BEGIN_NEW_REPEAT = 4
 
-    def __init__(self, measure: int, mtype : int, width=STAFF_SYM_WIDTH, height=STAFF_HEIGHT):
+    def __init__(self, measure: int, mtype : int):
+        width=STAFF_SYM_WIDTH
+        height=STAFF_HEIGHT
         super().__init__(width, height)
         self.measure = measure
         self.mtype = mtype

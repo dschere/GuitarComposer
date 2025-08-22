@@ -11,6 +11,7 @@ many beats in the measure.
 import copy
 
 from PyQt6.QtWidgets import (QWidget, QHBoxLayout, QVBoxLayout,  QSpinBox)
+from PyQt6.QtCore import Qt
 from models.measure import Measure, TabEvent
 
 from view.editor import glyphs
@@ -281,12 +282,12 @@ class MeasurePresenter(QWidget):
         if measure.measure_number == 1:
             start_track_measure_glyph = MeasureLine(
                 measure, track_model, True)
-            self.measure_layout.addWidget(start_track_measure_glyph)
+            self.measure_layout.addWidget(start_track_measure_glyph, alignment=Qt.AlignmentFlag.AlignTop)
             self.start_track_measure_glyph = start_track_measure_glyph
                          
         for tab_event in self.measure.tab_events:
             tp = TabEventPresenter(tab_event, measure, track_model)
-            self.measure_layout.addWidget(tp)
+            self.measure_layout.addWidget(tp, alignment=Qt.AlignmentFlag.AlignTop)
             self.tab_map[tab_event] = tp
 
 
