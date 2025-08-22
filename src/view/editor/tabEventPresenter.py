@@ -58,20 +58,10 @@ class TabEventPresenter(QWidget):
         tab_presentation        = glyphs.TabletureGlyph(self.tab_event)
         effects_presentation    = glyphs.EffectsGlyph(self.tab_event)
 
-        #TODO fix this crap!
-        # setSpacing does not work! I needed this kluge to force 
-        # a blank widget to eat up any extra padding set to exactly the correct
-        # height so that no padding is rendered between widgets.
-        pad = QWidget()
-        pad.setFixedHeight(170)
-        pad.setFixedWidth(STAFF_SYM_WIDTH)
-        #################################### 
-
         layout.addWidget(staff_presentation, alignment=Qt.AlignmentFlag.AlignTop )
-        layout.addWidget(ornamental_presentation )
-        layout.addWidget(tab_presentation )
-        layout.addWidget(effects_presentation)
-        layout.addWidget(pad)
+        layout.addWidget(ornamental_presentation, alignment=Qt.AlignmentFlag.AlignTop )
+        layout.addWidget(tab_presentation, alignment=Qt.AlignmentFlag.AlignTop )
+        layout.addWidget(effects_presentation, alignment=Qt.AlignmentFlag.AlignTop)
 
         self.setLayout(layout)
         self.staff_p = staff_presentation

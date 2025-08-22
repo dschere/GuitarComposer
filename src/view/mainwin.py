@@ -124,7 +124,7 @@ class MainWindow(QMainWindow):
     _shift_key = False
     _arrow_keys = (Qt.Key.Key_Left, Qt.Key.Key_Right, Qt.Key.Key_Up, Qt.Key.Key_Down)
 
-    def keyReleaseEvent(self, event: QKeyEvent) -> None:
+    def keyReleaseEvent(self, event: QKeyEvent):
         editor_keymap = EditorKeyMap()
         key = event.key()
         mod = event.modifiers()
@@ -147,7 +147,7 @@ class MainWindow(QMainWindow):
                 self.undoEdit()
             elif key == editor_keymap.REDO:
                 self.redoEdit()    
-            
+
         return super().keyReleaseEvent(event)
 
     def keyPressEvent(self, event: QKeyEvent):
@@ -181,6 +181,8 @@ class MainWindow(QMainWindow):
                 e_evt.key = key
                 e_evt.control_key_pressed = self._ctrl_key_pressed
                 Signals.editor_event.emit(e_evt)
+
+        return super().keyPressEvent(event)
 
     def __init__(self, ec: EditorController ):
         super().__init__()

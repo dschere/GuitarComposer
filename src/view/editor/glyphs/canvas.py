@@ -108,6 +108,8 @@ class Canvas(QLabel):
         if self._highlight_background:
             painter.fillRect(0, 0, self.c_width, self.c_height,QColor(60,60,60))     
        
+        #painter.drawLine(0,0,self.width(),self.height())
+
         self.canvas_paint_event(painter)
         self.draw_beat_error(painter)
         painter.end()
