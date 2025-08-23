@@ -25,6 +25,11 @@ accent_table = [False, True, False, True, False,
 # from the G5 note which is the y_start position on the first line of
 # the staff.
 
+DotTextMap = {
+    0: '',
+    1: '.',
+    2: '"'
+}
 
 class note_renderer:
     sharp_step_table, flat_step_table = {}, {}
@@ -75,7 +80,7 @@ class note_renderer:
             DT.SIXTEENTH: SIXTEENTH_NOTE,
             DT.THIRTYSECOND: THRITYSEC_NOTE,
             DT.SIXTYFORTH: SIXTYFORTH_NOTE
-        }[dtype] + ("." * self.dot_count)
+        }[dtype] + DotTextMap.get(self.dot_count,'')
 
     def get_rest_text(self, dtype):
         return {
@@ -86,7 +91,7 @@ class note_renderer:
             DT.SIXTEENTH: SIXTEENTH_REST,
             DT.THIRTYSECOND: THRITYSEC_REST,
             DT.SIXTYFORTH: SIXTYFORTH_REST
-        }[dtype] + ('.' * self.dot_count)
+        }[dtype] + DotTextMap.get(self.dot_count,'')
 
     def get_y_coord(self, midi_code, accent):
         # global sharp_step_table, flat_step_table
@@ -164,7 +169,8 @@ class note_renderer:
             text = self.get_note_head_text(dtype)
         else:
             text = self.get_tail_note_text(dtype)
-        text += '.' * self.dot_count    
+        text += '.' * self.dot_count
+        
         painter.drawText(accent_spacing, y-3, text)
 
         # draw ledger lines above/below staff as needed
