@@ -23,7 +23,7 @@ from view.config import LabelText
 from view.dialogs.effectsControlDialog.dialog import EffectPreview,\
     EffectChanges
 
-from view.events import Signals, TrackItem, PropertiesItem, SongItem
+from view.events import Signals, TrackItem, PropertiesItem, SongItem, InstrumentSelectedEvent
 
 from view.dialogs.msgboxes import alert
 
@@ -58,7 +58,6 @@ class SongController:
     def __init__(self, title):
         self.song = Song()
         self.song.title = title
-        self.instruments = {}
         self.q_model = None
 
         Signals.track_update.connect(self.on_track_change)
@@ -80,9 +79,6 @@ class SongController:
 
     def load_model(self, s: Song):
         self.song = s
-        for track in self.song.tracks:
-            instrument = Instrument(track.instrument_name)
-            self.instruments[track] = instrument
 
     def save_model(self, allow_dialog=False):
         if isinstance(self.song, Song):
@@ -139,17 +135,12 @@ class SongController:
         self.addQTrackModel(track, self.q_model)
 
     def addTrack(self, instr_name):
-        # assign synth channel(s) to play the instrument
-        instrument = Instrument(instr_name)
 
         # build data structure
         track = Track()
         #track.uuid = str(uuid.uuid4())
         track.instrument_name = instr_name
         self.song.tracks.append(track)
-
-        # map the instrument name to a syn interface
-        self.instruments[track] = instrument
 
         return track
 

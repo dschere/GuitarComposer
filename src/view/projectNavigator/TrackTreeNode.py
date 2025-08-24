@@ -38,12 +38,9 @@ class TrackTreeDialog(QDialog):
         self.instruments_combo_box.addItems(filtered_items)
 
     def _on_instrument_selected(self):
-        evt = InstrumentSelectedEvent()
-        evt.instrument = self.instruments_combo_box.currentText()
-        evt.track = self.track_model
-        self.track_qmodel_item.setText(evt.instrument)
-        Signals.instrument_selected.emit(evt)
-
+        instrument_name = self.instruments_combo_box.currentText()
+        self.track_model.instrument_name = instrument_name
+        
     def tuning_section(self):
         """ 
         <group line>
