@@ -10,6 +10,8 @@ from view.config import GuitarFretboardStyle
 from models.measure import TabEvent
 from PyQt6.QtCore import Qt
 
+from view.events import MouseSelTab, Signals
+
 
 class TabletureMeasure(Canvas):
     def __init__(self):
@@ -70,6 +72,19 @@ class TabletureGlyph(Canvas):
         self.tab_event = tab_event
         self._draw_playline = False 
 
+    def mousePressEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:  # Check for left mouse button
+            y = event.position().y()
+            n = TABLATURE_LINE_SPACE
+            gstr = int((y - (n/2))/n)
+            if gstr < 0:
+                gstr = 0
+            if gstr >= len(self.tab_event.fret):
+                gstr = len(self.tab_event.fret) - 1
+
+            evt = MouseSelTab(self.tab_event, gstr)
+            Signals.tab_select.emit(evt)
+           
     def set_playline(self):
         self._draw_playline = True
         self.update() 
@@ -100,7 +115,7 @@ class TabletureGlyph(Canvas):
         p.setColor(self.pen_color)
         painter.setPen(p)
 
-        offset = 15
+        offset = TABLATURE_LINE_SPACE
         for line_num in range(TABLATURE_NUM_LINES):
             y = line_num * TABLATURE_LINE_SPACE + offset
             # print(f"0 {y} {self.width} {y}")

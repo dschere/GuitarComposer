@@ -170,7 +170,7 @@ class Track:
                 self.current_measure = len(self.measures) - 1
             for (mn, m) in enumerate(self.measures):
                 m.measure_number = mn + 1        
-            
+
     def current_moment(self) -> Tuple[TabEvent, Measure]:
         m = self.measures[self.current_measure] 
         return (m.tab_events[m.current_tab_event], m)
