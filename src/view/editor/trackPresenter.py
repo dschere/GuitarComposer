@@ -12,7 +12,7 @@ from models.measure import Measure, TabEvent
 from models.track import Track
 
 
-from view.events import PlayerVisualEvent, Signals
+from view.events import MouseSelTab, PlayerVisualEvent, Signals
 from view.editor.pastebuffer import PasteBufferSingleton
 from .overlay import OverlayWidget
 
@@ -127,6 +127,23 @@ class TrackPresenter(QWidget):
         self.current_mp.reset_presentation()
         self.setup()
 
+    def on_tab_select(self, evt: MouseSelTab):
+        te = evt.tab
+        for (midx,m) in enumerate(self.track_model.measures):
+            if te in m.tab_events and self.current_tep is not None:
+                mp = self.mp_map[m]
+                te_pres = mp.tab_map[te]
+
+                # set current moment in track
+                self.track_model.current_measure = midx
+                m.current_tab_event = m.tab_events.index(te)
+
+                # setup presents to show cursor at that position
+                self.current_tep.cursor_off()
+                te.string = evt.gstring
+                self.setup()
+                 
+
     def __init__(self, track_model: Track):
         super().__init__()
         #self.setWidgetResizable(True)
@@ -147,7 +164,8 @@ class TrackPresenter(QWidget):
         # for drawing on top of staff
         self.overlay = OverlayWidget(self)
 
-        Signals.player_visual_event.connect(self.play_visual_event)        
+        Signals.player_visual_event.connect(self.play_visual_event) 
+        Signals.tab_select.connect(self.on_tab_select)       
         self.setup()
 
     def _clear_layout(self):

@@ -144,12 +144,18 @@ class QueryResult:
         self.track : Track | None = None  
         self.measure_num = -1 
         self.tab_num = -1
+
+class MouseSelTab:
+    def __init__(self, tab: TabEvent, gstr: int):
+        self.tab = tab
+        self.gstring = gstr
+
                         
 @singleton
 class _Signals(QObject):
     redo_undo_update = pyqtSignal(Track)
     query_slot = pyqtSignal(QueryMessage) 
-
+    
     def set_query_reactor(self, ident: str, callback):
         class handler(QObject):
             def __init__(self, ident, cb):
@@ -209,6 +215,7 @@ class _Signals(QObject):
     player_event = pyqtSignal(PlayerEvent)
     player_visual_event = pyqtSignal(PlayerVisualEvent)
 
+    tab_select = pyqtSignal(MouseSelTab)
 
 
 Signals = _Signals()
