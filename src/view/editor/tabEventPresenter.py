@@ -49,7 +49,7 @@ class TabEventPresenter(QWidget):
         # self.prev : TabEventPresenter | None = None
         # self.next : TabEventPresenter | None = None
 
-        layout = QVBoxLayout()
+        layout = QVBoxLayout(self)
         layout.setSpacing(0)
         layout.setContentsMargins(0, 0, 0, 0)
 
@@ -62,6 +62,7 @@ class TabEventPresenter(QWidget):
         layout.addWidget(ornamental_presentation, alignment=Qt.AlignmentFlag.AlignTop )
         layout.addWidget(tab_presentation, alignment=Qt.AlignmentFlag.AlignTop )
         layout.addWidget(effects_presentation, alignment=Qt.AlignmentFlag.AlignTop)
+        layout.addStretch() #<-- fixes alignment issue on delete
 
         self.setLayout(layout)
         self.staff_p = staff_presentation

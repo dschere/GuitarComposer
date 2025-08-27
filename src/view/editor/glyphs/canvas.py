@@ -64,6 +64,7 @@ class Canvas(QLabel):
         self.setFixedWidth(width)
         self.setFixedHeight(height)
         self.beat_error = ""
+        self.border = False
 
     def beat_overflow_error(self):
         self.beat_error = BEAT_OVERFLOW_CHAR
@@ -104,6 +105,11 @@ class Canvas(QLabel):
         painter = QtGui.QPainter()
         painter.begin(self)
         painter.eraseRect(0, 0, self.c_width, self.c_height)
+
+        if self.border:
+            painter.drawRect(
+                1, 1, self.width()-1, self.height()-1
+            )
 
         if self._highlight_background:
             painter.fillRect(0, 0, self.c_width, self.c_height,QColor(60,60,60))     
