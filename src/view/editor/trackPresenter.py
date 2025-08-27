@@ -2,7 +2,7 @@ import copy, logging
 import uuid
 
 from PyQt6.QtWidgets import (QWidget, QHBoxLayout, QScrollArea)
-from PyQt6.QtCore import Qt, QPointF
+from PyQt6.QtCore import Qt, QPointF, pyqtSignal
 
 from view.editor.measurePresenter import MeasurePresenter
 from view.editor.tabEventPresenter import TabEventPresenter
@@ -19,7 +19,7 @@ from .overlay import OverlayWidget
          
 
 class TrackPresenter(QWidget):
-        
+    current_measure_changed = pyqtSignal(int)        
 
     def setup(self):
         if self.track_model is None: return 
@@ -40,6 +40,9 @@ class TrackPresenter(QWidget):
         self.current_tep.cursor_on()
         self.current_tep.update() 
 
+        self.current_measure_changed.emit(self.current_measure.measure_number-1)
+        
+
         width = 100
         for measure in self.track_model.measures:
             mp = self.mp_map[measure]
@@ -50,6 +53,12 @@ class TrackPresenter(QWidget):
         self.overlay.setup(self.track_model, self.mp_map)
 
         Signals.redo_undo_update.emit(self.track_model)
+
+
+        # if self.prev_measure != -1:
+        #     if self.prev_measure != self.track_model.current_measure:
+        #         self.current_measure_changed.emit(self.track_model.current_measure) 
+        # self.prev_measure = self.track_model.current_measure
 
     def update_measure_repeat(self, m: Measure):
         "update the measure line for at the end of measure"
@@ -132,7 +141,7 @@ class TrackPresenter(QWidget):
         for (midx,m) in enumerate(self.track_model.measures):
             if te in m.tab_events and self.current_tep is not None:
                 mp = self.mp_map[m]
-                te_pres = mp.tab_map[te]
+                #te_pres = mp.tab_map[te]
 
                 # set current moment in track
                 self.track_model.current_measure = midx
@@ -142,7 +151,7 @@ class TrackPresenter(QWidget):
                 self.current_tep.cursor_off()
                 te.string = evt.gstring
                 self.setup()
-                 
+
 
     def __init__(self, track_model: Track):
         super().__init__()
