@@ -18,6 +18,11 @@ from PyQt6.QtCore import pyqtSignal
 class MeasureNavigation(QWidget):
     measure_change = pyqtSignal(int)
 
+    def editor_event(self, evt):
+        if self.prev_num_measures != len(self.track_model.measures):
+            self.setup()
+            self.prev_num_measures = self.track_model.measures
+
     # setup handler for when measure is selected.
     def click_handler(self, b: QAbstractButton):
         midx = self.button_group.id(b)
@@ -35,7 +40,8 @@ class MeasureNavigation(QWidget):
 
         self.button_group.buttonClicked.connect(self.click_handler)
 
-    def setup(self, track: Track):
+    def setup(self):
+        track = self.track_model
         try: 
             self.button_group.buttonClicked.disconnect(self.click_handler)        
         except TypeError:
@@ -88,9 +94,14 @@ class MeasureNavigation(QWidget):
         self.setFixedHeight((row + 1)* w)
 
 
-    def __init__(self, parent):
+    def __init__(self, parent, track_model: Track):
         super().__init__(parent)
+        self.track_model = track_model
+        self.prev_num_measures = len(self.track_model.measures)
 
         self.button_group = QButtonGroup(self)
         self.button_group.setExclusive(True)
+        Signals.editor_event.connect(self.editor_event)
 
+        self.setup()
+        

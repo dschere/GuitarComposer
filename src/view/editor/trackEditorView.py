@@ -116,8 +116,7 @@ class TrackEditorView(QScrollArea):
 
         self.track_model = track_model
 
-        mnav = MeasureNavigation(self)
-        mnav.setup(track_model)
+        mnav = MeasureNavigation(self, track_model)
         mnav.measure_change.connect(self.mnav_selected)
 
         # update navigation buttons when the current measure changes
@@ -190,8 +189,6 @@ class TrackEditorView(QScrollArea):
         prev_num_measures = len(self.track_model.measures)
         self.track_presenter.next_moment(ctrl_pressed)
         self.update_toolbar_track_event()
-        if len(self.track_model.measures) != prev_num_measures:
-            self.mnav.setup(self.track_model) # type: ignore
 
     def arrow_up_key(self):
         "^ move cursor up or loop if its the top fret"
