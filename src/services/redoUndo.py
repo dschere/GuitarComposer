@@ -135,6 +135,7 @@ class RedoUndoProcessor(QObject):
     def undo(self, track: Track) -> Track | None:
         entry = self.track_table.get(track.track_edit_id)
         if entry is not None:
+            entry.undo()
             return entry.undo()     
 
     def redo(self, track: Track) -> Track | None:

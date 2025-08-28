@@ -80,14 +80,14 @@ class MainWindow(QMainWindow):
         edit_menu : QMenu | None = menu_bar.addMenu("Edit")
         assert(edit_menu)
 
-        undo_action = QAction("Undo", self)
+        undo_action = QAction("Undo (Ctrl+Z)", self)
         undo_action.triggered.connect(self.undoEdit)
-        redo_action = QAction("Redo", self)
+        redo_action = QAction("Redo (Ctrl+Y)", self)
         redo_action.triggered.connect(self.redoEdit)
 
-        cut_action = QAction("Cut", self)
-        copy_action = QAction("Copy", self)
-        paste_action = QAction("Paste", self)
+        cut_action = QAction("Cut (Ctrl+X)", self)
+        copy_action = QAction("Copy (Ctrl+C)", self)
+        paste_action = QAction("Paste (Ctrl+V)", self)
 
         edit_menu.addAction(undo_action)
         edit_menu.addAction(redo_action)
