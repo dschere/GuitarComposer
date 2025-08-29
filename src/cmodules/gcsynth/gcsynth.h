@@ -1,8 +1,6 @@
 #ifndef __GCSYNTH_H
 #define __GCSYNTH_H
 
-// I am using my modified fluidsynth
-#include "../../../include/fluidsynth.h"
 #include "ladspa.h"
 
 #include "gcsynth_channel.h"
@@ -37,10 +35,6 @@ struct gcsynth_cfg {
 
 
 struct gcsynth {
-    fluid_synth_t*        synth;
-    fluid_settings_t*     settings;
-    fluid_audio_driver_t* adriver;
-    fluid_sequencer_t*    sequencer;
     short synth_destination, client_destination;
 
     struct gcsynth_cfg cfg;

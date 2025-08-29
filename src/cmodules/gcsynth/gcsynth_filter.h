@@ -38,8 +38,10 @@ enum {
     NUM_IO_PORTMAPS
 };
 
+#include <glib-2.0/gmodule.h>
+
 struct gcsynth_filter {
-    void* dl_handle;
+    GModule* gmodule;
 
     int enabled;
     int in_place_supported;
