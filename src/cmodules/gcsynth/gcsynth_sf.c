@@ -91,7 +91,7 @@ static int NumAudioThreads;
 static struct audio_thread* ChannelAllocTable[MAX_CHANNELS];
 
 
-struct voice_render_result {
+struct __attribute__((packed)) voice_render_result {
     int out_samples;
     float* outL;
     float* outR;
@@ -205,8 +205,9 @@ struct voice_render_result my_tsf_voice_render(tsf* f, struct tsf_voice* v, floa
 					// Low-pass filter.
 					if (tmpLowpass.active) val = tsf_voice_lowpass_process(&tmpLowpass, val);
 
-					*outL++ += val * gainLeft;
-					*outR++ += val * gainRight;
+
+					*outL++ += (fabsf(val) < 1e-6f) ? 0: val * gainLeft;
+					*outR++ += (fabsf(val) < 1e-6f) ? 0: val * gainRight;
 
                     result.out_samples++;
 
