@@ -416,7 +416,6 @@ static PyObject* py_fluid_synth_reset_basic_channel(PyObject* self, PyObject* ar
 
     CHECK_CHANNEL_VALUE(channel)
     
-    fluid_synth_reset_basic_channel(GcSynth.synth, channel);
     gcsynth_sequencer_remove_channel_events(&GcSynth, channel);
 
     Py_RETURN_NONE;

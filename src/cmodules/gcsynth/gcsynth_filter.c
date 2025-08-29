@@ -273,7 +273,7 @@ int  gcsynth_filter_isEnabled(struct gcsynth_filter* gc_filter)
 
 static void ladspa_deallocate(struct gcsynth_filter* gc_filter)
 {
-    if (gc_filter->dl_handle) {
+    if (gc_filter->gmodule != NULL) {
         if (gc_filter->plugin_instance && gc_filter->desc) {
             gcsynth_filter_disable(gc_filter);
 
@@ -283,7 +283,7 @@ static void ladspa_deallocate(struct gcsynth_filter* gc_filter)
             }
         }
 
-        dlclose(gc_filter->dl_handle);
+        g_module_close(gc_filter->gmodule);
         memset(gc_filter, 0, sizeof(struct gcsynth_filter));
     }
 }
@@ -337,16 +337,15 @@ static int ladspa_setup(struct gcsynth_filter* gc_filter, const char* path, char
 
     memset(gc_filter, 0, sizeof(struct gcsynth_filter));
 
-    // open the library with a local namespace so multipel opens of
-    // the same library will use different internal variables.
-    if ((gc_filter->dl_handle = dlopen(path, RTLD_LOCAL|RTLD_NOW)) == NULL) {
+    gc_filter->gmodule = g_module_open(path, G_MODULE_BIND_LOCAL);
+    if (gc_filter->gmodule == NULL) {
         sprintf(errmsg,"gcsynth: ladspa_setup dlopen failed %s", dlerror());
         gcsynth_raise_exception(errmsg);
         return -1;
     }
 
-    if ((gc_filter->descriptor_fn = 
-      dlsym(gc_filter->dl_handle, "ladspa_descriptor")) == NULL) {
+    if (!g_module_symbol(gc_filter->gmodule, "ladspa_descriptor", 
+        (gpointer) &gc_filter->descriptor_fn)) {
         gcsynth_raise_exception("dlsym failed to load ladspa_descriptor()");
         ladspa_deallocate(gc_filter);
         return -1;

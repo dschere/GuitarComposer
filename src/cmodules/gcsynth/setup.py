@@ -7,10 +7,10 @@ import subprocess
 current_module_path = os.sep.join(os.path.abspath(__file__).split(os.sep)[:-1])
 BASE_DIR = current_module_path+"/../../.."
 
-PACKAGES = "glib-2.0 sdl2"
+PACKAGES = "glib-2.0 sdl2 gmodule-2.0"
 
 _include_dirs = ['.', f'{BASE_DIR}/include']
-_libraries = ['fluidsynth','m','ev']
+_libraries = ['m','ev']
 _library_dirs = [f'{BASE_DIR}/lib64']
 
 glib_include = subprocess.getoutput(

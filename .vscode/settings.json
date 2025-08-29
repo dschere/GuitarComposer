@@ -40,4 +40,7 @@
     ],
     "clang.arguments": ["--header-insertion=never"],
     "clang.serverCompletionRanking": true,
+    "files.associations": {
+        "gmodule.h": "c"
+    },
 }
