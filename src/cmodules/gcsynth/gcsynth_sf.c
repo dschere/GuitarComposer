@@ -309,8 +309,9 @@ TSFDEF void my_tsf_render_float(tsf* f, float* buffer, int samples)
     }
 
     //FUTURE
-    //this is were I could create a master effects output 
-    // or stream the audio to a file 
+    // this is were I could create a master effects output 
+    // or stream the audio to a file, at this point we have 
+    // interleaved audio samples post per channel effects. 
 }
 
 
