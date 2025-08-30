@@ -91,7 +91,7 @@ static int NumAudioThreads;
 static struct audio_thread* ChannelAllocTable[MAX_CHANNELS];
 
 
-struct __attribute__((packed)) voice_render_result {
+struct voice_render_result {
     int out_samples;
     float* outL;
     float* outR;
@@ -206,8 +206,8 @@ struct voice_render_result my_tsf_voice_render(tsf* f, struct tsf_voice* v, floa
 					if (tmpLowpass.active) val = tsf_voice_lowpass_process(&tmpLowpass, val);
 
 
-					*outL++ += (fabsf(val) < 1e-6f) ? 0: val * gainLeft;
-					*outR++ += (fabsf(val) < 1e-6f) ? 0: val * gainRight;
+					*outL++ += val * gainLeft;
+					*outR++ += val * gainRight;
 
                     result.out_samples++;
 
@@ -251,7 +251,6 @@ struct voice_render_result my_tsf_voice_render(tsf* f, struct tsf_voice* v, floa
     return result;
 }
 
-
 /*
    refactored tsf_render_float so it routes audio data to ladspa filters
    if enabled for this channel.
@@ -274,10 +273,12 @@ TSFDEF void my_tsf_render_float(tsf* f, float* buffer, int samples)
 	TSF_MEMSET(buffer, 0, n);
     int i;
 
+    
+
     for (; v != vEnd; v++) {
 		if (v->playingPreset != -1) {
             float chan_buffer[AUDIO_SAMPLES * 2];
-            float* left, *right;
+            //float* left, *right;
             struct voice_render_result vr;
 
             memset(chan_buffer, 0, sizeof(chan_buffer));
@@ -285,8 +286,18 @@ TSFDEF void my_tsf_render_float(tsf* f, float* buffer, int samples)
             vr = my_tsf_voice_render(f, v, chan_buffer, samples);
         
             if (gcsynth_channel_filter_is_enabled(v->playingChannel)) { 
+                // improve performace, it is easier to work with large numbers 
+                // it also reduces the 'flapping' effect 
+                for(i = 0; i < vr.out_samples; i++) {
+                     vr.outL[i] = vr.outL[i] * 1000;
+                     vr.outR[i] = vr.outR[i] * 1000;
+                }
                 synth_filter_router(
-                    v->playingChannel, vr.outL, vr.outR, vr.out_samples);
+                    v->playingChannel, vr.outL, vr.outR, samples);
+                for(i = 0; i < vr.out_samples; i++) {
+                     vr.outL[i] = vr.outL[i] * 0.001;
+                     vr.outR[i] = vr.outR[i] * 0.001;
+                }
             }
 
             // convert to interleaved output.
