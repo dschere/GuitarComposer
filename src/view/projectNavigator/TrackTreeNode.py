@@ -10,6 +10,7 @@ from util.midi import midi_codes
 from models.track import Track
 
 from view.dialogs.effectsControlDialog.dialog import EffectsDialog
+from services.effectRepo import EffectRepository
 
 
 """
@@ -87,7 +88,9 @@ class TrackTreeDialog(QDialog):
     
 
     def launch_effects(self):
-        dialog = EffectsDialog(self, self.track_model.effects)
+        er = EffectRepository()
+        effects = er.create_effects()
+        dialog = EffectsDialog(self, effects)
 
         def on_preview(evt : EffectPreview):
             Signals.preview_effect.emit(evt)

@@ -30,7 +30,7 @@ Also based on tsf's design one sound font is allowed on one audio client.
 #include "gcsynth_sf.h"
 
 //#define AUDIO_SAMPLES 512
-#define AUDIO_SAMPLES 64
+#define AUDIO_SAMPLES 64*64
 #define BUFSIZE       0xFFFF
 #define MAX_CHANNEL_NUM 128
 
