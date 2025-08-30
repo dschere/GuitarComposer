@@ -289,14 +289,14 @@ TSFDEF void my_tsf_render_float(tsf* f, float* buffer, int samples)
                 // improve performace, it is easier to work with large numbers 
                 // it also reduces the 'flapping' effect 
                 for(i = 0; i < vr.out_samples; i++) {
-                     vr.outL[i] = vr.outL[i] * 1000;
-                     vr.outR[i] = vr.outR[i] * 1000;
+                     vr.outL[i] = vr.outL[i] * 0xFFFF;
+                     vr.outR[i] = vr.outR[i] * 0xFFFF;
                 }
                 synth_filter_router(
                     v->playingChannel, vr.outL, vr.outR, samples);
                 for(i = 0; i < vr.out_samples; i++) {
-                     vr.outL[i] = vr.outL[i] * 0.001;
-                     vr.outR[i] = vr.outR[i] * 0.001;
+                     vr.outL[i] = vr.outL[i] / 0xFFFF;
+                     vr.outR[i] = vr.outR[i] / 0xFFFF;
                 }
             }
 
