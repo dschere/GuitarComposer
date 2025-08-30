@@ -102,7 +102,6 @@ int gcsynth_filter_run_sterio(
         switch(gc_filter->in_buf_count) {
             case STEREO_FILTER:
                 if (gc_filter->in_place_supported) {
-
                     gc_filter->desc->connect_port(
                         gc_filter->plugin_instance,
                         gc_filter->left_in_idx,

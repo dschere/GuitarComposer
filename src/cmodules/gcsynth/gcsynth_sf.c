@@ -288,16 +288,22 @@ TSFDEF void my_tsf_render_float(tsf* f, float* buffer, int samples)
             if (gcsynth_channel_filter_is_enabled(v->playingChannel)) { 
                 // improve performace, it is easier to work with large numbers 
                 // it also reduces the 'flapping' effect 
-                for(i = 0; i < vr.out_samples; i++) {
-                     vr.outL[i] = vr.outL[i] * 0xFFFF;
-                     vr.outR[i] = vr.outR[i] * 0xFFFF;
-                }
+                // for(i = 0; i < vr.out_samples; i++) {
+                //      vr.outL[i] = vr.outL[i] * 50;
+                //      vr.outR[i] = vr.outR[i] * 50;
+                // }
+
+	            struct tsf_voice_lowpass tmpLowpass = v->lowpass;
+
+
                 synth_filter_router(
                     v->playingChannel, vr.outL, vr.outR, samples);
-                for(i = 0; i < vr.out_samples; i++) {
-                     vr.outL[i] = vr.outL[i] / 0xFFFF;
-                     vr.outR[i] = vr.outR[i] / 0xFFFF;
-                }
+
+
+                // for(i = 0; i < vr.out_samples; i++) {
+                //      vr.outL[i] = vr.outL[i] / 50.0;
+                //      vr.outR[i] = vr.outR[i] / 50.0;
+                // }
             }
 
             // convert to interleaved output.
