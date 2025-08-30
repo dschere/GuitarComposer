@@ -68,6 +68,7 @@ class EffectRepository:
                         'path': filepath
                     }
                     self.effects[label] = e
+                    print(f"{label} {name} {filepath}")
                 else:
                     # previously loaded
                     d = cfg[label]

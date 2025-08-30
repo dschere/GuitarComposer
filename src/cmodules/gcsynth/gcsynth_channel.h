@@ -4,7 +4,7 @@
 
 #include <glib.h>
 
-#define IN_AUDIO_SAMPLE_SIZE 64
+#define IN_AUDIO_SAMPLE_SIZE 64*64
 #define IN_AUDIO_BUFSIZE IN_AUDIO_SAMPLE_SIZE * (2 * sizeof(float))
 
 struct gcsynth_channel {

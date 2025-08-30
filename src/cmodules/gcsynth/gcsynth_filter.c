@@ -147,6 +147,7 @@ int gcsynth_filter_run_sterio(
                 break;
         }
 
+        // execute ladspa plugin to populate audio buffer
         gc_filter->desc->run(gc_filter->plugin_instance, samples);
 
         switch(gc_filter->out_buf_count) {
