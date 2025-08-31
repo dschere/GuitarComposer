@@ -9,6 +9,20 @@ import json
 import copy
 
 
+"""
+Each TabEvent can have a Effects() object or None
+The Effects contains all effects the user selected by clicking on
+the effects icon.
+
+When the track is played a local Effects() object is created by the 
+player. This will be used are a reference to switch on/off effects
+or to change prarameters.
+
+The Effects object by default contains an empty etable
+the existance of entry implies that the effect is turned on.
+"""
+
+
 
 class ControlMeta:
     def __init__(self, data : dict):
@@ -81,56 +95,83 @@ class Effect:
 
 
 class Effects:
-    def __init__(self):
+    def __init__(self, delta_r = {}):
         # label -> Effect instance
         self.etable = {}
+        self.etable.update(delta_r)
+
+    # EffectChanges = Dict[Effect, List[Tuple[str, EffectParameter]]]
+    def get_changes(self, other):
+        curr_enabled = set(self.etable.keys())
+        diff = {}
+
+        if other is not None:
+            other_enabled = set(other.etable.keys())
+            # get effects to be disabled
+            for label in (other_enabled - curr_enabled):
+                e : Effect = copy.deepcopy(other.etable[label])
+                e.disable()
+                diff[e] = []
+        # get the effects to be aletered or enabled
+        for e in self.get_enabled_effects():
+            e : Effect = copy.deepcopy(e)
+            e.enable()
+            diff[e] = e.params.items()
+        return diff
 
     def add(self, label: str, e: Effect):
         self.etable[label] = e
 
+    def get_enabled_effects(self) -> List[Effect]:
+        return list(self.etable.values())   
+
     def get_effect(self, label: str) -> Effect | None:
-        return self.etable.get(label)
+        from services.effectRepo import EffectRepository
+        if label in self.etable:
+            return self.etable[label]
+        else:
+            ef = EffectRepository()
+            return copy.deepcopy(ef.get(label))
 
     def get_names(self) -> List[str]:
-        r = list(self.etable.keys())
+        from services.effectRepo import EffectRepository
+        ef = EffectRepository()
+        r = ef.getNames()
         r.sort()
         return r
 
-
-    # Note: I wanted to declare the type EffectChange
     def delta(self, original): 
         """ 
-        Return a set of parameters for each effect that has been changed by the user.
-
-        original is a copy of the effects that existed previously, return
-        what has changed.
-
-        EffectChanges = Dict[Effect, List[Tuple[str, EffectParameter]]]
+        Return a dictionary of enabled effects and the parameters the user 
+        selected.
         """
         r = {}
     
         for n in self.get_names():
             e = self.get_effect(n)
-            orig_e = original.get_effect(n)
+            
+            if original is not None:
+                orig_e = original.get_effect(n)
+            else:
+                orig_e = None
+
             assert(e)
-            if not orig_e:
-                # rare case where we have actually added a new effect?
-                # in any case treat as if we are transitioning from
-                # disabled to enabled.
-                r[e] = [(n, e.get_param_by_name(n)) for n in e.getParamNames()]
+            if not orig_e and e.is_enabled():
+                e = copy.deepcopy(e)
+                r[e.label] = e
                  
             # effect was enabled but now its disabled
-            elif orig_e.is_enabled() and not e.is_enabled():
-                if orig_e and orig_e.is_enabled():
-                    r[e] = []
+            elif not e.is_enabled():
+                pass
 
             # effect was disabled but now its enabled.
-            elif not orig_e.is_enabled() and e.is_enabled():
-                r[e] = [(n, e.get_param_by_name(n)) for n in e.getParamNames()]
+            elif orig_e and not orig_e.is_enabled() and e.is_enabled():
+                e = copy.deepcopy(e)
+                r[e.label] = e
                                 
             # effect remained enabled, see if there are any
             # parameter changes, if so make an entry
-            elif orig_e.is_enabled() and e.is_enabled():
+            elif orig_e and orig_e.is_enabled() and e.is_enabled():
                 diff = []
                 for n in e.getParamNames():
                     ep = e.get_param_by_name(n)
@@ -138,8 +179,9 @@ class Effects:
                     if ep.current_value != o_ep.current_value:
                         diff.append((n,ep))
                 if len(diff) > 0:
-                    r[e] = diff 
-
+                    e = copy.deepcopy(e)
+                    r[e.label] = e
+                
             else:
                 # both was and is disabled, skip
                 pass

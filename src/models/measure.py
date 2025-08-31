@@ -46,7 +46,7 @@ class TabEvent:
         if type(self.tied_notes[0]) == type(-1):
             self.tied_notes = [False] * self.num_gstrings    
         if not hasattr(self, "actual_duration"):
-            self.actual_duration = -1        
+            self.actual_duration = -1            
     
     def toggle_tied(self):
         if self.tied_notes[self.string]:
@@ -57,6 +57,7 @@ class TabEvent:
     def clone(self):
         r = copy.deepcopy(self)
         r.uuid = str(uuid.uuid4())
+        r.effects = None
         return r
 
     def __init__(self, num_gstrings):

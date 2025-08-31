@@ -1,5 +1,5 @@
 from typing import Dict, List, Tuple
-from models.effect import Effect
+from models.effect import Effect, Effects
 from models.param import EffectParameter
 from view.editor.glyphs.common import (
         STAFF_SYM_WIDTH,
@@ -12,10 +12,10 @@ from PyQt6.QtGui import QIcon, QKeyEvent, QMouseEvent, QPixmap, QImage
 from PyQt6.QtCore import Qt
 
 from view.dialogs.effectsControlDialog.dialog import ( 
-    EffectsDialog, EffectPreview, EffectChangeEvent)
+    EffectsDialog, EffectPreview)
 
 
-EffectChanges = Dict[Effect, List[Tuple[str, EffectParameter]]]
+#EffectChanges = Dict[Effect, List[Tuple[str, EffectParameter]]]
     
 
 
@@ -52,8 +52,8 @@ class EffectsGlyph(QLabel):
         Signals.preview_effect.emit(evt)
         
         
-    def on_eff_update(self, evt: EffectChangeEvent):
-        self.te.setEffects(evt.effects)
+    def on_eff_update(self, evt: Effects):
+        self.te.setEffects(evt)
         self.dialog.close() 
         self.dialog_being_shown = False
         self.set_icon()

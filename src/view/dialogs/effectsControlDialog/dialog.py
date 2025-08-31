@@ -15,11 +15,6 @@ from PyQt6.QtGui import QStandardItemModel, QStandardItem, QFont
 
 from view.events import EffectPreview, EffectChanges
 
-class EffectChangeEvent:
-    def __init__(self, e: Effects, c: EffectChanges):
-        self.effects = e
-        self.changes = c
-
 
 class EffectsDialog(QDialog):
     effect_repo = EffectRepository()
@@ -28,7 +23,7 @@ class EffectsDialog(QDialog):
     effect_preview = pyqtSignal(EffectPreview)
     # user wishes to update the current effects state in the
     # track.
-    effect_updated = pyqtSignal(EffectChangeEvent)
+    effect_updated = pyqtSignal(Effects)
     selected_effect : Effect | None  = None
 
     # allow for enabled effects to be displayed in
@@ -36,7 +31,6 @@ class EffectsDialog(QDialog):
     effect_list_model = QStandardItemModel()
     effect_item_table : Dict[str,QStandardItem] = {}
 
-    effects : Effects | None = None 
     original_effects_state : Effects | None = None
 
 
@@ -187,9 +181,9 @@ class EffectsDialog(QDialog):
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
             )
             if reply == QMessageBox.StandardButton.Yes:
-                e_changes = self.effects.delta(self.original_effects_state) 
-                evt = EffectChangeEvent(self.effects, e_changes)
-                self.effect_updated.emit(evt)
+                delta_r = self.effects.delta(self.original_effects_state) 
+                new_effects = Effects(delta_r)
+                self.effect_updated.emit(new_effects)
 
                 self.close()
 
@@ -232,10 +226,17 @@ class EffectsDialog(QDialog):
 
         self.original_effects_state = effects 
 
-        if effects:
-            self.effects = copy.deepcopy(effects)
-        else:
-            self.effects = self.effect_repo.create_effects()
+        #if effects:
+        #    self.effects = copy.deepcopy(effects)
+        #else:
+        self.effects : Effects = self.effect_repo.create_effects()
+        if self.original_effects_state is not None:
+            for n in self.original_effects_state.get_names():
+                e = self.original_effects_state.get_effect(n)
+                if e and e.is_enabled():
+                    self.effects.add(e.label, e)
+
+
             
         layout = QVBoxLayout()
         layout.setSpacing(0)
