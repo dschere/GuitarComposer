@@ -96,6 +96,8 @@ class MeasureNavigation(QWidget):
 
     def __init__(self, parent, track_model: Track):
         super().__init__(parent)
+        self.setMinimumWidth(400)
+
         self.track_model = track_model
         self.prev_num_measures = len(self.track_model.measures)
 
