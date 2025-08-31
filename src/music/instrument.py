@@ -133,10 +133,10 @@ class Instrument:
             label = e.plugin_label() 
 
             if e.is_enabled():
-                if chan not in self.effect_enabled_state:
-                    synth.filter_add(chan, path, label)
-                    synth.filter_enable(chan, label)
-                    self.effect_enabled_state.add(chan)
+                #if chan not in self.effect_enabled_state:
+                synth.filter_add(chan, path, label)
+                synth.filter_enable(chan, label)
+                #self.effect_enabled_state.add(chan)
 
                 # change/set parameters
                 for (pname,param) in ec[e]:
@@ -146,11 +146,12 @@ class Instrument:
                         pname,
                         param.current_value
                     )
-                    
-            elif chan in self.effect_enabled_state:
+
+            else:                   
+#            elif chan in self.effect_enabled_state:
                 synth.filter_disable(chan, label)
                 synth.filter_remove(chan, label)
-                self.effect_enabled_state.remove(chan)
+                #self.effect_enabled_state.remove(chan)
 
     
     def free_resources(self):
@@ -190,7 +191,7 @@ class Instrument:
         self.effects_change(deltas)
         self.last_effects = ef
 
-        
+
     def tab_event(self, te: TabEvent, bpm: int, beat_duration: float):
         """
             generate a series of notes, effects etc in response to tab

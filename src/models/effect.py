@@ -114,6 +114,8 @@ class Effects:
                 diff[e] = []
         # get the effects to be aletered or enabled
         for e in self.get_enabled_effects():
+            e : Effect = copy.deepcopy(e)
+            e.enable()
             diff[e] = e.params.items()
         return diff
 
