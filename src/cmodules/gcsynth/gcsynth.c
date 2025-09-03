@@ -4,7 +4,7 @@
 #include <errno.h>
 
 #include <Python.h>
-
+#include <SDL2/SDL.h>
 
 
 /**
@@ -18,6 +18,9 @@
 #include "gcsynth_channel.h"
 #include "gcsynth_event.h"
 #include "pyutil.h"
+#include "gcsynth_acapture.h"
+
+
 
 static PyObject *GcsynthException = NULL;
 static struct gcsynth GcSynth;
@@ -27,10 +30,10 @@ static struct gcsynth GcSynth;
     {PyDict_SetItemString(dict,key,py_value); Py_DECREF(py_value);}    
 
 #define CHECK_CHANNEL_VALUE(channel) \
-    if (channel < 0 || channel >= MAX_CHANNELS) { \
+    if (channel < 0 || channel >= NUM_CHANNELS) { \
         char msg[256]; \
         sprintf(msg,"channel %d needs to be within 0 and %d\n", \
-             channel, MAX_CHANNELS); \
+             channel, NUM_CHANNELS); \
         raise_value_error(msg); \
         return NULL; \
     } 
@@ -118,6 +121,53 @@ static PyObject* py_filter_test(PyObject* self, PyObject* args) {
     }
 
     Py_RETURN_NONE;
+}
+
+static PyObject* py_start_capture(PyObject* self, PyObject* args) {
+    char* device;
+    int result;
+
+    if (!PyArg_ParseTuple(args, "s", &device)) {
+        return NULL;  // Return NULL to indicate an error if the parsing failed
+    }
+
+    result = StartAudioCapture(device);
+    return PyLong_FromLong(result);
+}
+
+static PyObject* py_stop_capture(PyObject* self, PyObject* args) {
+    StopAudioCapture();
+    Py_RETURN_NONE;
+}
+
+static PyObject* py_list_capture_devices(PyObject* self, PyObject* args) {
+    int num = SDL_GetNumAudioDevices(1);
+    PyObject* device_name_list = NULL;
+    int id;
+
+    if (num < 1) {
+        device_name_list = PyList_New(0);
+    } else {
+        device_name_list = PyList_New( num );
+        for (id = 0; id < num; id++) {
+            PyObject* item;
+            char noname[256];
+            const char *name = SDL_GetAudioDeviceName(id, 1);
+
+            if (name) {
+                item = PyUnicode_FromString(name);
+            } else {
+                sprintf(noname,"noname-capture-%d",id);
+                item = PyUnicode_FromString( noname);
+            }
+            
+            Py_INCREF(item);
+            PyList_SetItem(device_name_list, id, item);
+        }
+    }
+
+    Py_INCREF(device_name_list);
+    return device_name_list;
 }
 
 static PyObject* py_query_filter(PyObject* self, PyObject* args) {
@@ -600,6 +650,10 @@ static PyMethodDef GCSynthMethods[] = {
     {"pitchrange",py_gcsynth_sf_pitchrange, METH_VARARGS, "pitchrange(chan, semitones)"},
     {"pitchwheel",py_gcsynth_sf_pitchwheel, METH_VARARGS, "pitchwheel(chan, semitones)"},
 
+    {"stop_capture",py_stop_capture,METH_NOARGS,"stop_capture() -> stops capture and audio thread"},
+    {"start_capture",py_start_capture,METH_VARARGS,"start_capture(device) -> lanches capture and audio thread"},
+    {"list_capture_devices",py_list_capture_devices,METH_VARARGS,"list_capture_devices() -> List[str]"},
+
     {"timer_event",py_gcsynth_event,METH_VARARGS,"send an event that gets executed in the future"},
 
     {"filter_set_control_by_name", py_gcsynth_channel_set_control_by_name, 
@@ -681,6 +735,11 @@ void timing_log(char* caller, char *method)
 // Initialization function
 PyMODINIT_FUNC PyInit_gcsynth(void) {
     char* timing_log_env = getenv(TIMING_LOG_ENV);
+ 
+    if (SDL_Init(SDL_INIT_AUDIO) < 0) {
+        fprintf(stderr, "SDL_Init failed: %s\n", SDL_GetError());
+        return NULL;
+    }
     
     // Create the custom exception
     GcsynthException = PyErr_NewException("gcsynth.GcsynthException", NULL, NULL);
@@ -704,7 +763,8 @@ PyMODINIT_FUNC PyInit_gcsynth(void) {
     PyModule_AddIntConstant(module, "EV_FILTER_DISABLE", EV_FILTER_DISABLE);
     PyModule_AddIntConstant(module, "EV_FILTER_CONTROL", EV_FILTER_CONTROL);
     PyModule_AddIntConstant(module, "EV_PITCH_WHEEL", EV_PITCH_WHEEL);
-    PyModule_AddIntConstant(module, "NUM_CHANNELS", NUM_CHANNELS);
+    PyModule_AddIntConstant(module, "NUM_CHANNELS", NUM_CHANNELS); // max user specified channels
+    PyModule_AddIntConstant(module, "LIVE_CAPTURE_CHANNEL", LIVE_CAPTURE_CHANNEL); // reserved for live capture
 
     if ((timing_log_env != NULL) && (strcmp(timing_log_env,"1") == 0)) {
         TimingLog = fopen(TIMING_LOGPATH,"w");
@@ -720,6 +780,8 @@ PyMODINIT_FUNC PyInit_gcsynth(void) {
             TimingLog = NULL;    
         } 
     }
+
+
     
     return module;
 }
