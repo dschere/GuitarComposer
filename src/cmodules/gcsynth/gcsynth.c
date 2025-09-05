@@ -163,6 +163,7 @@ static PyObject* py_list_capture_devices(PyObject* self, PyObject* args) {
             
             Py_INCREF(item);
             PyList_SetItem(device_name_list, id, item);
+            
         }
     }
 

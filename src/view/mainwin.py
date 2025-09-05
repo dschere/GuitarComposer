@@ -20,7 +20,10 @@ import logging
 from controllers.editorcontroller import EditorController
 from view.player.playerView import PlayerView
 import signal
+from view.dialogs.liveCapture import LiveCaptureDialog
 
+from services.usbmonitor import UsbMonitor
+from services.synth.synthservice import synthservice
 
 class MainWindow(QMainWindow):    
     def saveSong(self):
@@ -45,6 +48,21 @@ class MainWindow(QMainWindow):
     def redoEdit(self):
         evt = EditorEvent(EditorEvent.REDO_EVENT)
         Signals.editor_event.emit(evt)
+
+    live_capture_dialog_showing = False
+
+    def liveCaptureDialogDismissed(self):
+        self.live_capture_dialog_showing = False    
+
+    def liveCaptureClicked(self):
+        # LiveCaptureDialog
+        if self.live_capture_dialog_showing == False:
+            self.live_capture_dialog_showing = True
+            dev_list = synthservice().list_capture_devices()
+            dialog = LiveCaptureDialog(self, dev_list)
+            dialog.show()
+            dialog.finished.connect(self.liveCaptureDialogDismissed)    
+            dialog.rejected.connect(self.liveCaptureDialogDismissed)    
 
     def create_menubar(self):
         # Create the menu bar
@@ -120,6 +138,11 @@ class MainWindow(QMainWindow):
         tools_menu.addAction(settings_action)
         tools_menu.addAction(options_action)
 
+        menu_bar.addSeparator()
+        self.live_capture = QAction("Live Audio", self)
+        self.live_capture.triggered.connect(self.liveCaptureClicked)
+        menu_bar.addAction(self.live_capture) 
+
     _ctrl_key_pressed = False
     _shift_key = False
     _arrow_keys = (Qt.Key.Key_Left, Qt.Key.Key_Right, Qt.Key.Key_Up, Qt.Key.Key_Down)
@@ -184,15 +207,27 @@ class MainWindow(QMainWindow):
 
         return super().keyPressEvent(event)
 
+    def _set_live_capture_state(self):
+        dev_list = synthservice().list_capture_devices()
+        if len(dev_list) > 0:
+            self.live_capture.setEnabled(True)
+        else:
+            self.live_capture.setEnabled(False)
+
+
     def __init__(self, ec: EditorController ):
         super().__init__()
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+        self.usb_mon = UsbMonitor()
+        self.usb_mon.device_changed.connect(self._set_live_capture_state)
+        
 
         # Set up the window
         self.setWindowTitle("Guitar Music Composer")
         self.setGeometry(100, 100, 800, 600)
 
         self.create_menubar()
+        self._set_live_capture_state()
 
         # Create a status bar
         status_bar = QStatusBar()

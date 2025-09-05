@@ -5,6 +5,8 @@ from view.mainwin import MainWindow
 from controllers.appcontroller import AppController
 from controllers.editorcontroller import EditorController
 from controllers.playercontroller import PlayerController
+from controllers.liveaudiocontroller import LiveAudioController
+
 from PyQt6.QtWidgets import QApplication
 from services.synth.synthservice import synthservice
 import sys
@@ -84,6 +86,7 @@ class GuitarComposer(QApplication):
         self.app_controller = AppController(SynthService)
         self.editor_controller = EditorController()
         self.player_controller = PlayerController()
+        self.live_audio_controller = LiveAudioController()
 
         atexit.register(self.on_shutdown)
 
