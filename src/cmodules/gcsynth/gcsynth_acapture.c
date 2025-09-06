@@ -46,6 +46,23 @@ static struct audio_capture_frame capture_ringbuf[MAX_BUFFERED_FRAMES];
 static unsigned int frame_idx = 0;
 
 
+#define TEST 1
+
+#ifdef TEST
+static float ave_power(struct audio_capture_frame* frame, int samples) {
+    int i;
+    float p = 0.0;
+#define fabs(x) (x < 0) ? -x: x
+
+    for(i = 0; i < samples; i++) {
+        p += fabs(frame->left[i]);
+        p += fabs(frame->right[i]);
+    }
+    return p / samples;
+}
+#endif
+
+
 // -- capture thread 
 
 
@@ -64,6 +81,12 @@ static void capture_callback(void *userdata, Uint8 *stream, int len) {
 
     if (g_async_queue_length(CaptureThread.live_data_queue) < MAX_BUFFERED_FRAMES) {
         g_async_queue_push(CaptureThread.live_data_queue, frame);
+
+#ifdef TEST
+// for testing
+printf("capture callback: ave_power -> %f\n", ave_power(frame,samples));
+#endif
+
     }// otherwise we have to drop the frame.
 }
 
@@ -159,6 +182,12 @@ static void audio_callback(void *userdata, Uint8 *stream, int len) {
         if (gcsynth_channel_filter_is_enabled(LIVE_CAPTURE_CHANNEL)) {
             synth_filter_router(LIVE_CAPTURE_CHANNEL, frame->left, frame->right, samples);
         }
+
+#ifdef TEST
+// for testing
+printf("audio callabck ave_power -> %f\n", ave_power(frame,samples));
+#endif
+
         // output interleaved 
         for(i = 0; i < samples; i++) {
             buffer[i * 2]     = frame->left[i];
