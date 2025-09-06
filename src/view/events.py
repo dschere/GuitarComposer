@@ -150,9 +150,16 @@ class MouseSelTab:
         self.tab = tab
         self.gstring = gstr
 
+class LiveCaptureConfig:
+    def __init__(self, state, device):
+        self.state = state 
+        self.device = device
                         
 @singleton
 class _Signals(QObject):
+    live_capture = pyqtSignal(LiveCaptureConfig)
+    live_effects = pyqtSignal(object)
+    
     redo_undo_update = pyqtSignal(Track)
     query_slot = pyqtSignal(QueryMessage) 
     

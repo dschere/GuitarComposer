@@ -12,7 +12,7 @@ class midi_channel_manager:
     def __init__(self, synth):
         self.c_index = 1
         self.synth = synth
-        self.num_channels = gcsynth.NUM_CHANNELS
+        self.num_channels = gcsynth.LIVE_CAPTURE_CHANNEL-1
         self.channel_state = [None for i in range(self.num_channels)]
 
     def checkout_channel(self):
@@ -104,6 +104,18 @@ class synthservice:
 
     def start(self):
         return gcsynth.start({"sfpaths": self.db.sfpaths})
+    
+    def list_capture_devices(self):
+        return gcsynth.list_capture_devices()
+    
+    def start_capture(self, device: str):
+        return gcsynth.start_capture(device)
+    
+    def stop_capture(self):
+        return gcsynth.stop_capture()
+
+    def get_live_channel(self):
+        return gcsynth.LIVE_CAPTURE_CHANNEL
 
     def stop(self):
         return gcsynth.stop()

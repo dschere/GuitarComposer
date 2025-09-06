@@ -71,7 +71,7 @@ class Instrument:
     def __init__(self, name, tuning=StandardTuning):
         self.string_playing = [None] * len(tuning)
         self.name = name
-        self.tuning = [midi_codes.midi_code(name) for name in tuning]
+        self.tuning = [midi_codes.midi_code(note_name) for note_name in tuning]
         self.effect_enabled_state = set()
         self.last_effects = Effects()
 
@@ -148,10 +148,8 @@ class Instrument:
                     )
 
             else:                   
-#            elif chan in self.effect_enabled_state:
                 synth.filter_disable(chan, label)
                 synth.filter_remove(chan, label)
-                #self.effect_enabled_state.remove(chan)
 
     
     def free_resources(self):

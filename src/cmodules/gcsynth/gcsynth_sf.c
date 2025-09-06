@@ -21,6 +21,7 @@ Also based on tsf's design one sound font is allowed on one audio client.
 #include <math.h>
 #include <pthread.h>
 #include <unistd.h>
+#include <glib.h>
 
 #include "gcsynth.h"
 #include "gcsynth_sf.h"
@@ -29,13 +30,13 @@ Also based on tsf's design one sound font is allowed on one audio client.
 
 #include "gcsynth_sf.h"
 
+
 //#define AUDIO_SAMPLES 512
-#define AUDIO_SAMPLES 64*64
 #define BUFSIZE       0xFFFF
-#define MAX_CHANNEL_NUM 128
+//#define MAX_CHANNEL_NUM 128
 
 
-#define MAX_ATHREADS 15 
+#define MAX_ATHREADS 13 
 
 
 struct audio_thread {
@@ -87,8 +88,7 @@ static AudioChannelFilter AudioFilterFunc;
 static struct audio_thread AudioThreads[MAX_ATHREADS];
 static int NumAudioThreads;
 
-
-static struct audio_thread* ChannelAllocTable[MAX_CHANNELS];
+static struct audio_thread* ChannelAllocTable[NUM_CHANNELS];
 
 
 struct voice_render_result {
@@ -286,24 +286,8 @@ TSFDEF void my_tsf_render_float(tsf* f, float* buffer, int samples)
             vr = my_tsf_voice_render(f, v, chan_buffer, samples);
         
             if (gcsynth_channel_filter_is_enabled(v->playingChannel)) { 
-                // improve performace, it is easier to work with large numbers 
-                // it also reduces the 'flapping' effect 
-                // for(i = 0; i < vr.out_samples; i++) {
-                //      vr.outL[i] = vr.outL[i] * 50;
-                //      vr.outR[i] = vr.outR[i] * 50;
-                // }
-
-	            struct tsf_voice_lowpass tmpLowpass = v->lowpass;
-
-
                 synth_filter_router(
                     v->playingChannel, vr.outL, vr.outR, samples);
-
-
-                // for(i = 0; i < vr.out_samples; i++) {
-                //      vr.outL[i] = vr.outL[i] / 50.0;
-                //      vr.outR[i] = vr.outR[i] / 50.0;
-                // }
             }
 
             // convert to interleaved output.
@@ -322,14 +306,14 @@ TSFDEF void my_tsf_render_float(tsf* f, float* buffer, int samples)
 
 
 static struct audio_thread* get_audio_thread(int chan) {
-    return ChannelAllocTable[chan % MAX_CHANNELS];
+    return ChannelAllocTable[chan % NUM_CHANNELS];
 }
 
 static struct audio_thread* checkout(int chan, int sfont_id) {
     struct audio_thread* at = NULL; 
     int a_index;
     
-    if (chan < 0 || chan >= MAX_CHANNELS) {
+    if (chan < 0 || chan >= NUM_CHANNELS) {
         return NULL;
     }
 
@@ -438,83 +422,9 @@ static void *audio_thread(void *arg) {
     }
 
     printf("audio thread exited\n");
-
+    SDL_CloseAudioDevice(at->dev);
     return NULL;
 }
-
-
-
-/**
-Failed experiment: 
-    produced an unwanted echo. 
-    never fixed the effects problem.
-
-Audio source thread.
-
-drift = 0
-
-while forever
-    start_time = now
-    usleep for INPUT_FEED_INTERVAL -drift seconds
-    actual_sleep_tm = now - start_time
-
-    samples = actual_sleep_tm * SAMPLE_RATE 
-       -- if we slepts for exactly INPUT_FEED_INTERVAL then 
-          samples would = SAMPLE_RATE which it almost never will 
-          be ;)
-
-    start_proc_time = now
-
-    process queued messages if any.
-    
-    process sf events + ladspa
-
-    queue output to sdl
-
-    drift = now - start_proc_time
-*/
-//Interesting concept but was abandond 
-// static void *audio_source_thread(void *arg) {
-//     struct audio_thread* at = (struct audio_thread*) arg;
-//     struct timespec requested_time, remaining; 
-//     long interval = 
-//         (AUDIO_SAMPLES * 1000000000L)/SAMPLE_RATE;
-    
-//     float buffer[AUDIO_SAMPLES * 16 * sizeof(float)];
-//     int samples;
-//     float bps = ((float)SAMPLE_RATE) / 1000000000.0;
-//     float r;
-
-//     requested_time.tv_sec = 0;
-//     requested_time.tv_nsec = interval;
-
-//     SDL_PauseAudioDevice(at->dev, 0);  // Start playback
-    
-//     while (1) {        
-//         nanosleep(&requested_time, &remaining); 
-
-//         r = bps * (requested_time.tv_nsec - remaining.tv_nsec);
-//         samples = (int) r;   
-         
-//         // process any pending messages 
-//         proc_at_msgs(at);
-
-//         my_tsf_render_float(at->g_TinySoundFont, buffer, samples);
-
-//         if (SDL_QueueAudio(at->dev, buffer, samples * 2 * sizeof(float)) < 0) {
-//             fprintf(stderr, "SDL_QueueAudio failed: %s\n", SDL_GetError());
-//             break;
-//         }
-//     }
-    
-//     return NULL;
-// }
-
-
-
-
-
-
 
 
 /*
@@ -529,11 +439,6 @@ while forever
 int gcsynth_sf_init(char* sf_file[], int num_font_files, AudioChannelFilter filter_func) {
     int a_thread;
     
-    if (SDL_Init(SDL_INIT_AUDIO) < 0) {
-        fprintf(stderr, "SDL_Init failed: %s\n", SDL_GetError());
-        return -1;
-    }
-
     if (num_font_files >= (MAX_ATHREADS-1)) {
         fprintf(stderr, "Too many sound fonts!\n");
         return -1;

@@ -8,12 +8,14 @@
 #define MAX_SOUNDFONTS 255
 #define ERRMSG_SIZE 4096
 
-#define NUM_CHANNELS 32
-#define MAX_CHANNELS 64
+#define NUM_CHANNELS 64
+#define LIVE_CAPTURE_CHANNEL NUM_CHANNELS-1 
+
 // +/- 12 semitones
 #define PITCH_WHEEL_SENSITIVITY 12
 
-
+#define AUDIO_SAMPLES 64*64
+#define SAMPLE_RATE  44100 
 
 enum {
     NOWARNING,

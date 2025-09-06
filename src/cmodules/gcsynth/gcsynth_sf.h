@@ -4,11 +4,6 @@
 #define GCSYNTH_NUM_SF_CHANNELS 32
 #define GCSYNTH_AUDIO_BUFSIZE 65535
 
-#ifndef MAX_CHANNELS
-#define MAX_CHANNELS 64
-#endif
-
-#define SAMPLE_RATE   44100
 
 
 typedef void (*AudioChannelFilter)(int channel, float* left, float* right, int samples);

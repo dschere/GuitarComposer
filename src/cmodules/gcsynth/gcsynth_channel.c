@@ -8,7 +8,7 @@
 #include "gcsynth_sf.h"
 
 
-static struct gcsynth_channel ChannelFilters[MAX_CHANNELS];
+static struct gcsynth_channel ChannelFilters[NUM_CHANNELS];
 
 
 static GMutex StateMutex;
@@ -83,7 +83,7 @@ int gcsynth_channel_remove_filter(int channel, char* plugin_label)
 void gcsynth_remove_all_filters()
 {
     int channel;
-    for(channel = 0; channel < MAX_CHANNELS; channel++) {
+    for(channel = 0; channel < NUM_CHANNELS; channel++) {
         gcsynth_channel_remove_filter(channel, NULL);
     }
 }
@@ -116,7 +116,7 @@ int gcsynth_channel_set_control_by_name(int channel, char* plugin_label,
 void voice_data_router(void *userdata, int chan, double* buf, int len)
 {
 //printf("voice_data_router chan=%d len=%d\n", chan, len);    
-    if ((chan >= 0) && (chan < MAX_CHANNELS)) {
+    if ((chan >= 0) && (chan < NUM_CHANNELS)) {
         lock_channel(chan);
         _voice_data_router(userdata, chan, buf, len);
         unlock_channel(chan);
@@ -217,7 +217,7 @@ static struct gcsynth_channel* lock_channel(int chan)
 {
     struct gcsynth_channel* c = NULL;
     
-    if ((chan >= 0) && (chan < MAX_CHANNELS)) { 
+    if ((chan >= 0) && (chan < NUM_CHANNELS)) { 
         c = &ChannelFilters[chan];
 
         if (c->initialized == 0) {
@@ -232,7 +232,7 @@ static struct gcsynth_channel* lock_channel(int chan)
 
 static void unlock_channel(int channel)
 {
-    if ((channel >= 0) && (channel < MAX_CHANNELS)) { 
+    if ((channel >= 0) && (channel < NUM_CHANNELS)) { 
         struct gcsynth_channel* c = &ChannelFilters[channel];
         g_mutex_unlock(&c->mutex); 
     }
