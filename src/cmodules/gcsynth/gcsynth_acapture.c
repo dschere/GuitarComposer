@@ -46,7 +46,7 @@ static struct audio_capture_frame capture_ringbuf[MAX_BUFFERED_FRAMES];
 static unsigned int frame_idx = 0;
 
 
-#define TEST 1
+#define TEST 0
 
 #ifdef TEST
 static float ave_power(struct audio_capture_frame* frame, int samples) {
