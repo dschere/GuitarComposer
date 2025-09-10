@@ -25,7 +25,7 @@ The sub widget that draws a
 """
 
 
-class TrackTreeDialog(QDialog):
+class TrackPropertiesDialog(QDialog):
     instrument_names = getInstrumentList()
     title = "Instrument"
 

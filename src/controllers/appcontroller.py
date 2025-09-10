@@ -227,7 +227,7 @@ class AppController:
         "construct a QModel for the treeView"
         root = QStandardItemModel()
         root.itemChanged.connect(self.on_song_title_changed)
-        root.setHorizontalHeaderLabels(["Guitar Composer"])
+        root.setHorizontalHeaderLabels(["Composition"])
         selected = kw_args.get('selected')
 
         for title in sorted(self.song_ctrl):
