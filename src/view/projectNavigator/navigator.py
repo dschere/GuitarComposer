@@ -1,7 +1,7 @@
-from PyQt6.QtWidgets import QVBoxLayout, QTreeView, QWidget, QMenu
-from PyQt6.QtGui import QStandardItemModel, QAction, QStandardItem
+from PyQt6.QtWidgets import QToolBar, QVBoxLayout, QTreeView, QWidget, QMenu, QPushButton, QStyle
+from PyQt6.QtGui import QStandardItemModel, QAction, QStandardItem, QIcon
 
-from .TrackTreeNode import TrackTreeDialog
+from .TrackTreeNode import TrackPropertiesDialog
 from view.events import Signals, EditorEvent
 from controllers.appcontroller import SongController
 from view.config import LabelText
@@ -34,6 +34,11 @@ class Navigator(QWidget):
                 song = item.data()
                 if song and len(song.tracks) > 0:
                     track = song.tracks[0]
+                    if len(song.tracks) == 1:
+                        self.delete_track_btn.setEnabled(False)
+                    else:
+                        self.delete_track_btn.setEnabled(True)
+
                     evt = EditorEvent()
                     evt.ev_type = EditorEvent.ADD_MODEL
                     evt.model = track 
@@ -48,7 +53,7 @@ class Navigator(QWidget):
         
         if isinstance(item, PropertiesItem):
             (track_model, track_qmodel_item) = item.data()
-            dialog = TrackTreeDialog(self, track_model, track_qmodel_item)
+            dialog = TrackPropertiesDialog(self, track_model, track_qmodel_item)
             dialog.show()
         elif isinstance(item, TrackItem):
             evt = EditorEvent()
@@ -98,6 +103,28 @@ class Navigator(QWidget):
         self.tree_view.customContextMenuRequested.connect(self.showContextMenu)
 
         layout = QVBoxLayout()
+
+        control_bar = QToolBar()
+        style = self.style() 
+        assert(style)
+
+        # Add button with standard "add" icon (plus symbol)
+        add_btn = QPushButton("+")
+        add_btn.setToolTip("Add Track")
+        add_btn.setIcon(style.standardIcon(QStyle.StandardPixmap.SP_FileDialogNewFolder))
+
+        # Delete button with standard "trash" icon
+        del_btn = QPushButton("-")
+        del_btn.setToolTip("Delete Track")
+        del_btn.setIcon(style.standardIcon(QStyle.StandardPixmap.SP_TrashIcon))
+
+        control_bar.addWidget(add_btn)
+        control_bar.addWidget(del_btn)
+
+        self.add_track_btn = add_btn 
+        self.delete_track_btn = del_btn
+
+        layout.addWidget(control_bar)
         layout.addWidget(self.tree_view)
         self.setLayout(layout)
 
