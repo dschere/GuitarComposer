@@ -11,7 +11,7 @@ from view.fretboard_view import fretboard_view
 
 from view.events import (Signals, EditorEvent)
 from view.config import ORAGANIZATION, APP_NAME
-from view.config import EditorKeyMap
+#from view.config import EditorKeyMap
 
 
 from view.projectNavigator.navigator import Navigator
@@ -40,14 +40,6 @@ class MainWindow(QMainWindow):
 
     def closeSong(self):
         Signals.close_song.emit()   
-
-    def undoEdit(self):
-        evt = EditorEvent(EditorEvent.UNDO_EVENT)
-        Signals.editor_event.emit(evt)
-        
-    def redoEdit(self):
-        evt = EditorEvent(EditorEvent.REDO_EVENT)
-        Signals.editor_event.emit(evt)
 
     live_capture_dialog_showing = False
 
@@ -142,70 +134,6 @@ class MainWindow(QMainWindow):
         self.live_capture = QAction("Live Audio", self)
         self.live_capture.triggered.connect(self.liveCaptureClicked)
         menu_bar.addAction(self.live_capture) 
-
-    _ctrl_key_pressed = False
-    _shift_key = False
-    _arrow_keys = (Qt.Key.Key_Left, Qt.Key.Key_Right, Qt.Key.Key_Up, Qt.Key.Key_Down)
-
-    def keyReleaseEvent(self, event: QKeyEvent):
-        editor_keymap = EditorKeyMap()
-        key = event.key()
-        mod = event.modifiers()
-        
-        if mod == Qt.KeyboardModifier.NoModifier:
-            self._ctrl_key_pressed = False
-        
-        if Qt.Key.Key_Shift == key:
-            self._shift_key = False
-        # generate key event for right/left arrows on key release
-        elif key in self._arrow_keys:
-            e_evt = EditorEvent()
-            e_evt.ev_type = EditorEvent.KEY_EVENT
-            e_evt.key = key
-            e_evt.control_key_pressed = self._ctrl_key_pressed
-            Signals.editor_event.emit(e_evt) 
-        
-        elif mod & Qt.KeyboardModifier.ControlModifier:
-            if key == editor_keymap.UNDO:
-                self.undoEdit()
-            elif key == editor_keymap.REDO:
-                self.redoEdit()    
-
-        return super().keyReleaseEvent(event)
-
-    def keyPressEvent(self, event: QKeyEvent):
-        editor_keymap = EditorKeyMap()
-        e_evt = EditorEvent()
-
-
-        if event.key() == Qt.Key.Key_V and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
-            e_evt.ev_type = EditorEvent.PASTE_EVENT
-            Signals.editor_event.emit(e_evt)
-
-        elif event.key() == Qt.Key.Key_X and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
-            e_evt.ev_type = EditorEvent.CUT_EVENT
-            Signals.editor_event.emit(e_evt)
-
-        elif event.modifiers() & Qt.KeyboardModifier.ControlModifier:
-            self._ctrl_key_pressed = True
-        elif event.modifiers() & Qt.KeyboardModifier.AltModifier:
-            pass
-        else:
-            key = event.key()
-            if key in self._arrow_keys:
-                pass
-            elif key == Qt.Key.Key_Shift:
-                self._shift_key = True
-            else:
-                if not self._shift_key and ord('Z') >= key >= ord('A'):     
-                    key += 32 # make lower case
-
-                e_evt.ev_type = EditorEvent.KEY_EVENT
-                e_evt.key = key
-                e_evt.control_key_pressed = self._ctrl_key_pressed
-                Signals.editor_event.emit(e_evt)
-
-        return super().keyPressEvent(event)
 
     def _set_live_capture_state(self):
         dev_list = synthservice().list_capture_devices()

@@ -15,6 +15,7 @@ from view.events import EditorEvent, Signals, PlayerVisualEvent
 
 from singleton_decorator import singleton 
 from .measureNavigation import MeasureNavigation
+from view.config import EditorKeyMap
 
 @singleton
 class TrackEditorData:
@@ -71,6 +72,80 @@ class TrackEditorView(QScrollArea):
 
             mp = self.track_presenter.mp_map.get(m)
             self.scroll_area.ensureWidgetVisible(mp)
+
+    def undoEdit(self):
+        evt = EditorEvent(EditorEvent.UNDO_EVENT)
+        Signals.editor_event.emit(evt)
+        
+    def redoEdit(self):
+        evt = EditorEvent(EditorEvent.REDO_EVENT)
+        Signals.editor_event.emit(evt)
+
+
+    _ctrl_key_pressed = False
+    _shift_key = False
+    _arrow_keys = (Qt.Key.Key_Left, Qt.Key.Key_Right, Qt.Key.Key_Up, Qt.Key.Key_Down)
+
+    def keyReleaseEvent(self, event: QKeyEvent):
+        editor_keymap = EditorKeyMap()
+        key = event.key()
+        mod = event.modifiers()
+        
+        if mod == Qt.KeyboardModifier.NoModifier:
+            self._ctrl_key_pressed = False
+        
+        if Qt.Key.Key_Shift == key:
+            self._shift_key = False
+        # generate key event for right/left arrows on key release
+        elif key in self._arrow_keys:
+            e_evt = EditorEvent()
+            e_evt.ev_type = EditorEvent.KEY_EVENT
+            e_evt.key = key
+            e_evt.control_key_pressed = self._ctrl_key_pressed
+            Signals.editor_event.emit(e_evt) 
+        
+        elif mod & Qt.KeyboardModifier.ControlModifier:
+            if key == editor_keymap.UNDO:
+                self.undoEdit()
+            elif key == editor_keymap.REDO:
+                self.redoEdit()    
+
+        return super().keyReleaseEvent(event)
+
+    def keyPressEvent(self, event: QKeyEvent):
+        editor_keymap = EditorKeyMap()
+        e_evt = EditorEvent()
+
+
+        if event.key() == Qt.Key.Key_V and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+            e_evt.ev_type = EditorEvent.PASTE_EVENT
+            Signals.editor_event.emit(e_evt)
+
+        elif event.key() == Qt.Key.Key_X and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+            e_evt.ev_type = EditorEvent.CUT_EVENT
+            Signals.editor_event.emit(e_evt)
+
+        elif event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+            self._ctrl_key_pressed = True
+        elif event.modifiers() & Qt.KeyboardModifier.AltModifier:
+            pass
+        else:
+            key = event.key()
+            if key in self._arrow_keys:
+                pass
+            elif key == Qt.Key.Key_Shift:
+                self._shift_key = True
+            else:
+                if not self._shift_key and ord('Z') >= key >= ord('A'):     
+                    key += 32 # make lower case
+
+                e_evt.ev_type = EditorEvent.KEY_EVENT
+                e_evt.key = key
+                e_evt.control_key_pressed = self._ctrl_key_pressed
+                Signals.editor_event.emit(e_evt)
+
+        return super().keyPressEvent(event)
+
 
 
     """ 
