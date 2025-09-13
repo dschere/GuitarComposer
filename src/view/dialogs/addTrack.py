@@ -26,3 +26,5 @@ from view.events import Signals
 class AddTrackDialog(QDialog):
     def __init__(self):
         super().__init__()
+        layout = QGridLayout()
+        
