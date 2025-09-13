@@ -24,6 +24,22 @@ STACCATO   = "\u1D17"
 LEGATO = "\u029F"
 NO_ARTICULATION = "\u29BB"
 
+KEYS = [
+    "C",
+    ("C#","Db"),
+    "D",
+    ("D#","Eb"),
+    "E",
+    "F",
+    ("F#","Gb"),
+    "G",
+    ("G#","Ab"),
+    "A",
+    ("A#","Bb"),
+    "B"
+]
+
+
 BARLINE1 = "𝄀 "
 BARLINE2 = "𝄁 "
 END_REPEAT = "𝄂 "
@@ -161,9 +177,9 @@ class TheKeyMidiCodeTable:
             octave = int(name[-1]) - 1
             offset = 24
             i = n.index(name[0])
-            if name[1] == '#':
+            if name[1] in '#':
                 i += 1
-            if name[1] == 'b':
+            if name[1] in 'b':
                 i -= 1
             r = offset + (octave*12) + i
             return r
@@ -182,16 +198,51 @@ class TheKeyMidiCodeTable:
                 midicode_from_name("F#5"),
                 midicode_from_name("C#5")
             ],
-            "A": [
-                midicode_from_name("F#5"),
-                midicode_from_name("C#5"),
-                midicode_from_name("G#5")
+            # D♯, E♯, F, G♯, A♯, B♯, and C
+            "D#": [
+                midicode_from_name("D#5"),
+                midicode_from_name("E#5"),
+                midicode_from_name("F5"),
+                midicode_from_name("G#5"),
+                midicode_from_name("G#5"),
+            ],
+            "Eb": [
+                midicode_from_name("Bb4"),
+                midicode_from_name("Eb5"),
+                midicode_from_name("Ab4")
             ],
             "E": [
                 midicode_from_name("F#5"),
                 midicode_from_name("C#5"),
                 midicode_from_name("G#5"),
                 midicode_from_name("D#5")
+            ],
+            "F": [
+                midicode_from_name("Bb4")
+            ],
+            #  F♯, C♯, G♯, D♯, A♯, and E♯. 
+            "F#": [
+                midicode_from_name("F#5"),
+                midicode_from_name("C#5"),
+                midicode_from_name("G#5"),
+                midicode_from_name("D#5"),
+                midicode_from_name("A#4"),
+                midicode_from_name("E#5"),
+            ],
+            "G": [
+                midicode_from_name("F#5")
+            ],
+            "G#": [
+                midicode_from_name("C#5"),
+                midicode_from_name("G#5"),
+                midicode_from_name("D#5"),
+                midicode_from_name("A#4"),
+                midicode_from_name("E#5")
+            ],
+            "A": [
+                midicode_from_name("F#5"),
+                midicode_from_name("C#5"),
+                midicode_from_name("G#5")
             ],
             "B": [
                 midicode_from_name("F#5"),
@@ -200,18 +251,10 @@ class TheKeyMidiCodeTable:
                 midicode_from_name("D#5"),
                 midicode_from_name("A#4")
             ],
-            "F": [
-                midicode_from_name("Bb4")
-            ],
             "Bb": [
                 midicode_from_name("Bb4"),
                 midicode_from_name("Eb5")
             ],
-            "Eb": [
-                midicode_from_name("Bb4"),
-                midicode_from_name("Eb5"),
-                midicode_from_name("Ab4")
-            ]
         }
 
     def get(self, k, defval):

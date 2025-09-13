@@ -95,6 +95,7 @@ class EditorKeyMap:
 @singleton
 class _LabelText:
     # TODO, tie into localization so these can be switched.
+    # ------------------------------------------------------
     properties = "properties"
     title = "title"
     track = "track"
@@ -103,13 +104,16 @@ class _LabelText:
     filter_scale = "Filter scales:"
     scales = "Scales:"
     instruments = "Instruments:"
-    keys = "Keys:"
+    keys = "Key"
     scale_selector_group = "Fretboard Overlay"
     clear_scale = "Clear"
     nav_track_properties = "Track properties"
     add_track = "Add Track"
     tuning = "Tuning"
-    
+    timesig = "Time Signature"
+    tempo = "Tempo"
+    bpm = "bpm"
+    name = "name"
 
 
 GuitarFretboardStyle = _GuitarFretboardStyle()
