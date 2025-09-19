@@ -56,6 +56,15 @@ class MainWindow(QMainWindow):
             dialog.finished.connect(self.liveCaptureDialogDismissed)    
             dialog.rejected.connect(self.liveCaptureDialogDismissed)    
 
+    def undoEdit(self):
+        evt = EditorEvent(EditorEvent.UNDO_EVENT)
+        Signals.editor_event.emit(evt)
+        
+    def redoEdit(self):
+        evt = EditorEvent(EditorEvent.REDO_EVENT)
+        Signals.editor_event.emit(evt)
+
+
     def create_menubar(self):
         # Create the menu bar
         menu_bar : QMenuBar | None = self.menuBar()

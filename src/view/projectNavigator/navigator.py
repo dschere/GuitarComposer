@@ -1,8 +1,11 @@
 from PyQt6.QtWidgets import QToolBar, QVBoxLayout, QTreeView, QWidget, QMenu, QPushButton, QStyle
 from PyQt6.QtGui import QStandardItemModel, QAction, QStandardItem, QIcon
 
+from models.song import Song
+from models.track import Track
+
 from view.dialogs.TrackPropertiesDialog import TrackPropertiesDialog
-from view.events import Signals, EditorEvent
+from view.events import Signals, EditorEvent, DeleteTrack
 from controllers.appcontroller import SongController
 from view.config import LabelText
 
@@ -12,11 +15,14 @@ from controllers.appcontroller import TrackItem
 from controllers.appcontroller import PropertiesItem
 from controllers.appcontroller import SongItem
 from view.events import Signals, TrackItem, PropertiesItem, SongItem
+from view.config import LabelText
 
 
 class Navigator(QWidget):
 
     initial_tree_model_update = True
+    current_song : Song | None = None
+    current_track : Track | None = None
 
     def update_tree_model(self, model):
         self.tree_model = model
@@ -34,14 +40,14 @@ class Navigator(QWidget):
                 song = item.data()
                 if song and len(song.tracks) > 0:
                     track = song.tracks[0]
-                    if len(song.tracks) == 1:
-                        self.delete_track_btn.setEnabled(False)
-                    else:
-                        self.delete_track_btn.setEnabled(True)
 
                     evt = EditorEvent()
                     evt.ev_type = EditorEvent.ADD_MODEL
                     evt.model = track 
+
+                    self.current_song = song 
+                    self.current_track = track
+
                     Signals.editor_event.emit(evt)
 
     def on_tree_clicked(self, index: QModelIndex):
@@ -53,17 +59,20 @@ class Navigator(QWidget):
         
         if isinstance(item, PropertiesItem):
             (track_model, track_qmodel_item) = item.data()
-            dialog = TrackPropertiesDialog(self, track_model, track_qmodel_item)
+            dialog = TrackPropertiesDialog(self, track_model)
             dialog.show()
         elif isinstance(item, TrackItem):
             evt = EditorEvent()
             item = index.model().itemFromIndex(index) # type: ignore
             evt.ev_type = EditorEvent.ADD_MODEL  # type: ignore
             evt.model = item.data()
+            self.current_track = evt.model
             Signals.editor_event.emit(evt)
         elif isinstance(item, SongItem):
-            song_model = item.data() 
-            Signals.song_selected.emit(song_model)    
+            song_model = item.data()
+            self.current_song = song_model 
+            Signals.song_selected.emit(song_model)  
+
 
 
     def add_track(self, song_controller: SongController):
@@ -86,6 +95,10 @@ class Navigator(QWidget):
     def on_item_update(self, item : QStandardItem):
         index = item.index() 
         self.tree_view.expand(index)
+
+    def on_delete_track(self):
+        evt = DeleteTrack(self.current_song, self.current_track)
+        Signals.delete_track.emit(evt)
 
     def __init__(self):
         super().__init__()
@@ -110,13 +123,15 @@ class Navigator(QWidget):
 
         # Add button with standard "add" icon (plus symbol)
         add_btn = QPushButton("+")
-        add_btn.setToolTip("Add Track")
+        add_btn.setToolTip(LabelText.add_track)
         add_btn.setIcon(style.standardIcon(QStyle.StandardPixmap.SP_FileDialogNewFolder))
+        add_btn.clicked.connect(lambda : Signals.add_track.emit())
 
         # Delete button with standard "trash" icon
         del_btn = QPushButton("-")
-        del_btn.setToolTip("Delete Track")
+        del_btn.setToolTip(LabelText.del_track)
         del_btn.setIcon(style.standardIcon(QStyle.StandardPixmap.SP_TrashIcon))
+        del_btn.clicked.connect(self.on_delete_track)
 
         control_bar.addWidget(add_btn)
         control_bar.addWidget(del_btn)
