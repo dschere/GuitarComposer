@@ -114,6 +114,8 @@ class _LabelText:
     tempo = "Tempo"
     bpm = "bpm"
     name = "name"
+    add_track = "Add Track"
+    del_track = "Delete Track"
 
 
 GuitarFretboardStyle = _GuitarFretboardStyle()

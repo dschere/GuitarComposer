@@ -132,6 +132,7 @@ class EditorController:
         self.track_model = track 
         self.track_editor_view.set_track_model(self.track_model)
         self.rup.enable_updates()
+        self.track_editor_view.setFocus()
 
     def undo_event(self, evt: EditorEvent): 
         new_model = self.rup.undo(self.track_model)

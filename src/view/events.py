@@ -154,6 +154,11 @@ class LiveCaptureConfig:
     def __init__(self, state, device):
         self.state = state 
         self.device = device
+
+class DeleteTrack:
+    def __init__(self, song, track):
+        self.song = song
+        self.track = track 
                         
 @singleton
 class _Signals(QObject):
@@ -206,6 +211,8 @@ class _Signals(QObject):
     new_song = pyqtSignal()
     save_song = pyqtSignal()
     save_as_song = pyqtSignal()
+    add_track = pyqtSignal()
+    delete_track = pyqtSignal(DeleteTrack)
 
     update_navigator = pyqtSignal(QStandardItemModel)
     fretboard_inst_select = pyqtSignal(object)

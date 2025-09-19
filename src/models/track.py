@@ -26,6 +26,20 @@ class Track:
             measure.append(tab_event)
         return measure
     
+    def sync_measure_structure(self, other: 'Track'):
+        """ 
+        Make the measure structure of this track the same as the 
+        'other' track. If the corresponding measure does not exist 
+        add one with rests that match the notes in the 'other'
+        track.
+        """
+        for (i,m) in enumerate(other.measures):
+            if i > len(self.measures):
+                new_m = copy.deepcopy(m)
+                for te in new_m.tab_events:
+                    te.fret = [-1] * te.num_gstrings
+                self.measures.append(new_m)    
+    
     def _reassemble(self, teList: List[TabEvent], ts: TimeSig, m_num: int):
         """
         Reassemble measures starting with the measure 'm_num'  

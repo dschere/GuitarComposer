@@ -188,11 +188,11 @@ class TrackPropertiesDialog(QDialog):
     def reject(self, *args):
         super().reject()    
 
-    def __init__(self, parent, track_model : Track, track_qmodel_item):
+    def __init__(self, parent, track_model : Track):
         super().__init__(parent)
         self.setWindowTitle(LabelText.nav_track_properties)
         self.track_model = track_model
-        self.track_qmodel_item = track_qmodel_item
+        #self.track_qmodel_item = track_qmodel_item
 
         _, m = self.track_model.current_moment()
         self.ts, self.bpm, self.key, self.cleff = track_model.getMeasureParams(m)

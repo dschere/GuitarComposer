@@ -22,6 +22,7 @@ from view.config import LabelText
 
 from view.dialogs.effectsControlDialog.dialog import EffectPreview,\
     EffectChanges
+from view.dialogs.TrackPropertiesDialog import TrackPropertiesDialog
 
 from view.events import Signals, TrackItem, PropertiesItem, SongItem, InstrumentSelectedEvent
 
@@ -135,14 +136,21 @@ class SongController:
         self.addQTrackModel(track, self.q_model)
 
     def addTrack(self, instr_name):
-
         # build data structure
         track = Track()
-        #track.uuid = str(uuid.uuid4())
         track.instrument_name = instr_name
         self.song.tracks.append(track)
 
         return track
+    
+    
+    def addTrackFromDialog(self) -> Track | None:
+        track = Track()
+        tpd = TrackPropertiesDialog(None, track)
+        r = tpd.exec()
+        if r == 1:
+            # user select OK, return populated track
+            return track
 
     def removeTrack(self, instr_name):
         # TODO, must add checkin/checkout capability to the
@@ -247,6 +255,37 @@ class AppController:
         Signals.update_navigator.emit(root)
         Signals.song_selected.emit(selected)
 
+    def delete_track(self, evt):
+        if len(evt.song.tracks) == 1:
+            return
+
+        reply = QMessageBox.question(
+            None,
+            "Confirmation",
+            f"Are you sure you want to delete the track {evt.track.instrument_name}",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No # Default button
+        )
+
+        if reply == QMessageBox.StandardButton.Yes:
+            index = evt.song.tracks.index(evt.track)
+            del evt.song.tracks[index]
+            self.update_navigator()
+
+
+    def add_track(self):
+        if self.current_song is not None:
+            track = self.current_song.addTrackFromDialog()
+            if track is not None:
+                #TODO, padd track with measures to match the first 
+                # measure if the timesig, bpm are the same.
+                if len(self.current_song.song.tracks) > 0:
+                    ref_track = self.current_song.song.tracks[0]
+                    track.sync_measure_structure(ref_track)
+
+                self.current_song.song.tracks.append(track)
+                self.update_navigator()        
+
     def on_ready(self, app):
         # setup navigator, score editor
         titles = self.projects.titles()
@@ -255,12 +294,15 @@ class AppController:
             sc = SongController("noname")
             sc.addTrack('12-str.GT')
             self.song_ctrl[sc.title()] = sc
+            self.current_song = sc
+
         else:
             for title in titles:
                 song_model = self.projects.open_song_using_title(title)
                 sc = SongController(title)
                 sc.load_model(song_model)
                 self.song_ctrl[sc.title()] = sc
+                self.current_song = sc
 
         self.update_navigator()
 
@@ -299,6 +341,7 @@ class AppController:
 
         # current track being edited.
         self.current_track = None
+        self.current_song = None
 
         Signals.preview_play.connect(self.handle_preview_play)
         Signals.preview_stop.connect(self.handle_preview_stop)
@@ -311,6 +354,10 @@ class AppController:
         Signals.ready.connect(self.on_ready)
         Signals.save_song.connect(self.on_save_song)
         Signals.open_song.connect(self.on_open_song)
+
+        Signals.add_track.connect(self.add_track)
+        Signals.delete_track.connect(self.delete_track)
+
 
         n = Note()
         n.string = 4
