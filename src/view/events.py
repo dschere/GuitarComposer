@@ -213,7 +213,7 @@ class _Signals(QObject):
     save_as_song = pyqtSignal()
     add_track = pyqtSignal()
     delete_track = pyqtSignal(DeleteTrack)
-
+    
     update_navigator = pyqtSignal(QStandardItemModel)
     fretboard_inst_select = pyqtSignal(object)
 

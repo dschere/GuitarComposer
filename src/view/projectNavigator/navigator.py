@@ -66,8 +66,15 @@ class Navigator(QWidget):
             item = index.model().itemFromIndex(index) # type: ignore
             evt.ev_type = EditorEvent.ADD_MODEL  # type: ignore
             evt.model = item.data()
+
             self.current_track = evt.model
+            song_model = item.parent().data()
+            if song_model != self.current_song:
+                Signals.song_selected.emit(song_model)    
+            self.current_song = song_model
+
             Signals.editor_event.emit(evt)
+
         elif isinstance(item, SongItem):
             song_model = item.data()
             self.current_song = song_model 
