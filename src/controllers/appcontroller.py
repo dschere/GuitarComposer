@@ -328,9 +328,19 @@ class AppController:
             except Exception as e:
                 alert(str(e), title=type(e).__name__)
 
+    def on_new_song(self):
+        self.noname_counter += 1
+        sc = SongController(f"noname-{self.noname_counter}")
+        sc.addTrack('12-str.GT')
+        self.song_ctrl[sc.title()] = sc
+        self.current_song = sc
+        self.current_track = sc.song.tracks[0]
+        self.update_navigator()
+
     def __init__(self, synth_service):
         self.synth_service = synth_service
         self.editor_ctrl = None
+        self.noname_counter = 0
         
 
         self.projects = ProjectManager()
@@ -354,10 +364,11 @@ class AppController:
         Signals.ready.connect(self.on_ready)
         Signals.save_song.connect(self.on_save_song)
         Signals.open_song.connect(self.on_open_song)
+        Signals.new_song.connect(self.on_new_song)
 
         Signals.add_track.connect(self.add_track)
         Signals.delete_track.connect(self.delete_track)
-
+        
 
         n = Note()
         n.string = 4
