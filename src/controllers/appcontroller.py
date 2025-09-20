@@ -277,8 +277,6 @@ class AppController:
         if self.current_song is not None:
             track = self.current_song.addTrackFromDialog()
             if track is not None:
-                #TODO, padd track with measures to match the first 
-                # measure if the timesig, bpm are the same.
                 if len(self.current_song.song.tracks) > 0:
                     ref_track = self.current_song.song.tracks[0]
                     track.sync_measure_structure(ref_track)
@@ -328,6 +326,26 @@ class AppController:
             except Exception as e:
                 alert(str(e), title=type(e).__name__)
 
+    def on_close_song(self):
+        if self.current_song is not None:
+            title = self.current_song.title()
+            reply = QMessageBox.question(
+                None,
+                "Confirmation",
+                f"Do you want to save {title}",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No # Default button
+            )
+            if reply == QMessageBox.StandardButton.Yes:
+                self.current_song.save_model()
+
+            del self.song_ctrl[title]
+            if len(self.song_ctrl) == 0:
+                self.on_new_song()
+            else:
+                self.update_navigator()
+            
+
     def on_new_song(self):
         self.noname_counter += 1
         sc = SongController(f"noname-{self.noname_counter}")
@@ -364,6 +382,7 @@ class AppController:
         Signals.ready.connect(self.on_ready)
         Signals.save_song.connect(self.on_save_song)
         Signals.open_song.connect(self.on_open_song)
+        Signals.close_song.connect(self.on_close_song)
         Signals.new_song.connect(self.on_new_song)
 
         Signals.add_track.connect(self.add_track)
