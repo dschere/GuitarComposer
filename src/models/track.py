@@ -153,7 +153,7 @@ class Track:
 
         # effects to be applied to this track
         #self.effects = EffectRepository().create_effects()
-        self.effects = []
+        self.effects : Effects | None = None
 
     def append_measure(self, **kwargs):
         m = self.blank_measure(**kwargs)
