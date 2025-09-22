@@ -270,7 +270,7 @@ class TrackEditorView(QScrollArea):
         self.track_presenter.cursor_up()
 
     def arrow_down_key(self):
-        "\/ move cursor down or loop if its the bottom fret"
+        "move cursor down or loop if its the bottom fret"
         self.track_presenter.cursor_down()
 
     def delete_key(self):

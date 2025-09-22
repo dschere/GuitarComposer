@@ -265,10 +265,3 @@ class MainWindow(QMainWindow):
                 settings.value("vertical_splitter_state"))
 
         Signals.load_settings.emit(settings)
-
-
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    window = MainWindow()
-    window.show()
-    sys.exit(app.exec())
