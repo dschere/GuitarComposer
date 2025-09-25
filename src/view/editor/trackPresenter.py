@@ -207,6 +207,14 @@ class TrackPresenter(QWidget):
         super().resizeEvent(event)
 
     def play_visual_event(self, evt : PlayerVisualEvent):
+        if evt.ev_type == evt.CLEAR_ALL:
+            for measure in self.track_model.measures:
+                mp = self.mp_map[measure]
+                for tp in mp.tab_map.values(): 
+                    if isinstance(tp, TabEventPresenter):
+                        tp.clear_play_line()
+            return
+
         tab_event = evt.tab_event 
         # get the measure presenter for this tab event
         m = self.track_model.find_tab_measure(tab_event)
@@ -232,7 +240,7 @@ class TrackPresenter(QWidget):
             elif evt.ev_type == evt.TABEVENT_HIGHLIGHT_OFF:
                 #logging.info("clear_play_line tp id %ld" % id(tp))
                 tp.clear_play_line()
-            
+                            
 
     def cursor_up(self):
         if self.current_tep:

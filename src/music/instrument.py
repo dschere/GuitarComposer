@@ -224,6 +224,9 @@ class Instrument:
                     n.midi_code = self.tuning[string] + fret_val 
                     n.pitch_changes = te.pitch_changes
                     n.velocity = te.dynamic
+                    if te.dynamic is None:
+                        print("break")
+                    
                     n.set_duration(te, ev_dur)  
 
                     # in the case of a bend of a single string
@@ -260,6 +263,20 @@ class Instrument:
                     start_offset += start_offset_inc
                 
         return ev_dur
+    
+    def stop(self):
+        s = self.synth.getSequencer()
+        
+        for (gstring,chan_mix) in enumerate(self.string_map):
+            midicode_in_use = self.string_playing[gstring]
+            if midicode_in_use:       
+                for (chan, _) in chan_mix:            
+                    self.synth.noteoff(chan, midicode_in_use)
+
+                    timer_ids = self.timer_inflight.get((chan,gstring),[])
+                    for timer_id in timer_ids:
+                        self.timer.cancel(timer_id)
+
 
     def noteoff_events(self, n: Note, bpm=120, start_offset=0.0):
         "turn off a note for specific strings or all strings"

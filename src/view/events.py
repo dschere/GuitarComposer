@@ -105,7 +105,7 @@ class MsgSeqCounter:
 class PlayerVisualEvent:
     TABEVENT_HIGHLIGHT_ON  = 1
     TABEVENT_HIGHLIGHT_OFF = 2
-
+    CLEAR_ALL = 3 
 
     def __init__(self, ev_type : int, tab_event : TabEvent ):
         self.ev_type = ev_type

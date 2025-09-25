@@ -9,6 +9,8 @@ BASE_DIR = current_module_path+"/../../.."
 
 PACKAGES = "glib-2.0 sdl2 gmodule-2.0"
 
+# added packages libavformat-dev libavcodec-dev libavutil-dev libc6-dev
+
 _include_dirs = ['.', f'{BASE_DIR}/include']
 _libraries = ['m','ev']
 _library_dirs = [f'{BASE_DIR}/lib64']

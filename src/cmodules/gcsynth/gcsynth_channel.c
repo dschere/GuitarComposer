@@ -324,9 +324,13 @@ static int _gcsynth_channel_add_filter(int channel, const char* filepath, char* 
 
     // check for duplicate 
     if (find_by_name(c,plugin_label) != NULL) {
+        /*
         sprintf(errmsg,"gcsynth_channel_add_filter duplicate plugin name %s not allowed!", plugin_label);
         gcsynth_raise_exception(errmsg);
         return -1;
+        */
+       printf("Filter %s already added to filter chain, nothing to do\n", plugin_label);
+       return 0;
     }
 
     // create a filter and add it to the filter chain

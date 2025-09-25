@@ -146,11 +146,11 @@ class track_player_api(QObject):
         self.timer = GcTimer()
         self.track.set_moment(start_measure, 0)
         self.is_playing = is_playing
+        self.start_measure = start_measure
         self.timer_loop_lock = Lock()
 
-    def stop(self):
-        if self.timer_id != -1:
-            self.timer.cancel(self.timer_id)
+        self.linear_tabs = [] 
+        self.linear_tab_idx = 0
 
     def _play_current_moment(self) -> Tuple[float,bool]:
         """
@@ -186,8 +186,8 @@ class track_player_api(QObject):
             self.timer.cancel(self.timer_id)
         self.track.previous_measure()
         
-
     def _play_loop(self, i, linear_tabs):
+        self.linear_tab_idx = i
         if i < len(linear_tabs) and self.is_playing.is_set():
             (tab_event, measure) = linear_tabs[i]
             (ts, bpm, _, _) = self.track.getMeasureParams(measure)
@@ -196,8 +196,6 @@ class track_player_api(QObject):
             evt = PlayerVisualEvent(PlayerVisualEvent.TABEVENT_HIGHLIGHT_ON, tab_event) 
             evt.measure = measure
             Signals.player_visual_event.emit(evt)
-
-            
 
             if i > 0:
                 (prev_tab_event, prev_measure) = linear_tabs[i-1]
@@ -226,10 +224,17 @@ class track_player_api(QObject):
             
          
     def play(self):
-        linear_tabs = compile_track(self.track)
-        if len(linear_tabs) > 0:
+        self.linear_tabs = compile_track(self.track)
+        if len(self.linear_tabs) > 0:
             self.is_playing.set()
-            self._play_loop(0, linear_tabs)     
+            self._play_loop(0, self.linear_tabs)     
+
+    def resume(self):
+        if self.linear_tab_idx < len(self.linear_tabs):
+            self.is_playing.set()
+            self._play_loop(self.linear_tab_idx, self.linear_tabs)
+        else:
+            self.play()
 
     #expected_tm = None
 
@@ -246,7 +251,27 @@ class track_player_api(QObject):
             if more_moments:
                 #self.expected_tm = time.perf_counter() + duration_secs
                 self.timer = GcTimer().start(duration_secs, self.timer_loop, ())
+
         
+    def stop(self, reset_start_measure=True):
+        if self.timer_id != -1:
+            self.timer.cancel(self.timer_id)
+            self.timer_id = -1
+        self.intrument.stop()    
+
+        if reset_start_measure:
+            self.linear_tab_idx = 0
+            self.linear_tabs = []
+            self.track.set_moment(self.start_measure, 0)
+
+        p_evt = PlayerVisualEvent(PlayerVisualEvent.CLEAR_ALL, TabEvent(6))
+        Signals.player_visual_event.emit(p_evt)
+
+    def pause(self):
+        # stop but do not rewind to starting meaasure
+        self.stop(False)
+
+
 
 class Player:
     def __init__(self, tracks : List[Track], start_measure = 0):
@@ -281,12 +306,12 @@ class Player:
 
     def pause(self):
         for p in self.track_players:
-            p.stop()
+            p.pause()
             p.expected_tm = None
 
     def resume(self):
         for p in self.track_players:
-            p.timer_loop()
+            p.resume()
 
     def play(self):
         for p in self.track_players:
