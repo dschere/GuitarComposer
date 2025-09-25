@@ -210,7 +210,7 @@ class MainWindow(QMainWindow):
         self.vertical_splitter.setHandleWidth(0)
         
         self.track_editor.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.track_editor.verticalScrollBar().setEnabled(False)
+        self.track_editor.verticalScrollBar().setEnabled(False) # type: ignore
         
         self.vertical_splitter.addWidget(self.track_editor)
         self.vertical_splitter.addWidget(self.bottom_widget)
