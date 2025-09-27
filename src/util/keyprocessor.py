@@ -124,21 +124,15 @@ class KeyProcessor:
                 te.dotted = False
                 te.double_dotted = True
         elif key in km.dur_lookup:
-            # If the current tab event is a rest:
-            #  determine the duration change and if it fits into
-            #  the dur_lookup then alter the structure of the measure
-            #  by adding or removing adjacent rests   
-            #if te.is_rest():
 
             d_change = km.dur_lookup[key] - te.duration
             te.duration = km.dur_lookup[key]
+
             evt = EditorEvent(EditorEvent.REST_DUR_CHANGED)  
             evt.new_dur = km.dur_lookup[key]
             evt.dur_change = d_change
             Signals.editor_event.emit(evt)  
 
-            #else:
-            #    te.duration = km.dur_lookup[key]
         elif key == km.TIED_NOTE:
             te.toggle_tied()
         elif key == km.START_REPEAT:
