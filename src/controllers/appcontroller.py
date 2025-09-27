@@ -340,6 +340,8 @@ class AppController:
                 self.current_song.save_model()
 
             del self.song_ctrl[title]
+            self.projects.close_song(self.current_song.song)    
+
             if len(self.song_ctrl) == 0:
                 self.on_new_song()
             else:

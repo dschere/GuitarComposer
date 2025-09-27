@@ -251,6 +251,7 @@ class MainWindow(QMainWindow):
                           self.vertical_splitter.saveState())
 
         Signals.save_settings.emit(settings)
+        settings.sync()
     
     def load_settings(self):
         """Restore the splitter sizes and window geometry."""

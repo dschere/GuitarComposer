@@ -221,8 +221,7 @@ class track_player_api(QObject):
             self.timer.cancel(self.timer_id)
             self.timer_id = -1
 
-            
-         
+        
     def play(self):
         self.linear_tabs = compile_track(self.track)
         if len(self.linear_tabs) > 0:
