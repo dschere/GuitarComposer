@@ -67,6 +67,8 @@ class EditorEvent:
     PASTE_EVENT = 11
     CUT_EVENT = 12
 
+    REST_DUR_CHANGED = 13
+
     def __init__(self, evt_type = -1):
         self.ev_type = evt_type
         self.model : Track | None = None
@@ -76,6 +78,8 @@ class EditorEvent:
         self.measure = 1
         self.bend_event : StringBendEvent | None = None  
         self.control_key_pressed = False
+        self.new_dur = 0
+        self.dur_change = 0
 
 class PlayerEvent:
     UNINITIALIZED = -1

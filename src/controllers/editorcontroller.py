@@ -6,9 +6,12 @@ track is displayed as a TrackView widget that allows
 for track events to be rendered.  
 """
 import logging
+from typing import List, Tuple
 import uuid
+import math
 from PyQt6.QtCore import Qt
 
+from models.measure import TabEvent
 from services.redoUndo import RedoUndoProcessor
 from view.config import EditorKeyMap
 from view.editor.pastebuffer import PasteBufferSingleton
@@ -160,6 +163,61 @@ class EditorController:
             paste_buffer.cut(tmodel, tedit)
             tedit.model_updated()
 
+    def on_rest_dur_changed(self, evt : EditorEvent):
+        tmodel : Track | None = self.track_model
+        tedit : TrackEditorView | None = self.track_editor_view
+        if tmodel is not None and tedit is not None: 
+            te, m = tmodel.current_moment()
+            i = m.tab_events.index(te)
+            d = evt.dur_change # <new_duration> - te.duration
+
+            if evt.new_dur == 0:
+                return
+            
+
+            def _adjacent_rests() -> List[Tuple[int, TabEvent]]:
+                r = []
+                for n in range(i+1,len(m.tab_events)):
+                    n_te = m.tab_events[n]
+                    if not n_te.is_rest():
+                        break
+                    if n_te.dotted != te.dotted:
+                        break
+                    if n_te.double_dotted != te.double_dotted:
+                        break
+                    r.append((n,n_te))
+                return r
+            
+            def _insert_rests():
+                c = math.fabs(evt.dur_change / evt.new_dur)
+                if math.fmod(c, 1.0) != 0.0:
+                    return
+                insList = []
+                for j in range(0,int(c)):
+                    item = TabEvent(te.num_gstrings)
+                    item.duration = evt.new_dur
+                    insList.append( item )
+                m.tab_events = m.tab_events[:i+1] + insList + m.tab_events[i+1:]
+                tedit.model_updated() # type: ignore                
+
+            if evt.dur_change < 0:
+                _insert_rests()
+            elif evt.dur_change > 0 and te.is_rest():
+                sum_d = 0
+                rem_list = []
+                for n_te in m.tab_events[i+1:]:
+                    sum_d += n_te.duration
+                    rem_list.append(n_te)
+                    if sum_d == evt.dur_change:
+                        for n_te in rem_list:
+                            m.tab_events.remove(n_te)    
+                        tedit.model_updated() # type: ignore
+                        break
+
+            # evt.dur_changed = new_duration - te.duration
+            pass
+
+
     dispatch = {
         EditorEvent.ADD_MODEL: add_model,
         EditorEvent.ADD_TRACK_EDITOR: add_editor,
@@ -172,7 +230,8 @@ class EditorController:
         EditorEvent.UNDO_EVENT: undo_event,
         EditorEvent.REDO_EVENT: redo_event,
         EditorEvent.PASTE_EVENT: paste_event,
-        EditorEvent.CUT_EVENT: cut_event
+        EditorEvent.CUT_EVENT: cut_event,
+        EditorEvent.REST_DUR_CHANGED: on_rest_dur_changed 
     }
 
     def editor_event(self, evt: EditorEvent):

@@ -20,6 +20,8 @@ from view.editor.tabEventPresenter import TabEventPresenter
 from models.track import Track
 from typing import Dict, List
 
+from view.events import Signals, EditorEvent
+
 from util.layoutGapWorkaround import adjust_size_to_fit
 
 
