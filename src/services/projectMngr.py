@@ -1,7 +1,10 @@
 """
-A small service that manages projects. For now this is just
-pickling Song models. If complexity increases at least this
-object will provide a place for the code to grow.
+This service is responsible for managing the persistence of projects.
+
+Considerations going forward are that in the future songs might include
+live audio clips and other resources not just the pickling of data.
+
+QSettings is used to persist data.
 """
 import pickle
 import marshal
@@ -89,6 +92,10 @@ class ProjectManager(QObject):
         if file_name:
             song = self.open_song_using_filename(file_name)
         return song
+    
+    def close_song(self, s: Song):
+        if s.title in self.opened_projects:
+            del self.opened_projects[s.title]
 
     def open_song_using_filename(self, file_name) -> Song | None:
         errmsg = None
