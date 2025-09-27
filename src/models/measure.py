@@ -59,6 +59,9 @@ class TabEvent:
         r.uuid = str(uuid.uuid4())
         r.effects = None
         return r
+    
+    def is_rest(self):
+        return sum(self.fret) == (-1 * self.num_gstrings)
 
     def __init__(self, num_gstrings):
         super().__init__()
