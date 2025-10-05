@@ -39,7 +39,8 @@ class MainWindow(QMainWindow):
         Signals.new_song.emit()
 
     def closeSong(self):
-        Signals.close_song.emit()   
+        #Signals.close_song.emit()
+        pass   
 
     live_capture_dialog_showing = False
 

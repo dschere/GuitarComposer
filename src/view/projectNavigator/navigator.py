@@ -17,6 +17,8 @@ from controllers.appcontroller import SongItem
 from view.events import Signals, TrackItem, PropertiesItem, SongItem
 from view.config import LabelText
 
+from .songDelegate import SongDelegate
+
 
 class Navigator(QWidget):
 
@@ -52,7 +54,8 @@ class Navigator(QWidget):
 
     def on_tree_clicked(self, index: QModelIndex):
         # Get the clicked item
-        assert(index.model())
+        if index.model() is None:
+            return
         clicked_item = index.model().itemFromIndex(index) # type: ignore
 
         item = index.model().itemFromIndex(index) # type: ignore
@@ -122,6 +125,10 @@ class Navigator(QWidget):
             Qt.ContextMenuPolicy.CustomContextMenu)
         self.tree_view.customContextMenuRequested.connect(self.showContextMenu)
 
+        delegate = SongDelegate(self.tree_view)
+        self.tree_view.setItemDelegateForColumn(0, delegate)  # put button in first column
+
+        
         layout = QVBoxLayout()
 
         control_bar = QToolBar()
