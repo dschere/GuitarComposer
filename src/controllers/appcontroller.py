@@ -157,6 +157,8 @@ class SongController:
         # channel manager in the synth service.
         pass
 
+    def getSong(self):
+        return self.song
 
 def log_model_contents(model: QStandardItemModel):
     # Get the number of rows and columns in the model
@@ -326,26 +328,40 @@ class AppController:
             except Exception as e:
                 alert(str(e), title=type(e).__name__)
 
-    def on_close_song(self):
-        if self.current_song is not None:
-            title = self.current_song.title()
+    def on_close_song(self, title):
+        sc : SongController | None = self.song_ctrl.get(title)
+        if sc is not None:
             reply = QMessageBox.question(
                 None,
                 "Confirmation",
-                f"Do you want to save {title}",
+                f"Do you want to close the song '{title}'",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No # Default button
+            )
+            if reply == QMessageBox.StandardButton.No:
+                return
+
+            reply = QMessageBox.question(
+                None,
+                "Confirmation",
+                f"Should I save '{title}' before I close?",
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                 QMessageBox.StandardButton.No # Default button
             )
             if reply == QMessageBox.StandardButton.Yes:
-                self.current_song.save_model()
+                sc.save_model()
 
+            # remove from project manager so it doesn't auto load
+            self.projects.close_song(sc.getSong())
+            
             del self.song_ctrl[title]
-            self.projects.close_song(self.current_song.song)    
 
             if len(self.song_ctrl) == 0:
                 self.on_new_song()
             else:
                 self.update_navigator()
+
+
             
 
     def on_new_song(self):

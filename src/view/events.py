@@ -211,7 +211,7 @@ class _Signals(QObject):
 
     # menu events
     open_song = pyqtSignal()
-    close_song = pyqtSignal()
+    close_song = pyqtSignal(object)
     new_song = pyqtSignal()
     save_song = pyqtSignal()
     save_as_song = pyqtSignal()
