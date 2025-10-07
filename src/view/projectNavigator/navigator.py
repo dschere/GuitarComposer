@@ -131,29 +131,29 @@ class Navigator(QWidget):
         
         layout = QVBoxLayout()
 
-        control_bar = QToolBar()
-        style = self.style() 
-        assert(style)
+        # control_bar = QToolBar()
+        # style = self.style() 
+        # assert(style)
 
-        # Add button with standard "add" icon (plus symbol)
-        add_btn = QPushButton("+")
-        add_btn.setToolTip(LabelText.add_track)
-        add_btn.setIcon(style.standardIcon(QStyle.StandardPixmap.SP_FileDialogNewFolder))
-        add_btn.clicked.connect(lambda : Signals.add_track.emit())
+        # # Add button with standard "add" icon (plus symbol)
+        # add_btn = QPushButton("+")
+        # add_btn.setToolTip(LabelText.add_track)
+        # add_btn.setIcon(style.standardIcon(QStyle.StandardPixmap.SP_FileDialogNewFolder))
+        # add_btn.clicked.connect(lambda : Signals.add_track.emit())
 
-        # Delete button with standard "trash" icon
-        del_btn = QPushButton("-")
-        del_btn.setToolTip(LabelText.del_track)
-        del_btn.setIcon(style.standardIcon(QStyle.StandardPixmap.SP_TrashIcon))
-        del_btn.clicked.connect(self.on_delete_track)
+        # # Delete button with standard "trash" icon
+        # del_btn = QPushButton("-")
+        # del_btn.setToolTip(LabelText.del_track)
+        # del_btn.setIcon(style.standardIcon(QStyle.StandardPixmap.SP_TrashIcon))
+        # del_btn.clicked.connect(self.on_delete_track)
 
-        control_bar.addWidget(add_btn)
-        control_bar.addWidget(del_btn)
+        # control_bar.addWidget(add_btn)
+        # control_bar.addWidget(del_btn)
 
-        self.add_track_btn = add_btn 
-        self.delete_track_btn = del_btn
+        # self.add_track_btn = add_btn 
+        # self.delete_track_btn = del_btn
 
-        layout.addWidget(control_bar)
+#        layout.addWidget(control_bar)
         layout.addWidget(self.tree_view)
         self.setLayout(layout)
 

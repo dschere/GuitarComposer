@@ -215,7 +215,7 @@ class _Signals(QObject):
     new_song = pyqtSignal()
     save_song = pyqtSignal()
     save_as_song = pyqtSignal()
-    add_track = pyqtSignal()
+    add_track = pyqtSignal(object)
     delete_track = pyqtSignal(DeleteTrack)
     
     update_navigator = pyqtSignal(QStandardItemModel)
