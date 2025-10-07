@@ -275,17 +275,18 @@ class AppController:
             self.update_navigator()
 
 
-    def add_track(self):
-        if self.current_song is not None:
-            track = self.current_song.addTrackFromDialog()
+    def add_track(self, song_title = None):
+        sc : SongController | None = self.song_ctrl.get(song_title, self.current_song)
+        if sc is not None:
+            track = sc.addTrackFromDialog()
             if track is not None:
-                if len(self.current_song.song.tracks) > 0:
-                    ref_track = self.current_song.song.tracks[0]
+                if len(sc.song.tracks) > 0:
+                    ref_track = sc.song.tracks[0]
                     track.sync_measure_structure(ref_track)
 
-                self.current_song.song.tracks.append(track)
-                self.update_navigator()        
-
+                sc.song.tracks.append(track)
+                self.update_navigator()
+              
     def on_ready(self, app):
         # setup navigator, score editor
         titles = self.projects.titles()
