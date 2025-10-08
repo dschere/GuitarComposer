@@ -80,7 +80,9 @@ class SongDelegate(QStyledItemDelegate):
         )
         add_btn = QStyleOptionButton()
         add_btn.rect = add_button_rect
-        add_btn.palette.setColor(QPalette.ColorRole.Button, QColor("silver"))
+        add_btn.palette.setColor(QPalette.ColorRole.ButtonText, QColor("silver"))
+        add_btn.palette.setColor(QPalette.ColorRole.Button, QColor("green"))
+        
         add_btn.text = "+"
         #        add_btn.icon = QIcon.fromTheme("folder-new")
         add_btn.iconSize = QSize(16, 16)
