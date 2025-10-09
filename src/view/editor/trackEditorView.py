@@ -233,12 +233,11 @@ class TrackEditorView(QScrollArea):
                 p_m = self.track_model.get_measure(-1)    
                 mp = self.track_presenter.mp_map.get(p_m)
                 if mp:
-                    mp.update_measure_line()
+                    mp.measure_glyph.update_bar_ctrl()
+                    mp.update()
 
-        #self.track_presenter.current_measure_updated()
  
     def toggle_measure_end_repeat(self):
-        #(_,m) = self.track_model.current_moment()
         m = self.track_model.get_measure()
         if m:
             if m.end_repeat:
@@ -251,7 +250,8 @@ class TrackEditorView(QScrollArea):
 
             mp = self.track_presenter.mp_map.get(m)
             if mp:
-                mp.update_measure_line()
+                mp.measure_glyph.update_bar_ctrl()
+                mp.update()
             
 
     def arrow_left_key(self, ctrl_pressed: bool):
