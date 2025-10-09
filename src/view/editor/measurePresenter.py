@@ -15,7 +15,7 @@ from PyQt6.QtCore import Qt
 from models.measure import Measure, TabEvent
 
 from view.editor import glyphs
-from view.editor.glyphs.common import ORNAMENT_MARKING_HEIGHT, STAFF_HEIGHT, STAFF_SYM_WIDTH
+from view.editor.glyphs.common import ORNAMENT_MARKING_HEIGHT, STAFF_ABOVE_LINES, STAFF_HEIGHT, STAFF_LINE_SPACING, STAFF_NUMBER_OF_LINES, STAFF_SYM_WIDTH
 from view.editor.tabEventPresenter import TabEventPresenter 
 from models.track import Track
 from typing import Dict, List
@@ -53,15 +53,17 @@ class RepeatMeasureBarlines(QWidget):
 
     def __init__(self, measure: Measure, b_type : int):
         super().__init__()
-        #self.setFixedWidth(STAFF_SYM_WIDTH)
-        #self.setFixedHeight(ORNAMENT_MARKING_HEIGHT)
-
         self.measure = measure
         layout = QVBoxLayout(self)
         layout.setSpacing(0)
         layout.setContentsMargins(0, 0, 0, 0)
 
-        self.spin_box = QSpinBox()
+        barlines = glyphs.StaffMeasureBarlines(
+            measure.measure_number+1,
+            b_type
+        )
+
+        self.spin_box = QSpinBox(barlines)
         self.spin_box.setRange(1,100)
         self.spin_box.setValue(self.measure.repeat_count)
         self.spin_box.setToolTip("repeat count")
@@ -69,15 +71,14 @@ class RepeatMeasureBarlines(QWidget):
         self.spin_box.setFixedHeight(self.SPIN_BOX_HEIGHT)
         self.spin_box.setFixedWidth(STAFF_SYM_WIDTH)
  
-        barlines = glyphs.StaffMeasureBarlines(
-            measure.measure_number+1,
-            b_type,
-            STAFF_SYM_WIDTH,
-            STAFF_HEIGHT - self.SPIN_BOX_HEIGHT
-        )
+        top_line = STAFF_ABOVE_LINES * STAFF_LINE_SPACING
+        bottom_line = top_line + (STAFF_NUMBER_OF_LINES-1) * STAFF_LINE_SPACING
+        self.spin_box.move(0, bottom_line) 
+        self.spin_box.raise_()
+        self.spin_box.setEnabled(True)
 
         layout.addWidget(barlines)
-        layout.addWidget(self.spin_box)
+        #layout.addWidget(self.spin_box)
         self.setLayout(layout)
 
 
