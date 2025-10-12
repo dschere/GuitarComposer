@@ -31,7 +31,14 @@ class ProjectManager(QObject):
 
         if settings.contains(self.opened_projects_key):
             s = settings.value(self.opened_projects_key)
-            self.opened_projects = marshal.loads(s)
+            self.opened_projects = {}
+            data = marshal.loads(s)
+            for (title, filename) in data.items():
+                if os.access(filename, os.F_OK):
+                    print(f"loading '{title}' {filename}")
+                    self.opened_projects[title] = filename
+
+            
 
     def on_save_settings(self, settings: QSettings):
         settings.setValue(self.project_dir_key, self.project_dir)

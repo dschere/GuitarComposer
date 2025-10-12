@@ -335,16 +335,6 @@ class AppController:
             reply = QMessageBox.question(
                 None,
                 "Confirmation",
-                f"Do you want to close the song '{title}'",
-                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-                QMessageBox.StandardButton.No # Default button
-            )
-            if reply == QMessageBox.StandardButton.No:
-                return
-
-            reply = QMessageBox.question(
-                None,
-                "Confirmation",
                 f"Should I save '{title}' before I close?",
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                 QMessageBox.StandardButton.No # Default button
@@ -354,12 +344,23 @@ class AppController:
 
             # remove from project manager so it doesn't auto load
             self.projects.close_song(sc.getSong())
-            
+
+            update_current_song = False
+            if self.current_song == self.song_ctrl[title]:
+                update_current_song = True
+
             del self.song_ctrl[title]
 
             if len(self.song_ctrl) == 0:
                 self.on_new_song()
             else:
+                if update_current_song:
+                    titles = list(self.song_ctrl.keys())
+                    titles.sort()
+                    new_sc = self.song_ctrl[titles[0]]
+                    self.current_song = new_sc
+                    self.current_track = new_sc.getSong().tracks[0]            
+
                 self.update_navigator()
 
 

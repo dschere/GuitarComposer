@@ -253,3 +253,4 @@ class EditorController:
         self.sequence_renderer = None
         
         Signals.editor_event.connect(self.editor_event)
+        

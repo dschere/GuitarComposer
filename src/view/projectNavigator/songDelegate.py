@@ -7,7 +7,7 @@ Uses a QStyledItemDelegate to create a widget within the tree view
 from PyQt6.QtGui import QStandardItemModel, QHelpEvent, QAction, QStandardItem, QColor, QPalette, QIcon
 from PyQt6.QtWidgets import (
     QApplication, QStyleOptionFrame, QTreeView, QStyledItemDelegate,
-    QStyle, QStyleOptionButton, QLineEdit,QStyleOption, QToolTip
+    QStyle, QStyleOptionButton, QLineEdit,QStyleOption, QToolTip, QMessageBox
 )
 
 from PyQt6.QtCore import QRect, QEvent, QSize, Qt, QModelIndex
@@ -167,7 +167,16 @@ class SongDelegate(QStyledItemDelegate):
 
                      
                     if tag == self.CLOSE_TAG:
-                        Signals.close_song.emit(index.data())
+                        title = index.data()
+                        reply = QMessageBox.question(
+                            None,
+                            "Confirmation",
+                            f"Do you want to close the song '{title}'",
+                            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                            QMessageBox.StandardButton.No # Default button
+                        )
+                        if reply == QMessageBox.StandardButton.Yes:
+                            Signals.close_song.emit(title)
                         return True
                     elif tag == self.ADD_TRACK_TAG:
                         Signals.add_track.emit(index.data())
