@@ -78,7 +78,7 @@ class TabEvent:
         if not hasattr(self, "actual_duration"):
             self.actual_duration = -1           
         if not hasattr(self,"tuplet_code"):
-            self.tuplet = TUPLET_DISABLED   
+            self.tuplet_code = TUPLET_DISABLED   
     
     def toggle_tied(self):
         if self.tied_notes[self.string]:
@@ -179,7 +179,7 @@ class TabEvent:
                 beats *= 0.6666
             if self.quintuplet:
                 beats *= 0.2
-            if self.tuplet_code != -1:
+            if self.tuplet_code in TupletTypes:
                 (_, tuplet_beats) = TupletTypes[self.tuplet_code]
                 m = tuplet_beats / (0.5 * self.tuplet_code)
                 beats *= m

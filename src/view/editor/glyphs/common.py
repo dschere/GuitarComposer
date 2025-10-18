@@ -23,6 +23,8 @@ STACCATO   = "\u1D17"
 #LEGATO     = u'\U0001D066'
 LEGATO = "\u029F"
 NO_ARTICULATION = "\u29BB"
+TRIPLET_SYMBOL = "🎶"
+
 
 KEYS = [
     "C",

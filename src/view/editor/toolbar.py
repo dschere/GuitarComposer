@@ -26,10 +26,11 @@ from view.editor.glyphs.common import (
     MEZZO_SYMBOL,
     PIANO_SYMBOL,
     STACCATO,
-    LEGATO
+    LEGATO,
+    TRIPLET_SYMBOL
     )
 from PyQt6.QtWidgets import (QToolBar, QPushButton, 
-    QSizePolicy, QWidget, QGroupBox, QHBoxLayout, QComboBox)
+    QSizePolicy, QWidget, QGroupBox, QHBoxLayout, QComboBox, QLabel)
 from PyQt6.QtCore import pyqtSignal, QObject
 from PyQt6.QtCore import QPointF
 from PyQt6.QtGui import QPainter, QPainterPath, QColor
@@ -37,6 +38,7 @@ from PyQt6.QtGui import QPainter, QPainterPath, QColor
 from music.constants import Dynamic
 from models.track import TabEvent, Track
 from view.events import StringBendEvent
+from models.measure import TupletTypes
 
 DOTTED = GHOST_NOTEHEAD
 DOUBLE_DOTTED = DOUBLE_GHOST_NOTEHEAD
@@ -271,7 +273,7 @@ class EditorToolbar(QToolBar):
 
         # set dot
         if tab_event.tied_notes[tab_event.string]:
-            btn = self._dot_btns[5]
+            btn = self._dot_btns[-1]
             self._dot_grp.check_btn(btn)
         elif tab_event.dotted:
             dotted_index = 1
@@ -327,17 +329,31 @@ class EditorToolbar(QToolBar):
         # dotted notes that alter standard note durations
         dot_dur_container = ButtonGroupContainer("Special Duration")
         self._dot_grp = MutuallyExclusiveButtonGroup()
+        self._tuplet_opts = QComboBox(self)
+        
         self._dot_btns = (
             ToolbarButton(self, " ", "no dot", "clear-dots"),
             ToolbarButton(self, DOTTED, "dotted note", "dotted"),
             ToolbarButton(self, DOUBLE_DOTTED, "double dotted", "double-dotted"),
-            ToolbarButton(self, "3" + QUATER_NOTE, "triplet", "triplet"),
-            ToolbarButton(self, "5" + QUATER_NOTE, "quintuplet", "quintuplet"),
+#            ToolbarButton(self, "3" + QUATER_NOTE, "triplet", "triplet"),
+#            ToolbarButton(self, "5" + QUATER_NOTE, "quintuplet", "quintuplet"),
             ToolbarButton(self, u'\u1D17', "tied note", "tied-note")
         )
         for btn in self._dot_btns:
             self._dot_grp.addButton(btn)
             dot_dur_container.add_item(btn)
+
+        triplet_label = QLabel()
+        triplet_label.setText("Triplet: ")
+        dot_dur_container.add_item(triplet_label)
+
+        self._tuplet_chooser = QComboBox()
+        self._tuplet_chooser.addItem(" ")
+        for (tuplet_code,(label,beats)) in TupletTypes.items():
+            text = f"{tuplet_code} {label}"
+            self._tuplet_chooser.addItem(text)
+        dot_dur_container.add_item(self._tuplet_chooser)
+
         self.addWidget(dot_dur_container)
         self._dot_grp.selected.connect(self._dot_selected) 
         self.addSeparator()
