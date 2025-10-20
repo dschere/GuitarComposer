@@ -94,6 +94,18 @@ class TabEvent:
     
     def is_rest(self):
         return sum(self.fret) == (-1 * self.num_gstrings)
+    
+    def minimum_y_pos_for_tuplet_line(self):
+        rest_y = 140 
+        s = set(self.note_ypos)
+        if -1 in s:
+            s.remove(-1)
+        if len(s) == 0:
+            return rest_y 
+        r = min(s)
+        if r-25 < 25:
+            return 25
+        return r-25
 
     def __init__(self, num_gstrings):
         super().__init__()

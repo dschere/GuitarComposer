@@ -38,7 +38,7 @@ from PyQt6.QtGui import QPainter, QPainterPath, QColor
 from music.constants import Dynamic
 from models.track import TabEvent, Track
 from view.events import StringBendEvent
-from models.measure import TupletTypes
+from models.measure import TupletTypes, TUPLET_DISABLED
 
 DOTTED = GHOST_NOTEHEAD
 DOUBLE_DOTTED = DOUBLE_GHOST_NOTEHEAD
@@ -239,6 +239,15 @@ class EditorToolbar(QToolBar):
             dialog.string_bend_selected.connect(on_apply)
             dialog.show()
 
+    def _tuplet_chooser_selected(self, text):
+        (te,_) = self.track_model.current_moment()
+        if text == "":
+            te.tuplet_code = TUPLET_DISABLED
+        else:
+            te.tuplet_code = int(text.split()[0])
+        print(te.tuplet_code)
+
+
     def setTabEvent(self, tab_event : TabEvent):
         """
         set the tab cursor and react to any changes in data so 
@@ -348,11 +357,13 @@ class EditorToolbar(QToolBar):
         dot_dur_container.add_item(triplet_label)
 
         self._tuplet_chooser = QComboBox()
-        self._tuplet_chooser.addItem(" ")
+        self._tuplet_chooser.addItem("")
         for (tuplet_code,(label,beats)) in TupletTypes.items():
             text = f"{tuplet_code} {label}"
             self._tuplet_chooser.addItem(text)
         dot_dur_container.add_item(self._tuplet_chooser)
+
+        self._tuplet_chooser.currentTextChanged.connect(self._tuplet_chooser_selected)
 
         self.addWidget(dot_dur_container)
         self._dot_grp.selected.connect(self._dot_selected) 
