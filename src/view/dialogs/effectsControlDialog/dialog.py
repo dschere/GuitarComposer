@@ -173,7 +173,8 @@ class EffectsDialog(QDialog):
         
     def on_apply(self):
         # only applicable if we are altering the exising effects state.
-        if self.original_effects_state and self.effects:
+        #if self.original_effects_state and self.effects:
+        if self.effects:
             reply = QMessageBox.question(
                 None,  # parent widget
                 "Confirm",  # window title

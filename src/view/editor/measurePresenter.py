@@ -9,6 +9,7 @@ many beats in the measure.
 
 """
 import copy
+import math
 
 from PyQt6.QtWidgets import (QWidget, QHBoxLayout, QVBoxLayout,  QSpinBox)
 from PyQt6.QtCore import Qt
@@ -213,12 +214,18 @@ class MeasurePresenter(QWidget):
         for te in teList:
             dur = ts.beat_duration()
             beats += te.beats(dur) 
-        if beats > ts.beats_per_measure:
+
+        # due to floating point math we might be off by trivial fraction
+        tolerance = 0.005
+        noerror = math.fabs(beats - ts.beats_per_measure) < tolerance
+
+        if noerror:
+            self.clear_beat_error()
+        elif beats > ts.beats_per_measure:
             self.beat_overflow_error() 
         elif beats < ts.beats_per_measure:
             self.beat_underflow_error()
-        else:
-            self.clear_beat_error()
+        
 
     def reset_presentation(self):
         "purge all widgets in layout and rebuild presentation"

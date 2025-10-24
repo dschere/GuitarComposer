@@ -1,11 +1,39 @@
 import copy
 import uuid
 
-from models.measure import Measure, TimeSig, TabEvent 
+from models.measure import TUPLET_DISABLED, Measure, TimeSig, TabEvent 
 from typing import Callable, List, Optional, Tuple
 from models.effect import Effects
 from music.constants import Dynamic
+from music.durationtypes import QUARTER
 from services.effectRepo import EffectRepository
+
+
+class MomentCursor:
+    def __init__(self, t : 'Track'):
+        self.t = t
+        self.current_measure = -1
+        self.current_tab_event = -1
+
+    def first(self) -> TabEvent:
+        self.current_measure = self.t.current_measure
+        m = self.t.measures[self.current_measure]
+        self.current_tab_event = m.current_tab_event
+        return m.tab_events[self.current_tab_event]
+    
+    def next(self) -> TabEvent | None:
+        self.current_tab_event += 1
+        m = self.t.measures[self.current_measure]
+        if self.current_tab_event < len(m.tab_events):
+            return m.tab_events[self.current_tab_event]
+        else:
+            self.current_tab_event = -1
+            self.current_measure += 1
+            if self.current_measure < len(self.t.measures):
+                return self.next()
+        # no more tab events return None
+
+    
 
 
 class Track:
@@ -85,6 +113,66 @@ class Track:
         if m.current_tab_event >= len(m.tab_events):
             m.current_tab_event = len(m.tab_events) - 1
 
+    def tuplet_alteration(self, code, beats):
+        
+        # if current -> number of beats tab events are rests then
+        # delete them from the track we can simply replace with 
+        # tuples, if there are any non rests then this operation 
+        # is an insert operation and the user will have to fix 
+        # the measure.
+        
+        cursor = MomentCursor(self)
+        first_te = cursor.first()
+        ref_tab = first_te.clone()
+        ref_tab.tuplet_code = code 
+
+        ref_dur = first_te.duration
+        uniform_duration = True 
+        exiting_within_beats = [first_te]
+        total_duration = first_te.duration 
+        exist_i = 0
+
+        while total_duration < beats and uniform_duration:
+            tab = cursor.next()
+            if tab is None:
+                uniform_duration = False
+            elif tab.duration == ref_dur:
+                total_duration += tab.duration 
+                exiting_within_beats.append(tab)
+            else:
+                uniform_duration = False
+
+        insList = []
+        for i in range(0,code):
+            if uniform_duration and exist_i < len(exiting_within_beats):
+                te = exiting_within_beats[exist_i]
+                exist_i += 1
+                te_n = te.clone()
+                te_n.tuplet_code = code
+                insList.append(te_n)
+            else:
+                insList.append( ref_tab.clone() )
+
+        c_te, c_m = self.current_moment()
+        ts, _, _, _ = self.getMeasureParams(c_m)
+
+        teList = c_m.tab_events[:c_m.current_tab_event] + insList + c_m.tab_events[c_m.current_tab_event:]
+        midx = self.current_measure + 1
+        while midx < len(self.measures):
+            teList += self.measures[midx].tab_events
+            midx += 1
+        m_num = self.current_measure
+
+        if uniform_duration:
+            while len(exiting_within_beats) > 0:
+                te = exiting_within_beats.pop()
+                idx = teList.index(te)
+                del teList[idx]
+
+        # adjust the current tab event and current measure. 
+        self._reassemble(teList, ts, m_num)
+            
+
 
     def insert_tab_events(self, insList: List[TabEvent]):
         if len(insList) == 0: return
@@ -101,7 +189,6 @@ class Track:
 
         # adjust the current tab event and current measure. 
         self._reassemble(teList, ts, m_num)
-                  
 
     def getMeasureParams(self, m : Measure) -> Tuple[TimeSig, int, str, str]:
         ts = self.measures[0].timesig
@@ -305,3 +392,16 @@ class Track:
     def setTuning(self, tuning):
         self.tuning = tuning
 
+if __name__ == '__main__':
+    t = Track(6)
+    te = t.measures[0].tab_events[0]
+    te.duration = 0.5
+
+    t.measures[0].tab_events = []
+    for i in range(0,8):
+        t.measures[0].tab_events.append( te.clone() )
+
+    t.tuplet_alteration(5,2)
+    print(t.measures)
+    for m in t.measures:
+        print([te.tuplet_code for te in m.tab_events])

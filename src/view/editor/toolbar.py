@@ -26,17 +26,20 @@ from view.editor.glyphs.common import (
     MEZZO_SYMBOL,
     PIANO_SYMBOL,
     STACCATO,
-    LEGATO
+    LEGATO,
+    TRIPLET_SYMBOL
     )
 from PyQt6.QtWidgets import (QToolBar, QPushButton, 
-    QSizePolicy, QWidget, QGroupBox, QHBoxLayout, QComboBox)
+    QSizePolicy, QWidget, QGroupBox, QHBoxLayout, QComboBox, QLabel)
 from PyQt6.QtCore import pyqtSignal, QObject
 from PyQt6.QtCore import QPointF
 from PyQt6.QtGui import QPainter, QPainterPath, QColor
 
 from music.constants import Dynamic
 from models.track import TabEvent, Track
-from view.events import StringBendEvent
+from view.events import StringBendEvent, EditorEvent, Signals
+from models.measure import TupletTypes, TUPLET_DISABLED, TupletTypes
+
 
 DOTTED = GHOST_NOTEHEAD
 DOUBLE_DOTTED = DOUBLE_GHOST_NOTEHEAD
@@ -237,6 +240,20 @@ class EditorToolbar(QToolBar):
             dialog.string_bend_selected.connect(on_apply)
             dialog.show()
 
+    def _tuplet_chooser_selected(self, text):
+        code = TUPLET_DISABLED
+        if text != "":
+            code = int(text.split()[0])
+            (label, beats) = TupletTypes[code]
+            self.track_model.tuplet_alteration(code, beats)
+            
+            # update and recalculate the measure presenter since
+            # new tab events where likely created.
+            evt = EditorEvent()
+            evt.ev_type = EditorEvent.SYNC_MODEL_TO_VIEW
+            evt.model = self.track_model 
+            Signals.editor_event.emit(evt)
+
     def setTabEvent(self, tab_event : TabEvent):
         """
         set the tab cursor and react to any changes in data so 
@@ -271,7 +288,7 @@ class EditorToolbar(QToolBar):
 
         # set dot
         if tab_event.tied_notes[tab_event.string]:
-            btn = self._dot_btns[5]
+            btn = self._dot_btns[-1]
             self._dot_grp.check_btn(btn)
         elif tab_event.dotted:
             dotted_index = 1
@@ -327,17 +344,33 @@ class EditorToolbar(QToolBar):
         # dotted notes that alter standard note durations
         dot_dur_container = ButtonGroupContainer("Special Duration")
         self._dot_grp = MutuallyExclusiveButtonGroup()
+        self._tuplet_opts = QComboBox(self)
+        
         self._dot_btns = (
             ToolbarButton(self, " ", "no dot", "clear-dots"),
             ToolbarButton(self, DOTTED, "dotted note", "dotted"),
             ToolbarButton(self, DOUBLE_DOTTED, "double dotted", "double-dotted"),
-            ToolbarButton(self, "3" + QUATER_NOTE, "triplet", "triplet"),
-            ToolbarButton(self, "5" + QUATER_NOTE, "quintuplet", "quintuplet"),
+#            ToolbarButton(self, "3" + QUATER_NOTE, "triplet", "triplet"),
+#            ToolbarButton(self, "5" + QUATER_NOTE, "quintuplet", "quintuplet"),
             ToolbarButton(self, u'\u1D17', "tied note", "tied-note")
         )
         for btn in self._dot_btns:
             self._dot_grp.addButton(btn)
             dot_dur_container.add_item(btn)
+
+        triplet_label = QLabel()
+        triplet_label.setText("Triplet: ")
+        dot_dur_container.add_item(triplet_label)
+
+        self._tuplet_chooser = QComboBox()
+        self._tuplet_chooser.addItem("")
+        for (tuplet_code,(label,beats)) in TupletTypes.items():
+            text = f"{tuplet_code} {label}"
+            self._tuplet_chooser.addItem(text)
+        dot_dur_container.add_item(self._tuplet_chooser)
+
+        self._tuplet_chooser.currentTextChanged.connect(self._tuplet_chooser_selected)
+
         self.addWidget(dot_dur_container)
         self._dot_grp.selected.connect(self._dot_selected) 
         self.addSeparator()

@@ -44,7 +44,7 @@ class BlockKeys(QObject):
 
 class TrackEditorView(QScrollArea):
 
-    def _update_track_editor_content(self):
+    def _update_track_editor_content(self, **kw_args):
         # check for error
         if self.track_presenter.current_mp: 
             self.track_presenter.current_mp.beat_error_check()

@@ -45,7 +45,11 @@ class TrackPresenter(QWidget):
 
         width = 100
         for measure in self.track_model.measures:
-            mp = self.mp_map[measure]
+            try:
+                mp = self.mp_map[measure]
+            except:
+                print(f"No measure presenter for {measure.measure_number}")
+                raise
             width += int(mp.width())
         self.setMinimumWidth(width)
 
@@ -175,7 +179,7 @@ class TrackPresenter(QWidget):
 
         Signals.player_visual_event.connect(self.play_visual_event) 
         Signals.tab_select.connect(self.on_tab_select)       
-        self.setup()
+        self.setup()    
 
     def _clear_layout(self):
         layout = self.measure_layout
@@ -199,6 +203,7 @@ class TrackPresenter(QWidget):
 
         # update overlat size
         self.overlay.resize(self.size())
+        self.overlay.setup(self.track_model, self.mp_map)
 
         self.setup()
 

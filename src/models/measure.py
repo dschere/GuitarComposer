@@ -1,6 +1,6 @@
 
 from music.constants import Dynamic
-from typing import List
+from typing import List, Tuple
 from music.durationtypes import (WHOLE, 
         HALF, QUARTER, SIXTEENTH, THIRTYSECOND, SIXTYFORTH)
 from models.effect import Effects 
@@ -8,6 +8,7 @@ import logging
 import math
 import uuid
 import copy
+from collections import OrderedDict
 
 class TimeSig:
     def __init__(self):
@@ -20,12 +21,41 @@ class TimeSig:
     def beat_duration(self):
         return 4.0 / self.beat_note_id    
 
+# number of notes, text label, number of beats 
+TupletTypes = OrderedDict()
+
+TupletTypes[3] = ("triplet", 1)
+TupletTypes[5] = ("quintuplet", 2)
+TupletTypes[6] = ("sextuplet", 2)
+TupletTypes[7] = ("septuplet", 2)
+TupletTypes[9] = ("nonuplet", 4)
+TupletTypes[10] = ("decuplet", 4)
+TupletTypes[11] = ("uncuplet", 4)
+TupletTypes[12] = ("dodecuplet", 4)
+TupletTypes[13] = ("tridecuplet", 4)
+
+TUPLET_DISABLED = -1
+
 class TabEvent:
     BEND_PERIODS = 13
 
     REST = 0
     NOTE = 1
     CHORD = 2
+
+    def getTupletData(self) -> List[Tuple[int, str, int]]:
+        return [(tup_type, label, beats) for tup_type, (label, beats) in TupletTypes.items()]
+
+    def setTupletCode(self, c : int):
+        assert c in TupletTypes
+        self.tuplet_code = c 
+
+    def getTupletCode(self):
+        return self.tuplet_code
+    
+    def getTupletBeats(self) -> int:
+        (_, beats) = TupletTypes.get(self.tuplet_code, ('',0))
+        return beats
 
     def classify(self):
         result = self.REST
@@ -46,7 +76,9 @@ class TabEvent:
         if type(self.tied_notes[0]) == type(-1):
             self.tied_notes = [False] * self.num_gstrings    
         if not hasattr(self, "actual_duration"):
-            self.actual_duration = -1            
+            self.actual_duration = -1           
+        if not hasattr(self,"tuplet_code"):
+            self.tuplet_code = TUPLET_DISABLED   
     
     def toggle_tied(self):
         if self.tied_notes[self.string]:
@@ -62,6 +94,18 @@ class TabEvent:
     
     def is_rest(self):
         return sum(self.fret) == (-1 * self.num_gstrings)
+    
+    def minimum_y_pos_for_tuplet_line(self):
+        rest_y = 140 
+        s = set(self.note_ypos)
+        if -1 in s:
+            s.remove(-1)
+        if len(s) == 0:
+            return rest_y 
+        r = min(s)
+        if r-25 < 25:
+            return 25
+        return r-25
 
     def __init__(self, num_gstrings):
         super().__init__()
@@ -104,6 +148,10 @@ class TabEvent:
         self.dynamic = Dynamic.MP
         self.triplet = False
         self.quintuplet = False
+
+        # Index into TupletTypes, 0 indicates disabled. 
+        self.tuplet_code = TUPLET_DISABLED
+
         self.legato : bool | None = None
         self.staccato : bool | None = None
         self.render_clear_articulation = False
@@ -143,6 +191,11 @@ class TabEvent:
                 beats *= 0.6666
             if self.quintuplet:
                 beats *= 0.2
+            if self.tuplet_code in TupletTypes:
+                (_, tuplet_beats) = TupletTypes[self.tuplet_code]
+                m = tuplet_beats / (0.5 * self.tuplet_code)
+                beats *= m
+
         return round(beats, 4)
 
 

@@ -43,6 +43,7 @@ class EditorController:
         self.update(self.track_model, self.track_editor_view)
         if self.track_editor_view and self.track_model:
             self.track_editor_view.setFocus()
+            
 
     def add_editor(self, evt: EditorEvent):
         self.track_editor_view = evt.track_editor
@@ -217,6 +218,10 @@ class EditorController:
             # evt.dur_changed = new_duration - te.duration
             pass
 
+    def on_model_sync(self, evt : EditorEvent):
+        if self.track_editor_view:
+            self.track_editor_view.model_updated() 
+            self.track_editor_view.setFocus()
 
     dispatch = {
         EditorEvent.ADD_MODEL: add_model,
@@ -231,7 +236,8 @@ class EditorController:
         EditorEvent.REDO_EVENT: redo_event,
         EditorEvent.PASTE_EVENT: paste_event,
         EditorEvent.CUT_EVENT: cut_event,
-        EditorEvent.REST_DUR_CHANGED: on_rest_dur_changed 
+        EditorEvent.REST_DUR_CHANGED: on_rest_dur_changed,
+        EditorEvent.SYNC_MODEL_TO_VIEW: on_model_sync 
     }
 
     def editor_event(self, evt: EditorEvent):
