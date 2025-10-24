@@ -37,8 +37,9 @@ from PyQt6.QtGui import QPainter, QPainterPath, QColor
 
 from music.constants import Dynamic
 from models.track import TabEvent, Track
-from view.events import StringBendEvent
-from models.measure import TupletTypes, TUPLET_DISABLED
+from view.events import StringBendEvent, EditorEvent, Signals
+from models.measure import TupletTypes, TUPLET_DISABLED, TupletTypes
+
 
 DOTTED = GHOST_NOTEHEAD
 DOUBLE_DOTTED = DOUBLE_GHOST_NOTEHEAD
@@ -240,13 +241,18 @@ class EditorToolbar(QToolBar):
             dialog.show()
 
     def _tuplet_chooser_selected(self, text):
-        (te,_) = self.track_model.current_moment()
-        if text == "":
-            te.tuplet_code = TUPLET_DISABLED
-        else:
-            te.tuplet_code = int(text.split()[0])
-        print(te.tuplet_code)
-
+        code = TUPLET_DISABLED
+        if text != "":
+            code = int(text.split()[0])
+            (label, beats) = TupletTypes[code]
+            self.track_model.tuplet_alteration(code, beats)
+            
+            # update and recalculate the measure presenter since
+            # new tab events where likely created.
+            evt = EditorEvent()
+            evt.ev_type = EditorEvent.SYNC_MODEL_TO_VIEW
+            evt.model = self.track_model 
+            Signals.editor_event.emit(evt)
 
     def setTabEvent(self, tab_event : TabEvent):
         """

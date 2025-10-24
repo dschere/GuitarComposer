@@ -69,6 +69,7 @@ class TupletGroup:
         self.tuplet_code = -1
         self.tab_events : List[Tuple[TabEvent, TabEventPresenter]] = []
         
+
     def add(self, te: TabEvent, mp: MeasurePresenter):
         self.tab_events.append( (te, mp.tab_map[te]) )
 
@@ -76,7 +77,10 @@ class TupletGroup:
         s = set()
         for (te, _) in self.tab_events:
             s.add(te.minimum_y_pos_for_tuplet_line())
-        return min(s)
+        r = min(s)
+        if r < 100:
+            return r
+        return 100
     
     def render_line(self, painter: QPainter, overlay: 'OverlayWidget'):
         w : QWidget = overlay.parent   # type: ignore
@@ -87,12 +91,12 @@ class TupletGroup:
         line_points = []
         #start = tp_start.mapTo(w, QPointF(STAFF_SYM_WIDTH/2,y-10))
         #start = tp_start.mapTo(w, QPointF(STAFF_SYM_WIDTH/2,y-10))
-        pt1 = start_tp.mapTo(w, QPointF(STAFF_SYM_WIDTH/2,y-5))
+        pt1 = start_tp.mapTo(w, QPointF(STAFF_SYM_WIDTH/2,y+5))
         pt2 = start_tp.mapTo(w, QPointF(STAFF_SYM_WIDTH/2,y))
 
 
         pt3 = end_tp.mapTo(w, QPointF(STAFF_SYM_WIDTH/2,y))
-        pt4 = end_tp.mapTo(w, QPointF(STAFF_SYM_WIDTH/2,y-5))
+        pt4 = end_tp.mapTo(w, QPointF(STAFF_SYM_WIDTH/2,y+5))
         
         text_x_pos = (pt3.x() - pt2.x())/2 + pt2.x() - 4
         text_y_pos = pt3.y() - 3
@@ -116,10 +120,8 @@ class TupletGroupRederer:
 
     def on_paint(self, painter: QPainter):
         for tg in self.tuplet_group:
-            start_te, start_tp = tg.tab_events[0]
-            end_te, end_tp = tg.tab_events[-1]
-
-
+            tg.render_line(painter, self.overlay)
+            
 
     def on_tab_event(self, tab_event: TabEvent, mp: MeasurePresenter):
 
