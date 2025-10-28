@@ -302,13 +302,12 @@ class EditorToolbar(QToolBar):
             no_dot_index = 0
             self._dot_grp.check_btn(self._dot_btns[no_dot_index])
 
-
-        # dyn_list = [Dynamic.FFF,Dynamic.FF,Dynamic.F,Dynamic.MF,
-        #             Dynamic.MP,Dynamic.P,Dynamic.PP,Dynamic.PPP]
-        # if tab_event.dynamic in dyn_list:
-        #     i = dyn_list.index(tab_event.dynamic)
-        #     btn = self._dyn_btns[i]
-        #     self._dyn_grp.check_btn(btn)
+        # set tuplet drop down.
+        key = ""
+        if tab_event.tuplet_code in TupletTypes:
+            (label, _) = TupletTypes[tab_event.tuplet_code]
+            key = f"{tab_event.tuplet_code} {label}"
+        self._tuplet_chooser.setCurrentText(key)
 
 
     def __init__(self, track_model: Track, update_staff_and_tab):
@@ -344,7 +343,6 @@ class EditorToolbar(QToolBar):
         # dotted notes that alter standard note durations
         dot_dur_container = ButtonGroupContainer("Special Duration")
         self._dot_grp = MutuallyExclusiveButtonGroup()
-        self._tuplet_opts = QComboBox(self)
         
         self._dot_btns = (
             ToolbarButton(self, " ", "no dot", "clear-dots"),

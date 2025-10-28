@@ -4,6 +4,7 @@ a canvas for drawing on top of the staff glyphs that span moments in
 a score such as tied notes, legato etc. 
 
 """
+import logging
 from typing import List, Tuple
 from PyQt6.QtWidgets import QWidget
 from PyQt6.QtCore import Qt, QPointF 
@@ -207,7 +208,6 @@ class OverlayWidget(QWidget):
 
         # paint tuplet markings 
         self.tgr.on_paint(painter)
-        
         for b_pts in self.beizer_lines:
             path = QPainterPath()
             start = b_pts[0]
@@ -227,4 +227,3 @@ class OverlayWidget(QWidget):
         
 
         painter.end()
-        self.clear_beizer_lines()
