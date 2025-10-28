@@ -245,14 +245,13 @@ class EditorToolbar(QToolBar):
         if text != "":
             code = int(text.split()[0])
             (label, beats) = TupletTypes[code]
-            self.track_model.tuplet_alteration(code, beats)
-            
-            # update and recalculate the measure presenter since
-            # new tab events where likely created.
-            evt = EditorEvent()
-            evt.ev_type = EditorEvent.SYNC_MODEL_TO_VIEW
-            evt.model = self.track_model 
-            Signals.editor_event.emit(evt)
+            if self.track_model.tuplet_alteration(code, beats):
+                # update and recalculate the measure presenter since
+                # new tab events where likely created.
+                evt = EditorEvent()
+                evt.ev_type = EditorEvent.SYNC_MODEL_TO_VIEW
+                evt.model = self.track_model 
+                Signals.editor_event.emit(evt)
 
     def setTabEvent(self, tab_event : TabEvent):
         """
