@@ -113,16 +113,21 @@ class Track:
         if m.current_tab_event >= len(m.tab_events):
             m.current_tab_event = len(m.tab_events) - 1
 
-    def tuplet_alteration(self, code, beats):
+    def tuplet_alteration(self, code, beats) -> bool:
         
         # if current -> number of beats tab events are rests then
         # delete them from the track we can simply replace with 
         # tuples, if there are any non rests then this operation 
         # is an insert operation and the user will have to fix 
         # the measure.
+        changed = True
         
         cursor = MomentCursor(self)
         first_te = cursor.first()
+
+        if first_te.tuplet_code == code:
+            return False #-> no alteration took place
+
         ref_tab = first_te.clone()
         ref_tab.tuplet_code = code 
 
@@ -172,7 +177,7 @@ class Track:
         # adjust the current tab event and current measure. 
         self._reassemble(teList, ts, m_num)
             
-
+        return changed
 
     def insert_tab_events(self, insList: List[TabEvent]):
         if len(insList) == 0: return

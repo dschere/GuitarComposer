@@ -4,7 +4,6 @@ a canvas for drawing on top of the staff glyphs that span moments in
 a score such as tied notes, legato etc. 
 
 """
-import logging
 from typing import List, Tuple
 from PyQt6.QtWidgets import QWidget
 from PyQt6.QtCore import Qt, QPointF 
