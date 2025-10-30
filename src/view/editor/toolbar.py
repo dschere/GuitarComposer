@@ -307,6 +307,7 @@ class EditorToolbar(QToolBar):
             (label, _) = TupletTypes[tab_event.tuplet_code]
             key = f"{tab_event.tuplet_code} {label}"
         self._tuplet_chooser.setCurrentText(key)
+        self._tuplet_chooser.setEnabled(tab_event.tuplet_option_enabled())
 
 
     def __init__(self, track_model: Track, update_staff_and_tab):
