@@ -154,9 +154,12 @@ class Track:
                 exist_i += 1
                 te_n = te.clone()
                 te_n.tuplet_code = code
+                te_n.tuplet_selected_enabled = i == 0
                 insList.append(te_n)
             else:
-                insList.append( ref_tab.clone() )
+                te_n = ref_tab.clone()
+                te_n.tuplet_selected_enabled = False
+                insList.append(te_n)
 
         c_te, c_m = self.current_moment()
         ts, _, _, _ = self.getMeasureParams(c_m)

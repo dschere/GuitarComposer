@@ -78,7 +78,12 @@ class TabEvent:
         if not hasattr(self, "actual_duration"):
             self.actual_duration = -1           
         if not hasattr(self,"tuplet_code"):
-            self.tuplet_code = TUPLET_DISABLED   
+            self.tuplet_code = TUPLET_DISABLED
+
+    # used to prevent selecting a tuplet while within a tuplet 
+    def tuplet_option_enabled(self) -> bool:
+        return getattr(self,"tuplet_selected_enabled",True)
+
     
     def toggle_tied(self):
         if self.tied_notes[self.string]:
@@ -96,16 +101,17 @@ class TabEvent:
         return sum(self.fret) == (-1 * self.num_gstrings)
     
     def minimum_y_pos_for_tuplet_line(self):
-        rest_y = 140 
+        rest_y = 140
+        stem_size = 50 
         s = set(self.note_ypos)
         if -1 in s:
             s.remove(-1)
         if len(s) == 0:
             return rest_y 
         r = min(s)
-        if r-25 < 25:
-            return 25
-        return r-25
+        if r-stem_size < stem_size:
+            return stem_size
+        return r-stem_size
 
     def __init__(self, num_gstrings):
         super().__init__()
@@ -120,6 +126,7 @@ class TabEvent:
         self.tied_notes = [False] * num_gstrings
 
         self.note_ypos = [-1] * num_gstrings  
+        self.tuplet_selected_enabled = True
         """ 
         tied_notes indicate that a note from a prevent tab event will 
         continue playing for a given string in this event. 
