@@ -14,7 +14,8 @@
 // +/- 12 semitones
 #define PITCH_WHEEL_SENSITIVITY 12
 
-#define AUDIO_SAMPLES 64*64
+//#define AUDIO_SAMPLES 64*64
+#define AUDIO_SAMPLES 64
 #define SAMPLE_RATE  44100 
 
 enum {
