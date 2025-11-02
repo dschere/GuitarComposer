@@ -1,3 +1,4 @@
+from typing import List
 from PyQt6.QtWidgets import (QWidget, QGridLayout, 
                               QSizePolicy, QVBoxLayout, 
                               QToolBar, QButtonGroup, QPushButton, QScrollArea)
@@ -280,6 +281,10 @@ class TrackEditorView(QScrollArea):
     def insert_key(self):
         self.track_presenter.insert_tab_copy()
         self.update_toolbar_track_event() 
+
+    def insert_tab_events(self, teList: List[TabEvent]):
+        self.track_presenter.insert_tab_events(teList)
+        self.update_toolbar_track_event()
 
     def set_fret_value(self, n : int):
         self.track_presenter.set_fret(n)

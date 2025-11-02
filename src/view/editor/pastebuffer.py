@@ -10,6 +10,7 @@ from PyQt6.QtWidgets import QWidget
 class PasteBufferSingleton:
     items : List[TabEventPresenter] = [] 
     active = False
+    tab_items : List[TabEvent] = []
 
     def __init__(self):
         super().__init__()
@@ -26,6 +27,7 @@ class PasteBufferSingleton:
         return len(self.items) == 0
     
     def append(self, item: TabEventPresenter):
+        self.tab_items : List[TabEvent] = []
         self.items.append(item)
 
     def activate(self):
@@ -35,17 +37,27 @@ class PasteBufferSingleton:
         self.active = False
 
     def isActive(self):
-        return self.active    
-    
+        return self.active
+
     def paste(self, track: Track, track_view : QWidget):
-        teList = self.get_tab_events()
-        track.insert_tab_events(teList)
-        self.clear()
-        track_view.update()
+        if len(self.tab_items) > 0:
+            # this is a cut and past operation
+            # track_view is a TrackEditorView
+            self.tab_items.reverse()
+            track_view.insert_tab_events(self.tab_items) # type: ignore
+            self.tab_items.reverse()
+            self.clear()
+            track_view.update()
+        else:
+            # this is a copy and paste operation.
+            self.tab_items = self.get_tab_events()
+            track.insert_tab_events(self.tab_items)
+            self.clear()
+            track_view.update()
         
     def cut(self, track: Track, track_view: QWidget):
-        teList = self.get_tab_events()
-        track.remove_tab_events(teList)
+        self.tab_items = self.get_tab_events()
+        track.remove_tab_events(self.tab_items)
         self.clear()
         track_view.update()
 

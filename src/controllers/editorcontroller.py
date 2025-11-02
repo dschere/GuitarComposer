@@ -175,7 +175,6 @@ class EditorController:
             if evt.new_dur == 0:
                 return
             
-
             def _adjacent_rests() -> List[Tuple[int, TabEvent]]:
                 r = []
                 for n in range(i+1,len(m.tab_events)):
