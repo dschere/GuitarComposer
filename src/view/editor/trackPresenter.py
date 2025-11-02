@@ -1,4 +1,5 @@
 import copy, logging
+from typing import List
 import uuid
 
 from PyQt6.QtWidgets import (QWidget, QHBoxLayout, QScrollArea)
@@ -102,16 +103,23 @@ class TrackPresenter(QWidget):
         dynamic encountered. 
         """    
 
-    def insert_tab_copy(self):
+    def insert_tab_copy(self, te : TabEvent | None = None):
         # create a copy of the current tab and insert
         # a neew tab event after the current one in the measure.
-        new_tab = copy.deepcopy(self.current_tab_event)
+        if te is None:
+            new_tab = copy.deepcopy(self.current_tab_event)
+        else:
+            new_tab = copy.deepcopy(te)
         new_tab.uuid = str(uuid.uuid4())
         
         self.current_measure.insert_after_current(new_tab)
         #self.current_measure.tab_events
         self.current_mp.reset_presentation()
         self.setup()
+
+    def insert_tab_events(self, teList : List[TabEvent]):
+        for te in teList:
+            self.insert_tab_copy(te)
 
     def delete_current_measure(self):
         "Delete current measure unless its the first measure, then ignore"
