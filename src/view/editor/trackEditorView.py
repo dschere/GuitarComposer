@@ -126,6 +126,10 @@ class TrackEditorView(QScrollArea):
             e_evt.ev_type = EditorEvent.CUT_EVENT
             Signals.editor_event.emit(e_evt)
 
+        elif event.key() == Qt.Key.Key_C and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+            e_evt.ev_type = EditorEvent.COPY_EVENT
+            Signals.editor_event.emit(e_evt)
+
         elif event.modifiers() & Qt.KeyboardModifier.ControlModifier:
             self._ctrl_key_pressed = True
         elif event.modifiers() & Qt.KeyboardModifier.AltModifier:
