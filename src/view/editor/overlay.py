@@ -68,6 +68,11 @@ class TupletGroup:
     def __init__(self):
         self.tuplet_code = -1
         self.tab_events : List[Tuple[TabEvent, TabEventPresenter]] = []
+
+    def isFull(self):
+        if self.tuplet_code == TUPLET_DISABLED:
+            return False
+        return len(self.tab_events) == self.tuplet_code    
         
 
     def add(self, te: TabEvent, mp: MeasurePresenter):
@@ -111,40 +116,42 @@ class TupletGroup:
 class TupletGroupRederer:
     def __init__(self, overlay: 'OverlayWidget'): 
         self.overlay = overlay 
-        self.tuplet_group = []
+        self.tuplet_groups = []
         self.current_tuple_group = None 
 
     def reset(self):
-        self.tuplet_group = []
+        self.tuplet_groups = []
         self.current_tuple_group = None 
 
     def on_paint(self, painter: QPainter):
-        for tg in self.tuplet_group:
+        for tg in self.tuplet_groups:
             tg.render_line(painter, self.overlay)
             
 
     def on_tab_event(self, tab_event: TabEvent, mp: MeasurePresenter):
 
-        # New tuplet encountered
-        if self.current_tuple_group is None and tab_event.tuplet_code != TUPLET_DISABLED:
-            # new tuplet group
-            tg = TupletGroup()
-            tg.tuplet_code = tab_event.tuplet_code
-            tg.add(tab_event, mp)
-            self.current_tuple_group = tg 
-            
-        elif isinstance(self.current_tuple_group, TupletGroup):
-            if tab_event.tuplet_code == self.current_tuple_group.tuplet_code:
-                self.current_tuple_group.add(tab_event, mp)
+        # reached a non tuplet, push an existing group 
+        # is there is one and set the current tuplet grouo to none
+        if tab_event.tuplet_code == TUPLET_DISABLED:
+            if isinstance(self.current_tuple_group, TupletGroup):
+                self.tuplet_groups.append(self.current_tuple_group)
+                self.current_tuple_group = None 
+
+        else:
+            add_to_current_group = False
+            if isinstance(self.current_tuple_group, TupletGroup):
+                if not self.current_tuple_group.isFull():
+                    if self.current_tuple_group.tuplet_code == tab_event.tuplet_code:
+                        add_to_current_group = True
+
+            if add_to_current_group:
+                self.current_tuple_group.add(tab_event, mp) # type: ignore
             else:
-                self.tuplet_group.append(self.current_tuple_group)
-                if self.current_tuple_group.tuplet_code == TUPLET_DISABLED:
-                    self.current_tuple_group = None
-                else:
-                    tg = TupletGroup()
-                    tg.tuplet_code = tab_event.tuplet_code
-                    tg.add(tab_event, mp)
-                    self.current_tuple_group = tg 
+                # Not currently adding to a tuple group
+                tg = TupletGroup()
+                tg.tuplet_code = tab_event.tuplet_code
+                tg.add(tab_event, mp)
+                self.current_tuple_group = tg 
 
     
 

@@ -62,9 +62,13 @@ class EditorController:
         if not tmodel: return   
 
         paste_buffer = PasteBufferSingleton()
-        if not evt.control_key_pressed and \
-            not paste_buffer.isEmpty() and \
-                not key in [Qt.Key.Key_Left,Qt.Key.Key_Right]:
+
+        # if we are selecting text for a copy and paste
+        # the control key must be pressed as well as left or right
+        # keys, otherwise clear the cut/paste highlight.
+        if evt.control_key_pressed and key in [Qt.Key.Key_Left,Qt.Key.Key_Right]:
+            pass
+        else:
             paste_buffer.clear()
 
         # Check for arrow keys
@@ -161,8 +165,16 @@ class EditorController:
         tedit : TrackEditorView | None = self.track_editor_view
         if tmodel is not None and tedit is not None: 
             paste_buffer = PasteBufferSingleton()
-            paste_buffer.cut(tmodel, tedit)
-            tedit.model_updated()
+            if paste_buffer.cut(tmodel, tedit):
+                tedit.model_updated()
+
+    def copy_event(self, evt: EditorEvent):
+        tmodel : Track | None = self.track_model
+        tedit : TrackEditorView | None = self.track_editor_view
+        if tmodel is not None and tedit is not None: 
+            paste_buffer = PasteBufferSingleton()
+            if paste_buffer.copy(tmodel, tedit):
+                tedit.model_updated()
 
     def on_rest_dur_changed(self, evt : EditorEvent):
         tmodel : Track | None = self.track_model
@@ -235,6 +247,8 @@ class EditorController:
         EditorEvent.REDO_EVENT: redo_event,
         EditorEvent.PASTE_EVENT: paste_event,
         EditorEvent.CUT_EVENT: cut_event,
+        EditorEvent.COPY_EVENT: copy_event,
+
         EditorEvent.REST_DUR_CHANGED: on_rest_dur_changed,
         EditorEvent.SYNC_MODEL_TO_VIEW: on_model_sync 
     }

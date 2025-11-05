@@ -292,6 +292,10 @@ class TrackPresenter(QWidget):
         new measure.  
         """
         paste_buffer = PasteBufferSingleton()
+        if ctrl_pressed and isinstance(self.current_tep,TabEventPresenter):
+            self.current_tep.set_copy_highlight()
+            paste_buffer.append(self.current_tep)
+        
 
         (next_tab, curr_measure) = self.track_model.next_moment()
         # are there still tabs?
@@ -301,9 +305,6 @@ class TrackPresenter(QWidget):
             self.setup()
             # set the next tab event presenter to show the cursor 
             self.current_tep.cursor_on()
-            if ctrl_pressed:
-                self.current_tep.set_copy_highlight()
-                paste_buffer.append(self.current_tep)
                 
         else:
             # we reached the end we need to create a new measure
