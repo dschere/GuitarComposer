@@ -126,7 +126,7 @@ class TupletGroupRederer:
     def on_paint(self, painter: QPainter):
         for tg in self.tuplet_groups:
             tg.render_line(painter, self.overlay)
-            
+
 
     def on_tab_event(self, tab_event: TabEvent, mp: MeasurePresenter):
 
@@ -138,16 +138,15 @@ class TupletGroupRederer:
                 self.current_tuple_group = None 
 
         else:
-            add_to_current_group = False
             if isinstance(self.current_tuple_group, TupletGroup):
-                if not self.current_tuple_group.isFull():
-                    if self.current_tuple_group.tuplet_code == tab_event.tuplet_code:
-                        add_to_current_group = True
-
-            if add_to_current_group:
-                self.current_tuple_group.add(tab_event, mp) # type: ignore
+                if self.current_tuple_group.tuplet_code == tab_event.tuplet_code:
+                    self.current_tuple_group.add(tab_event, mp) # type: ignore
+                    if self.current_tuple_group.isFull():
+                        # all notes for tuplet apend and setup for the next call.
+                        self.tuplet_groups.append(self.current_tuple_group)
+                        self.current_tuple_group = None 
             else:
-                # Not currently adding to a tuple group
+                # new tuplet group with no current group.
                 tg = TupletGroup()
                 tg.tuplet_code = tab_event.tuplet_code
                 tg.add(tab_event, mp)
