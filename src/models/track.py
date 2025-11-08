@@ -127,6 +127,22 @@ class Track:
 
         if first_te.tuplet_code == code:
             return False #-> no alteration took place
+        elif first_te.tuplet_code != TUPLET_DISABLED:
+            # clear tuplet code for existing tuplet and triplet
+            # and then recompute.
+            cursor2 = MomentCursor(self)
+            first_te = cursor2.first()
+            count = first_te.tuplet_code 
+            first_te.tuplet_code = TUPLET_DISABLED
+            first_te.tuplet_selected_enabled = True
+            count -= 1
+            while count > 0:
+                tab = cursor2.next()
+                if tab is not None:
+                    tab.tuplet_code = TUPLET_DISABLED
+                    tab.tuplet_selected_enabled = True
+                    count -= 1
+            
 
         ref_tab = first_te.clone()
         ref_tab.tuplet_code = code 
