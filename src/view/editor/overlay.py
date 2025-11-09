@@ -96,12 +96,12 @@ class TupletGroup:
         line_points = []
         #start = tp_start.mapTo(w, QPointF(STAFF_SYM_WIDTH/2,y-10))
         #start = tp_start.mapTo(w, QPointF(STAFF_SYM_WIDTH/2,y-10))
-        pt1 = start_tp.mapTo(w, QPointF(STAFF_SYM_WIDTH/2,y+5))
-        pt2 = start_tp.mapTo(w, QPointF(STAFF_SYM_WIDTH/2,y))
+        pt1 = start_tp.mapTo(w, QPointF(STAFF_SYM_WIDTH * 0.1,y+5))
+        pt2 = start_tp.mapTo(w, QPointF(STAFF_SYM_WIDTH * 0.1,y))
 
 
-        pt3 = end_tp.mapTo(w, QPointF(STAFF_SYM_WIDTH/2,y))
-        pt4 = end_tp.mapTo(w, QPointF(STAFF_SYM_WIDTH/2,y+5))
+        pt3 = end_tp.mapTo(w, QPointF(STAFF_SYM_WIDTH * 0.9,y))
+        pt4 = end_tp.mapTo(w, QPointF(STAFF_SYM_WIDTH * 0.9,y+5))
         
         text_x_pos = (pt3.x() - pt2.x())/2 + pt2.x() - 4
         text_y_pos = pt3.y() - 3
