@@ -315,6 +315,10 @@ class TrackEditorView(QScrollArea):
         pass
 
 
+    def enterEvent(self, event):
+        # shift focus to editor with a mouse enter event
+        self.setFocus()
+        return super().enterEvent(event)
 
     def __init__(self):
         super().__init__()
