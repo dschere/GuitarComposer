@@ -153,8 +153,6 @@ class TabEvent:
     
         self.render_dynamic = False 
         self.dynamic = Dynamic.MP
-        self.triplet = False
-        self.quintuplet = False
 
         # Index into TupletTypes, 0 indicates disabled. 
         self.tuplet_code = TUPLET_DISABLED
@@ -194,10 +192,6 @@ class TabEvent:
                 beats *= 1.5
             if self.double_dotted:
                 beats *= 1.75
-            if self.triplet:
-                beats *= 0.6666
-            if self.quintuplet:
-                beats *= 0.2
             if self.tuplet_code in TupletTypes:
                 (_, tuplet_beats) = TupletTypes[self.tuplet_code]
                 m = tuplet_beats / (0.5 * self.tuplet_code)

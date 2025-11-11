@@ -406,8 +406,6 @@ class Track:
             te.dynamic = inherit.dynamic
             te.legato = inherit.legato
             te.staccato = inherit.stacatto
-            te.triplet = inherit.triplet
-            te.quintuplet = inherit.quintuplet
         return te
 
     def computeMidiCodes(self, te: TabEvent):
