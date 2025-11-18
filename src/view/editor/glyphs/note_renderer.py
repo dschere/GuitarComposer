@@ -76,7 +76,7 @@ class note_renderer:
             DT.WHOLE: WHOLE_NOTE,
             DT.HALF: HALF_NOTE,
             DT.QUARTER: QUATER_NOTE,
-            DT.EIGHT: EIGTH_NOTE,
+            DT.EIGHTH: EIGTH_NOTE,
             DT.SIXTEENTH: SIXTEENTH_NOTE,
             DT.THIRTYSECOND: THRITYSEC_NOTE,
             DT.SIXTYFORTH: SIXTYFORTH_NOTE
@@ -87,7 +87,7 @@ class note_renderer:
             DT.WHOLE: WHOLE_REST,
             DT.HALF: HALF_REST,
             DT.QUARTER: QUATER_REST,
-            DT.EIGHT: EIGHTH_REST,
+            DT.EIGHTH: EIGHTH_REST,
             DT.SIXTEENTH: SIXTEENTH_REST,
             DT.THIRTYSECOND: THRITYSEC_REST,
             DT.SIXTYFORTH: SIXTYFORTH_REST

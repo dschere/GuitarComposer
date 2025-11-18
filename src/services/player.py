@@ -6,7 +6,7 @@ Processes track(s) and allows user to rewind pause skip etc.
 """
 
 from typing import List, Tuple
-from models.measure import Measure, TabEvent
+from models.measure import Measure, TabEvent, DynamicVariance
 from models.song import Song
 from models.track import Track
 from PyQt6.QtCore import QObject, QTimer, QThread, pyqtSignal
@@ -148,6 +148,7 @@ class track_player_api(QObject):
         self.is_playing = is_playing
         self.start_measure = start_measure
         self.timer_loop_lock = Lock()
+        self.current_dynamic_variance : DynamicVariance | None = None
 
         self.linear_tabs = [] 
         self.linear_tab_idx = 0
@@ -204,7 +205,24 @@ class track_player_api(QObject):
                 Signals.player_visual_event.emit(p_evt)
 
             beat_duration = ts.beat_duration()
-            duration = self.intrument.tab_event(tab_event, bpm, beat_duration)
+
+            override_velocity = -1
+            if tab_event.dynamic_variance != None:
+                if not tab_event.dynamic_variance.enabled:
+                    self.current_dynamic_variance = None 
+                else:
+                    if self.current_dynamic_variance == None:
+                        tab_event.dynamic_variance.reset()
+                        self.current_dynamic_variance = tab_event.dynamic_variance
+
+            if self.current_dynamic_variance:
+                override_velocity = self.current_dynamic_variance.getDynamic( # type: ignore
+                    ts.beats_per_measure,
+                    tab_event.duration,
+                    tab_event.dynamic
+                )
+
+            duration = self.intrument.tab_event(tab_event, bpm, beat_duration, override_velocity)
             
             # call next moment 
             self.timer_id = self.timer.start(duration, 

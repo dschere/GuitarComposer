@@ -16,7 +16,9 @@ from view.editor.glyphs.common import (BEND_SYMBOL, NO_ARTICULATION, ORNAMENT_AR
                                        STAFF_SYM_WIDTH, 
                                        ORNAMENT_MARKING_HEIGHT, 
                                        LEGATO, 
-                                       STACCATO, DOWNSTROKE, UPSTROKE)
+                                       STACCATO, DOWNSTROKE, UPSTROKE,
+                                       WAVY_VLINE, SPEAKER_WITH_SOUNDWAVES
+                                    )
 from models.track import TabEvent
 from PyQt6.QtGui import QPainter, QFont
 import math
@@ -174,9 +176,15 @@ class oramental_markings(Canvas):
             self.draw_symbol(painter, UPSTROKE,x=10, 
                     y=ORNAMENT_STROKE_Y, draw_lines=False, color=self.stroke_color) 
         
+        if self.tab_event.dynamic_variance is not None:
+            t = WAVY_VLINE + SPEAKER_WITH_SOUNDWAVES
+            self.draw_symbol(painter, t, x=20, y=ORNAMENT_DYNAMIC_Y, 
+                draw_lines=False, size=10, italic=True, color=(255, 215, 0)) 
+            
         if self.tab_event.render_dynamic:
             t = Dynamic.short_text(self.tab_event.dynamic)
             self.draw_symbol(painter, t, x=20, y=ORNAMENT_DYNAMIC_Y, 
                 draw_lines=False, size=10, italic=True, color=(255, 215, 0)) 
+            
             
             

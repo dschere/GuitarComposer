@@ -39,6 +39,7 @@ from music.constants import Dynamic
 from models.track import TabEvent, Track
 from view.events import StringBendEvent, EditorEvent, Signals
 from models.measure import TupletTypes, TUPLET_DISABLED, TupletTypes
+from view.dialogs.dynamicVariance import DynamicVarianceDialog
 
 
 DOTTED = GHOST_NOTEHEAD
@@ -310,6 +311,40 @@ class EditorToolbar(QToolBar):
         self._tuplet_chooser.setEnabled(tab_event.tuplet_option_enabled())
 
 
+        if tab_event.dynamic_variance is not None:
+            if tab_event.dynamic_variance.isEnabled():
+                self.dynamic_variance_active()
+            else:
+                self.dynamic_variance_inactive()
+
+
+    def dynamic_varince_btn_clicked(self):
+        (te, _) = self.track_model.current_moment()
+        dialog = DynamicVarianceDialog(te)
+        dialog.exec()
+        print(f"te.dynamic_variance = {te.dynamic_variance}")
+        if te.dynamic_variance is not None:
+            if te.dynamic_variance.isEnabled():
+                self.dynamic_variance_active()
+            else:
+                self.dynamic_variance_inactive()
+        self.update_staff_and_tab()
+
+    def dynamic_variance_active(self):
+        self.dynamic_varince_btn.setStyleSheet("""
+            QPushButton {
+                 border: 2px solid gold;
+            }
+        """)
+
+    def dynamic_variance_inactive(self):
+        self.dynamic_varince_btn.setStyleSheet("""
+            QPushButton {
+                 border: 2px solid silver;
+            }
+        """)
+
+
     def __init__(self, track_model: Track, update_staff_and_tab):
         super().__init__()
         self.track_model = track_model 
@@ -412,6 +447,14 @@ class EditorToolbar(QToolBar):
         for btn in self._dyn_btns:
             self._dyn_grp.addButton(btn) 
             dyn_container.add_item(btn)
+
+        self.dynamic_varince_btn = QPushButton("≡")      # Hamburger icon
+        self.dynamic_varince_btn.setFixedSize(32,32)
+        self.dynamic_varince_btn.setToolTip("Create a pattern that changes dynamic based on the beat")
+        self.dynamic_varince_btn.clicked.connect(self.dynamic_varince_btn_clicked)
+        self.dynamic_variance_inactive()
+        dyn_container.add_item(self.dynamic_varince_btn)
+
         self.addWidget(dyn_container) 
         self._dyn_grp.selected.connect(self._dyn_selected)    
         self.addSeparator()
