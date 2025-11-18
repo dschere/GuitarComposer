@@ -5,7 +5,7 @@ class _Duration:
     WHOLE = 4.0
     HALF = 2.0
     QUARTER = 1.0
-    EIGHT = 0.5
+    EIGHTH = 0.5
     SIXTEENTH = 0.25
     THRISTYSECOND = 0.125
     SIXTYFORTH = 0.0625

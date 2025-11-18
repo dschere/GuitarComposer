@@ -160,7 +160,6 @@ class TrackPresenter(QWidget):
                 te.string = evt.gstring
                 self.setup()
 
-
     def __init__(self, track_model: Track):
         super().__init__()
         #self.setWidgetResizable(True)

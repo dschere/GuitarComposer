@@ -10,7 +10,7 @@ from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import QFileDialog
 from singleton_decorator import singleton
 
-from models.measure import Measure, TabEvent
+from models.measure import Measure, TabEvent # type: ignore
 from models.note import Note
 from models.param import EffectParameter
 from models.track import Track

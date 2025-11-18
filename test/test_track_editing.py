@@ -55,7 +55,7 @@ class TestTrackMoments(unittest.TestCase):
         staff_e.signature = "6/8"
         r = staff_e.compute_timespec()
         assert(r.beats_per_measure == 6)
-        assert(r.beat_duration == EIGHT)   
+        assert(r.beat_duration == EIGHTH)   
 
         dt = DurationTable
         

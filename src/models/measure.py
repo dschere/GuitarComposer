@@ -10,6 +10,46 @@ import uuid
 import copy
 from collections import OrderedDict
 
+class DynamicVariance:
+    def __init__(self):
+        # set by user
+        self.dynamic_pattern : List[int] = []
+        self.duration = 1.0
+        self.repeat_per_measure = True 
+        self.enabled = True
+
+        # these are for book keeping for the player
+        self.beat_count = 0.0
+
+    def isEnabled(self):
+        return self.enabled
+    
+    def setEnabled(self, e: bool):
+        self.enabled = e
+
+    def reset(self):
+        self.beat_count = 0.0
+        
+    def getDynamic(self, beats_per_measure: int, beats: float, default: int) -> int:
+        d = default
+        plen = len(self.dynamic_pattern)
+        if self.enabled and plen > 0:
+            units = int(self.beat_count / self.duration)
+            if self.repeat_per_measure:
+                units = units % beats_per_measure
+            d = self.dynamic_pattern[units % plen]
+
+            self.beat_count += beats 
+            if self.beat_count > (plen * self.duration):
+                self.beat_count -= (plen * self.duration)
+
+            if self.repeat_per_measure and self.beat_count >= beats_per_measure:
+                self.beat_count = 0.0
+
+        return d
+        
+        
+
 class TimeSig:
     def __init__(self):
         # number of beat notes per measure 
@@ -153,6 +193,7 @@ class TabEvent:
     
         self.render_dynamic = False 
         self.dynamic = Dynamic.MP
+        self.dynamic_variance : DynamicVariance | None  = None
 
         # Index into TupletTypes, 0 indicates disabled. 
         self.tuplet_code = TUPLET_DISABLED

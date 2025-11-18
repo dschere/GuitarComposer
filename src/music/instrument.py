@@ -190,7 +190,7 @@ class Instrument:
         self.last_effects = ef
 
 
-    def tab_event(self, te: TabEvent, bpm: int, beat_duration: float):
+    def tab_event(self, te: TabEvent, bpm: int, beat_duration: float, override_velocity = -1):
         """
             generate a series of notes, effects etc in response to tab
             return the floating point number of seconds for the duration
@@ -206,7 +206,7 @@ class Instrument:
             self.setup_effects(te.effects)
 
         if te_type == te.REST:
-            n = Note()
+            n = Note() 
             n.rest = True
             n.duration = ev_dur
             self.noteoff_events(n, bpm)
@@ -223,7 +223,10 @@ class Instrument:
                     n.string = string
                     n.midi_code = self.tuning[string] + fret_val 
                     n.pitch_changes = te.pitch_changes
-                    n.velocity = te.dynamic
+                    if override_velocity == -1:
+                        n.velocity = te.dynamic
+                    else:
+                        n.velocity = override_velocity
                     if te.dynamic is None:
                         print("break")
                     
