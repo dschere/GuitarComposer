@@ -234,6 +234,10 @@ class EditorController:
             self.track_editor_view.model_updated() 
             self.track_editor_view.setFocus()
 
+    def on_focus(self, evt: EditorEvent):
+        if self.track_editor_view:
+            self.track_editor_view.setFocus()
+
     dispatch = {
         EditorEvent.ADD_MODEL: add_model,
         EditorEvent.ADD_TRACK_EDITOR: add_editor,
@@ -250,7 +254,8 @@ class EditorController:
         EditorEvent.COPY_EVENT: copy_event,
 
         EditorEvent.REST_DUR_CHANGED: on_rest_dur_changed,
-        EditorEvent.SYNC_MODEL_TO_VIEW: on_model_sync 
+        EditorEvent.SYNC_MODEL_TO_VIEW: on_model_sync,
+        EditorEvent.FOCUS: on_focus 
     }
 
     def editor_event(self, evt: EditorEvent):

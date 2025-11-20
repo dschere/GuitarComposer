@@ -66,6 +66,9 @@ class GuitarFretboard(QWidget):
                     self.string_playing_note[n.string] = None
                 self._update_active_notes(n)
 
+                e = EditorEvent(EditorEvent.FOCUS)
+                Signals.editor_event.emit(e)
+
     def editor_event(self, evt: EditorEvent):
         if evt.ev_type == EditorEvent.ADD_MODEL:
             if evt.model:

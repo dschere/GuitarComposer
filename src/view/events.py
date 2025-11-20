@@ -70,6 +70,8 @@ class EditorEvent:
     REST_DUR_CHANGED = 13
     SYNC_MODEL_TO_VIEW = 14
 
+    FOCUS = 15
+
     def __init__(self, evt_type = -1):
         self.ev_type = evt_type
         self.model : Track | None = None
