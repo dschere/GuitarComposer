@@ -91,7 +91,7 @@ class EditorController:
             (tab_event, _) = tmodel.current_moment()
 
             # use the key to update the tablature cursor
-            self.key_proc.proc(key, tab_event) 
+            self.key_proc.proc(key, tab_event, tmodel) 
 
             # render the updated tab event model.
             tedit.current_tab_event_updated()

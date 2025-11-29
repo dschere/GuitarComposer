@@ -61,9 +61,10 @@ class note_renderer:
             text = midi_codes.name(midi, '#')
             painter.drawText(0, offset * inc, text)
 
-    def __init__(self, cleff, dot_count=0):
+    def __init__(self, cleff, dot_count=0, drum_track=False):
         self.cleff = cleff
         self.dot_count = dot_count
+        self.drum_track = drum_track
 
     def get_note_head_text(self, dtype):
         return {
@@ -95,6 +96,8 @@ class note_renderer:
 
     def get_y_coord(self, midi_code, accent):
         # global sharp_step_table, flat_step_table
+        if not 24 <= midi_code < 128:
+            return -1
 
         line_spacing = STAFF_LINE_SPACING
         y_start = STAFF_Y_START - 7
@@ -115,6 +118,9 @@ class note_renderer:
             return int(offset + (self.flat_step_table[midi_code] * inc))
 
     def draw_note_accent(self, painter, conf, midi_code, accent, x):
+        if not 24 <= midi_code < 128:
+            return
+        
         y = self.get_y_coord(midi_code, accent)
 
         # do we need to render a # or b infront of the note?
@@ -150,6 +156,9 @@ class note_renderer:
         accent_spacing = STAFF_ACCENT_SPACING
         text_font_size = STAFF_TEXT_FONT_SIZE
         text_font = STAFF_TEXT_FONT
+
+        if not 24 <= midi_code < 128:
+            return -1
 
         y = self.get_y_coord(midi_code, accent)
         # do we need to render a # or b infront of the note?
@@ -206,6 +215,9 @@ class note_renderer:
 
         low_y = self.get_y_coord(midi_code_list[0], accent)
         high_y = self.get_y_coord(midi_code_list[-1], accent)
+
+        if -1 in (low_y, high_y):
+            return
 
         notehead_offset = int(STAFF_TEXT_FONT_SIZE/7)
         painter.drawLine(
