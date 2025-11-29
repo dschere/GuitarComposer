@@ -124,6 +124,7 @@ class synthservice:
         return gcsynth.noteoff(channel, midicode)
 
     def noteon(self, channel: int, midicode: int, velocity: int):
+        print(f"gcsynth.noteon(channel={channel}, midicode={midicode}, velocity={velocity})")
         return gcsynth.noteon(channel, midicode, velocity)
 
     def select(self,

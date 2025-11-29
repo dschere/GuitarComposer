@@ -1,6 +1,6 @@
 from typing import List, Tuple
-from PyQt6.QtWidgets import (QHBoxLayout, QDialogButtonBox,
-                             QDialog, QLineEdit, QLabel,QSpinBox,
+from PyQt6.QtWidgets import (QHBoxLayout, QDialogButtonBox, QGridLayout,
+                             QDialog, QLineEdit, QLabel,QSpinBox, QCheckBox,
                              QVBoxLayout, QComboBox, QGroupBox, QPushButton)
 from PyQt6.QtCore import Qt
 
@@ -179,6 +179,7 @@ class TrackPropertiesDialog(QDialog):
         m.timesig = self.getTimeSig()
         m.bpm = self.bpm_sb.value()
         self.track_model.instrument_name = self.instruments_combo_box.currentText()
+        self.track_model.drum_track = self.drum_track_enable.isChecked()
 
         evt = EditorEvent()
         evt.ev_type = EditorEvent.ADD_MODEL
@@ -209,7 +210,6 @@ class TrackPropertiesDialog(QDialog):
 
         # line 1 is text box that allows the user to search an instrument.
         instr_group_box = QGroupBox(LabelText.instruments)
-        instr_group_layout = QVBoxLayout()
 
         filter_layout = QHBoxLayout()
         filter_label = QLabel("filter", self)
@@ -221,7 +221,6 @@ class TrackPropertiesDialog(QDialog):
         filter_layout.addWidget(self.filter_input)
 
         # line 2 is a combobox of sorted instruments
-        combo_layout = QHBoxLayout()
         combo_label = QLabel("name", self)
         self.instruments_combo_box = QComboBox(self)
         self.instruments_combo_box.addItems(self.instrument_names)
@@ -230,13 +229,20 @@ class TrackPropertiesDialog(QDialog):
         f = self._on_instrument_selected
         self.instruments_combo_box.currentIndexChanged.connect(f)
 
-        combo_layout.addWidget(combo_label)
-        combo_layout.addWidget(self.instruments_combo_box)
 
-        instr_group_layout.addLayout(filter_layout)
-        instr_group_layout.addLayout(combo_layout)
+        percussion_label = QLabel("percussion")
+        self.drum_track_enable = QCheckBox()
+        self.drum_track_enable.setChecked(track_model.drum_track) 
+    
+        instruments_layout = QGridLayout()
+        instruments_layout.addWidget(filter_label, 0, 0)
+        instruments_layout.addWidget(self.filter_input, 0, 1)
+        instruments_layout.addWidget(combo_label, 1, 0)
+        instruments_layout.addWidget(self.instruments_combo_box, 1, 1)
+        instruments_layout.addWidget(percussion_label, 2, 0)
+        instruments_layout.addWidget(self.drum_track_enable, 2, 1)
 
-        instr_group_box.setLayout(instr_group_layout)
+        instr_group_box.setLayout(instruments_layout)
 
         # line 3 tuning
         tuning_box = self.tuning_section()

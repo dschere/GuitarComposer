@@ -190,7 +190,7 @@ class Instrument:
         self.last_effects = ef
 
 
-    def tab_event(self, te: TabEvent, bpm: int, beat_duration: float, override_velocity = -1):
+    def tab_event(self, te: TabEvent, bpm: int, beat_duration: float, override_velocity = -1, drum_track=False):
         """
             generate a series of notes, effects etc in response to tab
             return the floating point number of seconds for the duration
@@ -221,7 +221,10 @@ class Instrument:
                     n.rest = False
                     n.fret = fret_val 
                     n.string = string
-                    n.midi_code = self.tuning[string] + fret_val 
+                    if drum_track:
+                        n.midi_code = fret_val
+                    else:
+                        n.midi_code = self.tuning[string] + fret_val 
                     n.pitch_changes = te.pitch_changes
                     if override_velocity == -1:
                         n.velocity = te.dynamic
@@ -255,7 +258,10 @@ class Instrument:
                     n.rest = False
                     n.fret = fret_val 
                     n.string = string
-                    n.midi_code = self.tuning[string] + fret_val 
+                    if drum_track:
+                        n.midi_code = fret_val
+                    else:
+                        n.midi_code = self.tuning[string] + fret_val 
                     n.pitch_changes = te.pitch_changes
                     n.velocity = te.getDynamic()
                     # slightly decay velocity as we pick through the strings 
@@ -324,7 +330,8 @@ class Instrument:
 
 
         for (chan, velocity_mul) in chan_mix:
-            midicode = self.tuning[n.string] + n.fret # type: ignore
+            #midicode = self.tuning[n.string] + n.fret # type: ignore
+            midicode = n.midi_code
             velocity = int(n.velocity * velocity_mul)
 
             # set of timers associated with this channel and guitar string

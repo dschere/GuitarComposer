@@ -97,14 +97,14 @@ class StaffGlyph(Canvas):
         m : Measure = self.m
         dot_count = int(tc.dotted) + int(tc.double_dotted)
         
-        return note_renderer(self.cleff, dot_count)
+        return note_renderer(self.cleff, dot_count, self.track_model.drum_track)
     
     def _get_chord_note_renderers(self):
         tc : TabEvent = self.te
         m : Measure = self.m
         dot_count = int(tc.dotted) + int(tc.double_dotted)
         
-        return (note_renderer(self.cleff, 0), note_renderer(self.cleff, dot_count))
+        return (note_renderer(self.cleff, 0), note_renderer(self.cleff, dot_count, self.track_model.drum_track))
 
 
     def _render_note(self, painter):
@@ -114,9 +114,12 @@ class StaffGlyph(Canvas):
         # find note
         for (gstring,fret) in enumerate(te.fret):
             if fret != -1:
-                tuning = self.track_model.tuning
-                base_midi_code = tuning[gstring]
-                midi_code = midi_codes.midi_code(base_midi_code) + fret
+                if self.track_model.drum_track:
+                    midi_code = fret
+                else:
+                    tuning = self.track_model.tuning
+                    base_midi_code = tuning[gstring]
+                    midi_code = midi_codes.midi_code(base_midi_code) + fret
                 y = r.draw_note(painter, midi_code, self.accent, te.duration)
                 te.note_ypos[gstring] = y
                 break
@@ -133,7 +136,10 @@ class StaffGlyph(Canvas):
             if fret != -1:
                 tuning = self.track_model.tuning
                 base_midi_code = tuning[gstring]
-                midi_code = midi_codes.midi_code(base_midi_code) + fret
+                if self.track_model.drum_track:
+                    midi_code = fret
+                else:
+                    midi_code = midi_codes.midi_code(base_midi_code) + fret
                 y = r1.get_y_coord(midi_code, self.accent)
                 te.note_ypos[gstring] = y 
 

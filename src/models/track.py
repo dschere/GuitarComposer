@@ -8,7 +8,6 @@ from music.constants import Dynamic
 from music.durationtypes import QUARTER
 from services.effectRepo import EffectRepository
 
-
 class MomentCursor:
     def __init__(self, t : 'Track'):
         self.t = t
@@ -233,6 +232,13 @@ class Track:
         assert(key)        
         return (ts, bpm, key, cleff)
 
+    def __setstate__(self, state):
+        # support migration
+        self.__dict__.update(state)
+        
+        if not hasattr(self, "drum_track"):
+            self.drum_track = False
+
     def __init__(self, cleff = None):
         self.track_edit_id = ""
         self.instrument_name = "Acoustic Guitar"
@@ -246,6 +252,7 @@ class Track:
             "E2"
         ]
         self.current_measure = 0
+        self.drum_track = False
 
         # create a default Measure as a starter
         # 4/4 time, bpm 120 and in the key of C

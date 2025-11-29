@@ -16,7 +16,7 @@ from PyQt6.QtCore import Qt
 from models.measure import Measure, TabEvent
 
 from view.editor import glyphs
-from view.editor.glyphs.common import ORNAMENT_MARKING_HEIGHT, STAFF_ABOVE_LINES, STAFF_HEIGHT, STAFF_LINE_SPACING, STAFF_NUMBER_OF_LINES, STAFF_SYM_WIDTH
+from view.editor.glyphs.common import DRUM_CLEFF, ORNAMENT_MARKING_HEIGHT, STAFF_ABOVE_LINES, STAFF_HEIGHT, STAFF_LINE_SPACING, STAFF_NUMBER_OF_LINES, STAFF_SYM_WIDTH
 from view.editor.tabEventPresenter import TabEventPresenter 
 from models.track import Track
 from typing import Dict, List
@@ -183,8 +183,11 @@ class MeasurePresenter(QWidget):
     def create_staff_if_needed(self):
         # Are there staff changes in this measure?
         if self.measure.staff_changes:
+            cleff = self.measure.cleff 
+            if self.track_model.drum_track:
+                cleff = DRUM_CLEFF
             self.staff_header = StaffHeader(self.track_model,
-                self.measure.cleff,
+                cleff,
                 self.measure.key,
                 self.measure.timesig,
                 self.measure.bpm

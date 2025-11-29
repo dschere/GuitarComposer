@@ -1,0 +1,216 @@
+{
+    "Agogo": [
+        [
+            67,
+            "High Agogo"
+        ],
+        [
+            68,
+            "Low Agogo"
+        ]
+    ],
+    "Bass": [
+        [
+            35,
+            "Acoustic Bass Drum"
+        ],
+        [
+            36,
+            "Bass Drum 1"
+        ]
+    ],
+    "Bell": [
+        [
+            53,
+            "Ride Bell"
+        ],
+        [
+            56,
+            "Cow Bell"
+        ]
+    ],
+    "Block": [
+        [
+            76,
+            "Hi Wood Block"
+        ],
+        [
+            77,
+            "Low Wood Block"
+        ]
+    ],
+    "Bongo": [
+        [
+            60,
+            "Hi Bongo"
+        ],
+        [
+            61,
+            "Low Bongo"
+        ]
+    ],
+    "Conga": [
+        [
+            62,
+            "Mute Hi Conga"
+        ],
+        [
+            63,
+            "Open Hi Conga"
+        ],
+        [
+            64,
+            "Low Conga"
+        ]
+    ],
+    "Cuica": [
+        [
+            78,
+            "Mute Cuica"
+        ],
+        [
+            79,
+            "Open Cuica"
+        ]
+    ],
+    "Cymbal": [
+        [
+            59,
+            "Ride Cymbal 2"
+        ],
+        [
+            49,
+            "Crash Cymbal 1"
+        ],
+        [
+            51,
+            "Ride Cymbal 1"
+        ],
+        [
+            52,
+            "Chinese Cymbal"
+        ],
+        [
+            55,
+            "Splash Cymbal"
+        ],
+        [
+            57,
+            "Crash Cymbal 2"
+        ]
+    ],
+    "Guiro": [
+        [
+            73,
+            "Short Guiro"
+        ],
+        [
+            74,
+            "Long Guiro"
+        ]
+    ],
+    "Hi-Hat": [
+        [
+            42,
+            "Closed Hi-Hat"
+        ],
+        [
+            44,
+            "Pedal Hi-Hat"
+        ],
+        [
+            46,
+            "Open Hi-Hat"
+        ]
+    ],
+    "Misc": [
+        [
+            37,
+            "Side Stick"
+        ],
+        [
+            39,
+            "Hand Clap"
+        ],
+        [
+            69,
+            "Cabasa"
+        ],
+        [
+            70,
+            "Maracas"
+        ],
+        [
+            71,
+            "Short Whistle"
+        ],
+        [
+            72,
+            "Long Whistle"
+        ],
+        [
+            75,
+            "Claves"
+        ],
+        [
+            54,
+            "Tambourine"
+        ]
+    ],
+    "Snare": [
+        [
+            38,
+            "Acoustic Snare"
+        ],
+        [
+            40,
+            "Electric Snare"
+        ]
+    ],
+    "Timbale": [
+        [
+            65,
+            "High Timbale"
+        ],
+        [
+            66,
+            "Low Timbale"
+        ]
+    ],
+    "Tom": [
+        [
+            41,
+            "Low Floor Tom"
+        ],
+        [
+            43,
+            "High Floor Tom"
+        ],
+        [
+            45,
+            "Low Tom"
+        ],
+        [
+            47,
+            "Low-Mid Tom"
+        ],
+        [
+            48,
+            "Hi Mid Tom"
+        ],
+        [
+            50,
+            "High Tom"
+        ]
+    ],
+    "Triangle": [
+        [
+            80,
+            "Mute Triangle"
+        ],
+        [
+            81,
+            "Open Triangle"
+        ]
+    ]
+}

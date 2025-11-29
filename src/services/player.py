@@ -38,7 +38,7 @@ def PlayMoment(track: Track, instrument: Instrument):
     Signals.player_visual_event.emit(on_evt)
 
     beat_duration = ts.beat_duration()
-    duration = instrument.tab_event(tab_event, bpm, beat_duration)
+    duration = instrument.tab_event(tab_event, bpm, beat_duration, -1, track.drum_track)
 
     class turn_off_highlight:
         def __init__(self, tab_event):
@@ -172,7 +172,7 @@ class track_player_api(QObject):
         Signals.player_visual_event.emit(evt)
 
         beat_duration = ts.beat_duration()
-        duration = self.intrument.tab_event(tab_event, bpm, beat_duration)
+        duration = self.intrument.tab_event(tab_event, bpm, beat_duration, -1, self.track.drum_track)
         r = self.track.next_moment()
 
         return (duration,type(r) != type(None))
@@ -222,7 +222,8 @@ class track_player_api(QObject):
                     tab_event.dynamic
                 )
 
-            duration = self.intrument.tab_event(tab_event, bpm, beat_duration, override_velocity)
+            duration = self.intrument.tab_event(tab_event, bpm, beat_duration, \
+                override_velocity, self.track.drum_track)
             
             # call next moment 
             self.timer_id = self.timer.start(duration, 

@@ -1,6 +1,6 @@
 from PyQt6.QtCore import Qt
 
-from models.track import TabEvent
+from models.track import TabEvent, Track
 from view.config import EditorKeyMap
 from view.events import Signals, EditorEvent
 
@@ -13,8 +13,18 @@ class KeyProcessor:
         self._buffer = []
         self._buf_maxlen = 3
 
-    def fret_value(self, key, te: TabEvent):
+    def fret_value(self, key, te: TabEvent, tm: Track):
         if key >= Qt.Key.Key_0 and key <= Qt.Key.Key_9: 
+            if tm.drum_track:
+                n = key - Qt.Key.Key_0
+                if te.fret[te.string] == -1:
+                    te.fret[te.string] = n 
+                elif te.fret[te.string] < 10:
+                    te.fret[te.string] = (te.fret[te.string]*10) + n 
+                else:
+                    te.fret[te.string] = n
+                return
+
             if te.fret[te.string] == 1:
                 te.fret[te.string] = 10 + key - Qt.Key.Key_0
             elif te.fret[te.string] == 2:
@@ -98,7 +108,7 @@ class KeyProcessor:
 
         return True
 
-    def proc(self, key, te: TabEvent):
+    def proc(self, key, te: TabEvent, tm: Track):
         km = EditorKeyMap()    
 
         # see if the key srokes form a dynamic setting
@@ -140,4 +150,4 @@ class KeyProcessor:
         elif key == km.END_REPEAT:
             Signals.editor_event.emit(EditorEvent(EditorEvent.MEASURE_REPEAT_END_KEY))
         else:
-            self.fret_value(key, te)
+            self.fret_value(key, te, tm)
