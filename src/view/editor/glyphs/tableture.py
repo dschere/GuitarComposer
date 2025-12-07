@@ -142,7 +142,7 @@ class TabletureGlyph(Canvas):
         painter.setPen(p)
 
         # Must be called before draw_tab_notes
-        x = int(self.c_width * 0.22)
+        x = int(self.c_width * 0.1)
         width = int(2*self.c_width/3)
         n : int = gstring  # type: ignore
         y = (n * TABLATURE_LINE_SPACE) + int(3 * TABLATURE_LINE_SPACE/10)
@@ -156,9 +156,11 @@ class TabletureGlyph(Canvas):
             painter.eraseRect(x+1, y+1, width-1, width-1)
 
     def draw_tab_notes(self, painter, gstring, fret, opts):
-        x = int(self.c_width/4) + 10
+        #x = int(self.c_width/4) + 10
+        x = 10
         width = int(self.c_width/2)
         y = gstring * TABLATURE_LINE_SPACE
+        
         painter.eraseRect(x+1, y+1, width-1, width-1)
         if fret != -1:
             sym_color = GuitarFretboardStyle.orament_color_rgb

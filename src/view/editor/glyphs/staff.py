@@ -115,7 +115,7 @@ class StaffGlyph(Canvas):
         for (gstring,fret) in enumerate(te.fret):
             if fret != -1:
                 if self.track_model.drum_track:
-                    midi_code = fret
+                    midi_code = fret + 12
                 else:
                     tuning = self.track_model.tuning
                     base_midi_code = tuning[gstring]
@@ -137,7 +137,7 @@ class StaffGlyph(Canvas):
                 tuning = self.track_model.tuning
                 base_midi_code = tuning[gstring]
                 if self.track_model.drum_track:
-                    midi_code = fret
+                    midi_code = fret + 12
                 else:
                     midi_code = midi_codes.midi_code(base_midi_code) + fret
                 y = r1.get_y_coord(midi_code, self.accent)
