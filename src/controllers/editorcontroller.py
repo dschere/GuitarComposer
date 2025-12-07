@@ -238,6 +238,15 @@ class EditorController:
         if self.track_editor_view:
             self.track_editor_view.setFocus()
 
+    def on_drumcode_select(self, evt: EditorEvent):
+        tmodel : Track | None = self.track_model
+        tedit : TrackEditorView | None = self.track_editor_view
+        if tmodel and tedit:
+            te, _ = tmodel.current_moment()
+            te.fret[te.string] = evt.midi_drum_code
+            tedit.current_tab_event_updated()
+            tedit.setFocus()
+
     dispatch = {
         EditorEvent.ADD_MODEL: add_model,
         EditorEvent.ADD_TRACK_EDITOR: add_editor,
@@ -255,7 +264,8 @@ class EditorController:
 
         EditorEvent.REST_DUR_CHANGED: on_rest_dur_changed,
         EditorEvent.SYNC_MODEL_TO_VIEW: on_model_sync,
-        EditorEvent.FOCUS: on_focus 
+        EditorEvent.FOCUS: on_focus,
+        EditorEvent.DRUM_DIALOG_SELECT: on_drumcode_select
     }
 
     def editor_event(self, evt: EditorEvent):

@@ -71,6 +71,7 @@ class EditorEvent:
     SYNC_MODEL_TO_VIEW = 14
 
     FOCUS = 15
+    DRUM_DIALOG_SELECT = 16
 
     def __init__(self, evt_type = -1):
         self.ev_type = evt_type
@@ -83,6 +84,7 @@ class EditorEvent:
         self.control_key_pressed = False
         self.new_dur = 0
         self.dur_change = 0
+        self.midi_drum_code = -1
 
 class PlayerEvent:
     UNINITIALIZED = -1
