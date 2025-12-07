@@ -17,6 +17,7 @@ from view.events import EditorEvent, Signals, PlayerVisualEvent
 from singleton_decorator import singleton 
 from .measureNavigation import MeasureNavigation
 from view.config import EditorKeyMap
+from view.dialogs.drumCodeDialog import DrumCodeDialog
 
 @singleton
 class TrackEditorData:
@@ -157,10 +158,19 @@ class TrackEditorView(QScrollArea):
     API for the editorcontroller
     
     """    
+    drum_code_dialog = None
+
+    def on_dialog_closed(self):
+        self.drum_code_dialog = None
 
     def set_track_model(self, track_model: Track):
         (tab_event, _) = track_model.current_moment() # type: ignore
         # main layout for toolbar and scrolling area
+
+        if track_model.drum_track and self.drum_code_dialog is None:
+            self.drum_code_dialog = DrumCodeDialog()
+            self.drum_code_dialog.show()
+            self.drum_code_dialog.finished.connect(self.on_dialog_closed)
             
         main_layout = self.layout()
         if main_layout:
