@@ -61,7 +61,8 @@ class EffectParameter:
         bounded = self.is_bounded_below and self.is_bounded_above
         if self.is_toggled:
             self.pres_type = self.BOOLEAN
-        elif bounded and not self.is_logarithmic:
+#        elif bounded and not self.is_logarithmic:
+        elif bounded:
             if self.is_integer:
                 self.pres_type = self.BOUNDED_INTEGER
             else:

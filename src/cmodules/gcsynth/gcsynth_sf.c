@@ -11,6 +11,8 @@ Also based on tsf's design one sound font is allowed on one audio client.
 
 */
 
+#include "repeater_loop.h"
+#include <assert.h>
 #include <time.h>
 #define TSF_IMPLEMENTATION
 #include "tsf.h"
@@ -26,16 +28,11 @@ Also based on tsf's design one sound font is allowed on one audio client.
 #include "gcsynth.h"
 #include "gcsynth_sf.h"
 #include "gcsynth_channel.h"
-
-
 #include "gcsynth_sf.h"
+#include "ringbuffer.h"
 
 
-//#define AUDIO_SAMPLES 512
-#define BUFSIZE       0xFFFF
-//#define MAX_CHANNEL_NUM 128
-
-
+#define BUFSIZE      0xFFFF
 #define MAX_ATHREADS 13 
 
 
@@ -49,14 +46,30 @@ struct audio_thread {
     GAsyncQueue *queue;
 
     pthread_attr_t attr;
-    pthread_t thread; 
+    pthread_t thread;
+    struct sched_param pri_param; 
     
-    pthread_mutex_t running_mutex;
+    pthread_mutex_t state_mutex;
     int running; 
 
     int ladspa_channel;   
     int athread;
     int sfont_id;
+
+    ring_buffer* rb;
+    unsigned char audio_renderer_running;
+
+    /*
+    Let the SDL audio callback drive the sf/effects rendering.
+
+    Whenever the SDL audio callback is called it will send an 
+    event to this queue. The event is used to regulate the 
+    stream of audio frames. If the ring counter is empty the
+    event will call for 2 frames to be created for buffering 
+    otherwise 1 frame to be created.    
+    */
+    GAsyncQueue *request_frames; 
+
 };
 
 enum {
@@ -97,6 +110,27 @@ struct voice_render_result {
     float* outR;
 };
 
+
+static int audio_render_is_running(struct audio_thread* at)
+{
+    int state = 0;
+
+    pthread_mutex_lock(&at->state_mutex);
+    state = at->audio_renderer_running;
+    pthread_mutex_unlock(&at->state_mutex);
+    return state;
+}
+
+static void audio_render_set_running(struct audio_thread* at, unsigned char state)
+{
+    pthread_mutex_lock(&at->state_mutex);
+    at->audio_renderer_running = state;
+    pthread_mutex_unlock(&at->state_mutex);
+}
+
+/*
+This is a reworking of tsf's tsf_voice_render so I can easilly output buffers for ladspa.
+*/
 struct voice_render_result my_tsf_voice_render(tsf* f, struct tsf_voice* v, float* outputBuffer, int numSamples)
 {
 	struct tsf_region* region = v->region;
@@ -205,7 +239,6 @@ struct voice_render_result my_tsf_voice_render(tsf* f, struct tsf_voice* v, floa
 					// Low-pass filter.
 					if (tmpLowpass.active) val = tsf_voice_lowpass_process(&tmpLowpass, val);
 
-
 					*outL++ += val * gainLeft;
 					*outR++ += val * gainRight;
 
@@ -251,50 +284,42 @@ struct voice_render_result my_tsf_voice_render(tsf* f, struct tsf_voice* v, floa
     return result;
 }
 
-/*
-   refactored tsf_render_float so it routes audio data to ladspa filters
-   if enabled for this channel.
 
-Original:
-
-TSFDEF void tsf_render_float(tsf* f, float* buffer, int samples, int flag_mixing)
+/**
+ * WE HAVE ARRIVED AT THE MOST IMPORTANT FUNCTION IN THE SYSTEM/
+ * 
+ * This is where synth instruments and effects are outputed to the sound system.
+ * This is run in a FIFO thread at max priority. This function gets called approximately
+ * every 2 milliseconds.
+ */
+TSFDEF void my_tsf_render_float(tsf* f, float* out_right, float* out_left, int samples)
 {
 	struct tsf_voice *v = f->voices, *vEnd = v + f->voiceNum;
-	if (!flag_mixing) TSF_MEMSET(buffer, 0, (f->outputmode == TSF_MONO ? 1 : 2) * sizeof(float) * samples);
-	for (; v != vEnd; v++)
-		if (v->playingPreset != -1)
-			tsf_voice_render(f, v, buffer, samples);
-}
-*/
-TSFDEF void my_tsf_render_float(tsf* f, float* buffer, int samples)
-{
-	struct tsf_voice *v = f->voices, *vEnd = v + f->voiceNum;
-    int n = (f->outputmode == TSF_MONO ? 1 : 2) * sizeof(float) * samples;
-	TSF_MEMSET(buffer, 0, n);
+    int n = sizeof(float) * samples;
+	TSF_MEMSET(out_left, 0, n);
+	TSF_MEMSET(out_right, 0, n);
     int i;
-
-    
 
     for (; v != vEnd; v++) {
 		if (v->playingPreset != -1) {
             float chan_buffer[AUDIO_SAMPLES * 2];
-            //float* left, *right;
             struct voice_render_result vr;
 
+            // render sound fount 
             memset(chan_buffer, 0, sizeof(chan_buffer));
-
             vr = my_tsf_voice_render(f, v, chan_buffer, samples);
-        
+
+            // optionally process effects 
             if (gcsynth_channel_filter_is_enabled(v->playingChannel)) { 
                 synth_filter_router(
-                    v->playingChannel, vr.outL, vr.outR, samples);
+                    v->playingChannel, vr.outL, vr.outR, vr.out_samples);
             }
 
-            // convert to interleaved output.
+            // mix this track
             for(i = 0; i < vr.out_samples; i++) {
-                buffer[i * 2] += vr.outL[i];
-                buffer[i * 2 + 1] += vr.outR[i];
-            }                        
+                out_left[i] += vr.outL[i];
+                out_right[i] += vr.outR[i];
+            }                     
         }
     }
 
@@ -384,41 +409,80 @@ static void proc_at_msgs(struct audio_thread* at) {
     }
 }
 
-
-
-
-// compute the actual freq
-// struct timespec {
-//     time_t   tv_sec;        /* seconds */
-//     long     tv_nsec;       /* nanoseconds */
-// };
-
-
-// this gets called SAMPLE_RATE / AUDIO_SAMPLES every second.
-static void audio_callback(void *userdata, Uint8 *stream, int len) {
+/*
+ * Issues requests for audio frames to be rendered into a ring buffer by
+ * the audio rendering thread. These frames are then read from a ring buffer
+ * and outputed.
+ */
+static void audio_consumer(void *userdata, Uint8 *stream, int len) {
     struct audio_thread* at = (struct audio_thread*) userdata;
-    int samples = (len / (2 * sizeof(float))); //2 output channels
+    float* buffer = (float*) stream;
+    int i; 
+    float left[AUDIO_SAMPLES];
+    float right[AUDIO_SAMPLES];
 
-   //actual_freq(len);
+    memset(buffer, 0, len);
+    if (audio_render_is_running(at)) {
+        // how many frames are ready
+        int frames = ring_buffer_count(at->rb);
 
-    // process any pending messages 
-    proc_at_msgs(at);
- 
-    // render to audio buffer while allowing for ladspa effects to 
-    // be applied to each playing voice.
-	my_tsf_render_float(at->g_TinySoundFont, (float*)stream, samples);
+        g_async_queue_push(at->request_frames, (frames == 0) ? 2: 1);
+        
+        // process current frame.    
+        if (ring_buffer_pop(at->rb, left, right) == 0) {
+            for(i = 0; i < AUDIO_SAMPLES; i++) {
+                buffer[i * 2] = left[i];
+                buffer[i * 2 + 1] = right[i];
+            }
+        }
+    } // else we can do nothing, the audio renderer hasn't started.
 }
 
-static void *audio_thread(void *arg) {
+
+/*
+  populates ring buffer with audio from soundfonts and effects. 
+*/
+static void audio_render(void* arg) 
+{
+    struct audio_thread* at = (struct audio_thread*) arg;
+    float out_right[AUDIO_SAMPLES];
+    float out_left[AUDIO_SAMPLES];
+
+    my_tsf_render_float(at->g_TinySoundFont,
+        out_left,out_right, AUDIO_SAMPLES);
+
+    ring_buffer_push(at->rb, out_left, out_right);
+} 
+
+
+/*
+ * high priority thread function for rendering audio frames and applying 
+ * effects to them.
+ */
+static void *audio_render_thread(void *arg) {
     struct audio_thread* at = (struct audio_thread*) arg;
     SDL_PauseAudioDevice(at->dev, 0);  // Start playback
     int running = 1;
 
+    // alert audio consumer thread that teh render is up.
+    audio_render_set_running(at, 1);
+    
     while (running) {
-        SDL_Delay(1000);
-        pthread_mutex_lock(&at->running_mutex);
+        int i;
+        // block until frames requested.
+        int requested_frames = (int) g_async_queue_pop(at->request_frames);
+
+        // process commands that start/stop sf voices. prior to audio rendering
+        proc_at_msgs(at);
+
+        // render sound fonts and effects for all requested channels
+        for (i = 0; i < requested_frames; i++) {
+            audio_render(arg);
+        }
+
+        pthread_mutex_lock(&at->state_mutex);
         running = at->running;
-        pthread_mutex_unlock(&at->running_mutex);
+        pthread_mutex_unlock(&at->state_mutex);
     }
 
     printf("audio thread exited\n");
@@ -428,7 +492,7 @@ static void *audio_thread(void *arg) {
 
 
 /*
-    api methods 
+    api methods for outside this module.
 */
 
 
@@ -466,7 +530,7 @@ int gcsynth_sf_init(char* sf_file[], int num_font_files, AudioChannelFilter filt
         AudioThreads[a_thread].spec.format =  AUDIO_F32SYS;  // AUDIO_F32;
         AudioThreads[a_thread].spec.channels = 2;
         AudioThreads[a_thread].spec.samples = AUDIO_SAMPLES;
-        AudioThreads[a_thread].spec.callback = audio_callback;
+        AudioThreads[a_thread].spec.callback = audio_consumer;
         AudioThreads[a_thread].spec.userdata = &AudioThreads[a_thread];
         AudioThreads[a_thread].queue = g_async_queue_new();
 
@@ -475,7 +539,10 @@ int gcsynth_sf_init(char* sf_file[], int num_font_files, AudioChannelFilter filt
         // follow the convention of fluidsynth to make porting easier.
         // sfont_id is basically the index for the audio thread
         AudioThreads[a_thread].sfont_id = f_index + 1;  
+        AudioThreads[a_thread].rb = ring_buffer_create();
 
+        AudioThreads[a_thread].audio_renderer_running = 0;
+        AudioThreads[a_thread].request_frames = g_async_queue_new();
 
      	// Set the SoundFont rendering output mode
 	    tsf_set_output(
@@ -495,7 +562,7 @@ int gcsynth_sf_init(char* sf_file[], int num_font_files, AudioChannelFilter filt
         }
 
         AudioThreads[a_thread].running = 1;
-        if (pthread_mutex_init(&AudioThreads[a_thread].running_mutex, NULL) != 0) {
+        if (pthread_mutex_init(&AudioThreads[a_thread].state_mutex, NULL) != 0) {
             perror("Mutex initialization failed");
             return 1;
         }
@@ -505,15 +572,55 @@ int gcsynth_sf_init(char* sf_file[], int num_font_files, AudioChannelFilter filt
         pthread_attr_setdetachstate(
             &AudioThreads[a_thread].attr,PTHREAD_CREATE_DETACHED);
 
-        // launch audio thread 
-        if (pthread_create(
-            &AudioThreads[a_thread].thread, 
-            &AudioThreads[a_thread].attr, 
-            audio_thread, 
-            &AudioThreads[a_thread]) != 0) 
-        {
-            perror("pthread_create");
-            return -1;
+        /*
+         * Attempt to set the highest priority on the audio rendering thread as allowed. 
+         */    
+        int max_prio = sched_get_priority_max(SCHED_FIFO); 
+        int using_high_pri_thread = 0;
+        
+        if (max_prio != -1) {
+            pthread_attr_t attr = AudioThreads[a_thread].attr;
+            pthread_attr_setinheritsched(&attr, 
+                PTHREAD_EXPLICIT_SCHED); 
+            pthread_attr_setschedpolicy(&attr, 
+                SCHED_FIFO);
+            while (max_prio > 0 && using_high_pri_thread == 0) 
+            {    
+                AudioThreads[a_thread].pri_param.sched_priority = max_prio;
+                pthread_attr_setschedparam(&attr, 
+                &AudioThreads[a_thread].pri_param);
+                // start at the maximum priority and count down.
+                if (pthread_create(
+                    &AudioThreads[a_thread].thread, 
+                    &attr, 
+                    audio_render_thread, 
+                    &AudioThreads[a_thread]) == 0) {
+                        // update attribute, if this is unsuccessful we 
+                        // retained the original attribute.
+                        AudioThreads[a_thread].attr = attr;
+                        using_high_pri_thread = 1; 
+                    } else {
+                        max_prio--;
+                    }
+            }// end while
+        } 
+
+        if (using_high_pri_thread == 0){
+            // Unsuccessful, we will use a lower priority thread
+            fprintf(stderr,
+                "Warning, unable to allocate high priority thread, use audio effects at your own risk\n");
+
+            // launch audio thread 
+            if (pthread_create(
+                &AudioThreads[a_thread].thread, 
+                &AudioThreads[a_thread].attr, 
+                audio_render_thread, 
+                &AudioThreads[a_thread]) != 0) 
+            {
+                // serious problem we can't continue!!
+                perror("pthread_create");
+                return -1;
+            }
         }
     }
     
@@ -673,9 +780,9 @@ void gcsynth_sf_shutdown() {
     int i;
     for (i = 0; i < NumAudioThreads; i++) {
         struct audio_thread* at = &AudioThreads[i];
-        pthread_mutex_lock(&at->running_mutex);
+        pthread_mutex_lock(&at->state_mutex);
         at->running = 0;
-        pthread_mutex_unlock(&at->running_mutex);
+        pthread_mutex_unlock(&at->state_mutex);
     }
 
     for (i = 0; i < NumAudioThreads; i++) {

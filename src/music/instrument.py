@@ -136,10 +136,9 @@ class Instrument:
                 #if chan not in self.effect_enabled_state:
                 synth.filter_add(chan, path, label)
                 synth.filter_enable(chan, label)
-                #self.effect_enabled_state.add(chan)
 
                 # change/set parameters
-                for (pname,param) in ec[e]:
+                for (pname,param) in e.params.items():
                     synth.filter_set_control_by_name(
                         chan,
                         label,

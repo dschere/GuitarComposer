@@ -412,6 +412,7 @@ class AppController:
         n = Note()
         n.string = 4
         n.fret = 0
+        n.midi_code = 42
         n.velocity = 100
         n.duration = 4000
         self.effects_preview_note = n
