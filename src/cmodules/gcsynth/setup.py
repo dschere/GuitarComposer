@@ -25,9 +25,6 @@ _libraries += [lib[2:]
                for lib in glib_libs if lib.startswith('-l')]
 # Removing '-L' prefix
 _library_dirs += [lib[2:] for lib in glib_libs if lib.startswith('-L')]
-# _include_dirs.append('./effects')
-# _include_dirs.append('./effects/FX/')
-# _include_dirs.append('./effects/EFX_Common/')
 
 
 CSOURCES = [
@@ -42,12 +39,6 @@ CSOURCES = [
     'gcsynth_acapture.c',
     'ringbuffer.c',
     'repeater_loop.c'
-    # ,
-    # './effects/EFX_common/AnalogFilter.cpp',
-    # './effects/EFX_common/FPreset.cpp',
-    # './effects/FX/Effect.cpp',
-    # './effects/FX/Reverb.cpp',
-    # 'gcsynth_effects.cpp'
 ]
 
 """
@@ -67,9 +58,9 @@ gcsynth_module = Extension(
     include_dirs=_include_dirs,  # Include path
     library_dirs=_library_dirs,  # Library path
     libraries=_libraries,     # Link against packages
-    extra_compile_args=['-O0','-g3'],  # Add the -g2 flag for debug symbols
+    extra_compile_args=['-O3','-g'],  # Add the -g2 flag for debug symbols
     # Ensure the linker also gets the debug symbols
-    extra_link_args=['-g3', '-lasound']
+    extra_link_args=['-lasound']
 )
 
 # Setup the module
