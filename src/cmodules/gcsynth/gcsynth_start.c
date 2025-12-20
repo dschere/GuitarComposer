@@ -1,5 +1,5 @@
 #include <unistd.h>
-#include <unistd.h>
+#include <stdio.h>
 
 #include "gcsynth.h"
 #include "gcsynth_event.h"

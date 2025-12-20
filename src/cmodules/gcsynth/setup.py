@@ -25,6 +25,9 @@ _libraries += [lib[2:]
                for lib in glib_libs if lib.startswith('-l')]
 # Removing '-L' prefix
 _library_dirs += [lib[2:] for lib in glib_libs if lib.startswith('-L')]
+# _include_dirs.append('./effects')
+# _include_dirs.append('./effects/FX/')
+# _include_dirs.append('./effects/EFX_Common/')
 
 
 CSOURCES = [
@@ -36,7 +39,15 @@ CSOURCES = [
     'gcsynth_event.c',
     'pyutil.c',
     'gcsynth_sf.c',
-    'gcsynth_acapture.c'
+    'gcsynth_acapture.c',
+    'ringbuffer.c',
+    'repeater_loop.c'
+    # ,
+    # './effects/EFX_common/AnalogFilter.cpp',
+    # './effects/EFX_common/FPreset.cpp',
+    # './effects/FX/Effect.cpp',
+    # './effects/FX/Reverb.cpp',
+    # 'gcsynth_effects.cpp'
 ]
 
 """

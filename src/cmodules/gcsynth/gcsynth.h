@@ -16,7 +16,10 @@
 
 //#define AUDIO_SAMPLES 64*64
 #define AUDIO_SAMPLES 64
-#define SAMPLE_RATE  44100 
+#define SAMPLE_RATE  44100
+
+#define RING_BUFFER_DEPTH 40 
+
 
 enum {
     NOWARNING,

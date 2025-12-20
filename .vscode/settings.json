@@ -42,6 +42,7 @@
     "clang.serverCompletionRanking": true,
     "files.associations": {
         "gmodule.h": "c",
-        "python.h": "c"
+        "python.h": "c",
+        "ladspa.h": "c"
     },
 }

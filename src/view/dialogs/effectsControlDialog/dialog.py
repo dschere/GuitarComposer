@@ -162,8 +162,9 @@ class EffectsDialog(QDialog):
         # then simply generate EffectChanges for all enabled effects
         for n in self.effects.get_names():     
             e = self.effects.get_effect(n)
-            if e and e.is_enabled():
+            if e:
                 r[e] = [(n, e.get_param_by_name(n)) for n in e.getParamNames()]
+            
         return r
 
     def on_preview(self):

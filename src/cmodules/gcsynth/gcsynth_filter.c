@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include <dlfcn.h>
 #include <errno.h>
@@ -90,7 +91,23 @@ int gcsynth_interleaved_filter_run(struct gcsynth_filter* gc_filter, LADSPA_Data
     return 0;
 }
 
+// #include "gccmacro.h"
+// static void clamp(float* right, float* left, int samples)
+// {
+//     int i;
+//     for(i = 0; i < samples; i++) {
+//         right[i] = PA_CLAMP_UNLIKELY(right[i], -1.0f, 1.0f);
+//         left[i] = PA_CLAMP_UNLIKELY(left[i], -1.0f, 1.0f);
+//     }
+// }
 
+#define MICRO_EPSILON 1e-4    // Define the threshold 
+
+static inline void truncate_coefficient(float *value) {
+    if (fabsf(*value) < MICRO_EPSILON) {
+        *value = 0.0f;
+    }
+}
 
 
 int gcsynth_filter_run_sterio(
@@ -99,6 +116,13 @@ int gcsynth_filter_run_sterio(
     int i=0;
 
     if (gc_filter->enabled) {
+        //clamp(right, left, samples);
+
+        //for(i = 0; i < samples; i++) {
+        //    truncate_coefficient(&left[i]);
+        //    truncate_coefficient(&right[i]);
+        //}
+
         switch(gc_filter->in_buf_count) {
             case STEREO_FILTER:
                 if (gc_filter->in_place_supported) {
@@ -161,6 +185,7 @@ int gcsynth_filter_run_sterio(
                 break;    
         }
 
+        //clamp(right, left, samples);
     }    
     return 0;
 }
@@ -365,6 +390,7 @@ static int ladspa_setup(struct gcsynth_filter* gc_filter, const char* path, char
     }
 
     // instanciate plugin, then associate buffers.
+    // see if this works
     gc_filter->plugin_instance = gc_filter->desc->instantiate(gc_filter->desc, SAMPLE_RATE);
     if (gc_filter->plugin_instance == NULL) {
         gcsynth_raise_exception("gc_filter->desc->instantiate() failed!");

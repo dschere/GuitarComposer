@@ -108,6 +108,7 @@ class TabEventPresenter(QWidget):
     def set_fret(self, fret_value):
         # Number pressed, update the fret value
         self.tab_event.fret[self.tab_event.string] = fret_value
+        
         self.tab_p.set_tab_note(self.tab_event.string, fret_value)
 
     def clear_fret(self):
