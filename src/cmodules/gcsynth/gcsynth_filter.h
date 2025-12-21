@@ -81,12 +81,8 @@ struct gcsynth_filter* gcsynth_filter_new_ladspa(const char* pathname, char* lab
 void gcsynth_filter_destroy(struct gcsynth_filter* gc_filter);
 
 // sets the value of a control
-//int gcsynth_filter_setbyname(struct gcsynth_filter* gc_filter, char* name, LADSPA_Data value);
-//int gcsynth_filter_setbyindex(struct gcsynth_filter* gc_filter, int, LADSPA_Data value);
-
-// sends FLUID_BUFSIZE size to the filter and copies FLUID_BUFSIZE out from the
-// filter 
-int gcsynth_filter_run(struct gcsynth_filter* gc_filter, LADSPA_Data* io_buf, int len);
+int gcsynth_filter_setbyname(struct gcsynth_filter* gc_filter, char* name, LADSPA_Data value);
+int gcsynth_filter_setbyindex(struct gcsynth_filter* gc_filter, int, LADSPA_Data value);
 
 int gcsynth_filter_run_sterio(
     struct gcsynth_filter* gc_filter, float* left, float* right, int samples);

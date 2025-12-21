@@ -19,7 +19,6 @@ static struct gcsynth_active_state GcsynthState;
 
 static struct gcsynth_filter* find_by_name(
     struct gcsynth_channel* c, char* plugin_label);  
-static int update_ctrl_val(struct gcsynth_filter_control* control, float value);
 
 static int _gcsynth_channel_add_filter(int channel, const char* filepath, char* plugin_label);
 static int _gcsynth_channel_remove_filter(int channel, char* plugin_label);
@@ -28,7 +27,6 @@ static int _gcsynth_channel_set_control_by_index(int channel, char* plugin_label
     int control_num, float value);
 static int _gcsynth_channel_set_control_by_name(int channel, char* plugin_label, 
     char* control_name, float value);
-static void _voice_data_router(void *userdata, int chan, double* buf, int len);
 
 static struct gcsynth_channel* lock_channel(int channel);
 static void unlock_channel(int channel);
@@ -111,17 +109,6 @@ int gcsynth_channel_set_control_by_name(int channel, char* plugin_label,
     return ret;
 }    
 
-// -- fluidsynth interface for applying a filterchain to a voice ----
-// 
-void voice_data_router(void *userdata, int chan, double* buf, int len)
-{
-//printf("voice_data_router chan=%d len=%d\n", chan, len);    
-    if ((chan >= 0) && (chan < NUM_CHANNELS)) {
-        lock_channel(chan);
-        _voice_data_router(userdata, chan, buf, len);
-        unlock_channel(chan);
-    }
-}
 
 
 void synth_filter_router(int chan, float* left, float* right, int samples)
@@ -239,49 +226,6 @@ static void unlock_channel(int channel)
 }
 
 
-
-
-static void _voice_data_router(void *userdata, int chan, double* buf, int len)
-{
-    int i;
-    LADSPA_Data fc_buffer[FLUID_BUFSIZE];
-    GList* iter;
-
-    
-    // len is always 
-    struct gcsynth_channel *c = &ChannelFilters[chan];
-
-    // adjust volume of channel if directed.
-    if (c->gain != 0.0) {
-        for(i = 0; i < len && i < FLUID_BUFSIZE; i++) {
-            buf[i] *= (1.0 + c->gain);
-        }
-    }
-
-    if (c->filter_chain != NULL) {
-        
-        // copy the voice buffer from fluid synth (double) to the ladspa buffer (float)
-        for(i = 0; i < len && i < FLUID_BUFSIZE; i++) fc_buffer[i] = (float) buf[i];
-
-        // walk through the filter chain
-        for(iter = g_list_first(c->filter_chain);
-            iter != NULL;
-            iter = iter->next
-        ) {
-            struct gcsynth_filter* f = (struct gcsynth_filter*) iter->data;
-            // continuously overwrite fc_buffer for each enabled filter
-            gcsynth_filter_run(f, fc_buffer, len);
-        }
-
-        // output fc_buffer to the fluidsynth buffer
-        for(i = 0; i < len && i < FLUID_BUFSIZE; i++) buf[i] = (double) fc_buffer[i];
-    } 
-}
-
-
-
-
-
 static int _gcsynth_channel_remove_filter(int channel, char* plugin_label_or_all)
 {
     struct gcsynth_channel* c = &ChannelFilters[channel]; // gcsynth.c validated channel
@@ -354,19 +298,10 @@ static int _gcsynth_channel_add_filter(int channel, const char* filepath, char* 
 static int _gcsynth_channel_set_control_by_index(int channel,
     char* plugin_label, int control_num, float value)
 {
-    int ret = FILTER_CONTROL_NO_FOUND; 
     struct gcsynth_channel* c = &ChannelFilters[channel]; // gcsynth.c validated channel
     struct gcsynth_filter* f = find_by_name(c,plugin_label);
-    struct gcsynth_filter_control* control;
 
-    // control_num
-
-    if (f && control_num < f->num_controls && control_num >= 0) {
-        control = &f->controls[control_num];
-        ret = update_ctrl_val(control, value);
-    }
-
-    return ret;
+    return gcsynth_filter_setbyindex(f, control_num, value);
 }
 
 static int _gcsynth_channel_set_control_by_name(int channel,
@@ -378,40 +313,7 @@ static int _gcsynth_channel_set_control_by_name(int channel,
     int ret = FILTER_CONTROL_NO_FOUND;
 
     if (f) {
-        for(i = 0; i < f->num_controls; i++) {
-            if (strcmp(f->controls[i].name,control_name) == 0) {
-                ret = update_ctrl_val(&f->controls[i], value); 
-                break;
-            }
-        } 
-    }
-
-    return ret;
-}
-
-
-
-
-static int update_ctrl_val(struct gcsynth_filter_control* control, float value)
-{
-    int ret = NOWARNING;
-
-    if (control->is_toggled) {
-        control->value = (value != 0.0) ? 1.0: 0.0; 
-    } else {
-        if (control->is_bounded_above && value > control->upper) {
-            ret = FILTER_CONTROL_VALUE_ABOVE_BOUNDS; // failed upper bounds check
-        }
-        else if (control->is_bounded_below && value < control->lower) {
-            ret = FILTER_CONTROL_VALUE_BELOW_BOUNDS; // failed lower bounds check
-        } else {
-            // value is is in range
-            if (control->is_integer) {
-                control->value = ceil(value);
-            } else {
-                control->value = value;
-            }
-        }
+        ret = gcsynth_filter_setbyname(f, control_name, value);
     }
 
     return ret;

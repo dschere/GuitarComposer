@@ -59,70 +59,6 @@ void gcsynth_raise_exception(char* errmsg) {
 }
 
 
-
-static PyObject* py_filter_test(PyObject* self, PyObject* args) {
-    const char* filepath;
-    const char* plugin_label;
-    struct gcsynth_filter* filter = NULL;
-    int i;
-    int changed = 0;
-    LADSPA_Data io_buffer[FLUID_BUFSIZE];
-
-    // Parse the Python tuple, expecting two strings and a dictionary
-    if (!PyArg_ParseTuple(args, "ss", &filepath, &plugin_label)) {
-        return NULL;  // Return NULL to indicate an error if the parsing failed
-    }
-
-    // load plugin
-    filter = gcsynth_filter_new_ladspa(filepath, (char*)plugin_label);
-    if (filter == NULL) {
-        return NULL;
-    }
-
-    // send a square wave in and verify that the wave out has changed. 
-    //TODO implement a better clever audio analysis probably run the
-    // the tests that the author who created the ladspa filter did.
-    if (filter->in_buf_count == 0) {
-        gcsynth_raise_exception("test requires a filter with an input!");
-        return NULL;
-    } 
-
-    // create a square wave 
-    for(i = 0; i < FLUID_BUFSIZE; i++) {
-        if ((i/8) % 2) {
-            io_buffer[i] = 100.0;
-        } else {
-            io_buffer[i] = 0.0;
-        }
-    }
-
-    gcsynth_filter_run(filter, io_buffer, FLUID_BUFSIZE);
-    
-    // should have altered the io_buffer
-    for(i = 0; (i < FLUID_BUFSIZE) && (changed == 0); i++) {
-        if ((i/8) % 2) {
-            if (io_buffer[i] != 100.0) {
-                changed = 1;
-            }
-        } else {
-            if (io_buffer[i] != 0.0) {
-                changed = 1;
-            }
-        }
-    }
-
-    // unload plugin
-    gcsynth_filter_destroy(filter);
-
-    // now let's test the set methods for a control
-    if (changed == 0) {
-        gcsynth_raise_exception("filter test failed!\n");
-        return NULL;
-    }
-
-    Py_RETURN_NONE;
-}
-
 static PyObject* py_start_capture(PyObject* self, PyObject* args) {
     char* device;
     int result;
@@ -667,8 +603,6 @@ static PyMethodDef GCSynthMethods[] = {
     {"channel_gain",py_channel_gain,METH_VARARGS,"channel_gain(chan,v) v = 0 no change"},
     {"reset_channel",py_fluid_synth_reset_basic_channel,METH_VARARGS,"reset_channel(chan)"},
 
-    // aid in unit testing
-    {"test_filter",py_filter_test,METH_VARARGS,"test_filter(path,plugin_label)-> pass or raise exception"},
     {NULL, NULL, 0, NULL}
 };
 
