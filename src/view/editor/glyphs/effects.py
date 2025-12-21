@@ -50,12 +50,10 @@ class EffectsGlyph(QLabel):
 
     def on_eff_preview(self, evt: EffectPreview):
         Signals.preview_effect.emit(evt)
-        
-        
+                
     def on_eff_update(self, evt: Effects):
         self.te.setEffects(evt)
         self.dialog.close() 
-        self.dialog_being_shown = False
         self.set_icon()
 
     def show_dialog(self):
@@ -70,11 +68,9 @@ class EffectsGlyph(QLabel):
         self.dialog.effect_preview.connect(self.on_eff_preview)
         self.dialog.effect_updated.connect(self.on_eff_update)
         self.dialog.exec()
-        self.dialog_being_shown = True
-
+        
     def mousePressEvent(self, ev: QMouseEvent | None) -> None:
-        if not self.dialog_being_shown:
-            self.show_dialog()
+        self.show_dialog()
         return super().mousePressEvent(ev)         
 
     def __init__(self, te: TabEvent):
