@@ -578,12 +578,15 @@ int gcsynth_sf_init(char* sf_file[], int num_font_files, AudioChannelFilter filt
         int max_prio = sched_get_priority_max(SCHED_FIFO); 
         int using_high_pri_thread = 0;
         
+        // are we allowed to set the thread priority?
         if (max_prio != -1) {
             pthread_attr_t attr = AudioThreads[a_thread].attr;
             pthread_attr_setinheritsched(&attr, 
                 PTHREAD_EXPLICIT_SCHED); 
             pthread_attr_setschedpolicy(&attr, 
                 SCHED_FIFO);
+            // starting with max and decrementing try to set the
+            // maximum allowable thread priority.    
             while (max_prio > 0 && using_high_pri_thread == 0) 
             {    
                 AudioThreads[a_thread].pri_param.sched_priority = max_prio;
@@ -608,7 +611,7 @@ int gcsynth_sf_init(char* sf_file[], int num_font_files, AudioChannelFilter filt
         if (using_high_pri_thread == 0){
             // Unsuccessful, we will use a lower priority thread
             fprintf(stderr,
-                "Warning, unable to allocate high priority thread, use audio effects at your own risk\n");
+                "Warning, unable to allocate high priority thread, use audio effects at your own risk!\n");
 
             // launch audio thread 
             if (pthread_create(

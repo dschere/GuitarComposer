@@ -17,6 +17,34 @@ static LADSPA_Data get_default_value(
     struct gcsynth_filter* gc_filter, unsigned long int lPortIndex,
     int* has_default);
 static void gcsynth_filter_report(struct gcsynth_filter* gc_filter);
+static int update_ctrl_val(struct gcsynth_filter_control* control, float value);
+
+
+
+static int update_ctrl_val(struct gcsynth_filter_control* control, float value)
+{
+    int ret = NOWARNING;
+
+    if (control->is_toggled) {
+        control->value = (value != 0.0) ? 1.0: 0.0; 
+    } else {
+        if (control->is_bounded_above && value > control->upper) {
+            ret = FILTER_CONTROL_VALUE_ABOVE_BOUNDS; // failed upper bounds check
+        }
+        else if (control->is_bounded_below && value < control->lower) {
+            ret = FILTER_CONTROL_VALUE_BELOW_BOUNDS; // failed lower bounds check
+        } else {
+            // value is is in range
+            if (control->is_integer) {
+                control->value = ceil(value);
+            } else {
+                control->value = value;
+            }
+        }
+    }
+
+    return ret;
+}
 
 
 struct gcsynth_filter* gcsynth_filter_new_ladspa(const char* pathname, char* label)
@@ -49,16 +77,33 @@ void gcsynth_filter_destroy(struct gcsynth_filter* gc_filter)
     }
 }
 
-// // sets the value of a control
-// int gcsynth_filter_setbyname(struct gcsynth_filter* gc_filter, char* name, LADSPA_Data value)
-// {
-//     return 0;
-// }
+// sets the value of a control
+int gcsynth_filter_setbyname(struct gcsynth_filter* gc_filter, char* name, LADSPA_Data value)
+{
+    int i;
+    int result = -1;
 
-// int gcsynth_filter_setbyindex(struct gcsynth_filter* gc_filter, int, LADSPA_Data value)
-// {
-//     return 0;
-// }
+    for(i = 0; i < gc_filter->num_controls; i++) {
+        if (strcmp(gc_filter->controls[i].name,name) == 0) {
+            result = update_ctrl_val(&gc_filter->controls[i], value); 
+            break;
+        }
+    } 
+
+    return result;
+}
+
+int gcsynth_filter_setbyindex(struct gcsynth_filter* gc_filter, int control_num, LADSPA_Data value)
+{
+    int result = -1;
+
+    if (gc_filter && control_num < gc_filter->num_controls && control_num >= 0) {
+        struct gcsynth_filter_control* control = &gc_filter->controls[control_num];
+        result = update_ctrl_val(control, value);
+    }
+
+    return 0;
+}
 
 
 static
@@ -91,24 +136,6 @@ int gcsynth_interleaved_filter_run(struct gcsynth_filter* gc_filter, LADSPA_Data
     return 0;
 }
 
-// #include "gccmacro.h"
-// static void clamp(float* right, float* left, int samples)
-// {
-//     int i;
-//     for(i = 0; i < samples; i++) {
-//         right[i] = PA_CLAMP_UNLIKELY(right[i], -1.0f, 1.0f);
-//         left[i] = PA_CLAMP_UNLIKELY(left[i], -1.0f, 1.0f);
-//     }
-// }
-
-#define MICRO_EPSILON 1e-4    // Define the threshold 
-
-static inline void truncate_coefficient(float *value) {
-    if (fabsf(*value) < MICRO_EPSILON) {
-        *value = 0.0f;
-    }
-}
-
 
 int gcsynth_filter_run_sterio(
     struct gcsynth_filter* gc_filter, float* left, float* right, int samples)
@@ -116,13 +143,6 @@ int gcsynth_filter_run_sterio(
     int i=0;
 
     if (gc_filter->enabled) {
-        //clamp(right, left, samples);
-
-        //for(i = 0; i < samples; i++) {
-        //    truncate_coefficient(&left[i]);
-        //    truncate_coefficient(&right[i]);
-        //}
-
         switch(gc_filter->in_buf_count) {
             case STEREO_FILTER:
                 if (gc_filter->in_place_supported) {
@@ -184,85 +204,9 @@ int gcsynth_filter_run_sterio(
                 }
                 break;    
         }
-
-        //clamp(right, left, samples);
     }    
     return 0;
 }
-
-
-// sends FLUID_BUFSIZE size to the filter and copies FLUID_BUFSIZE out from the
-// filter 
-int gcsynth_filter_run(struct gcsynth_filter* gc_filter, LADSPA_Data* fc_buffer, int len)
-{
-    unsigned long int i;
-//    int io_count;
-
-    if (gc_filter->enabled) {
-        if (gc_filter->in_buf_count == 2 && gc_filter->out_buf_count == 2) {
-            return gcsynth_interleaved_filter_run(gc_filter, fc_buffer, len);
-        }
-
-        /*
-            Ladspa filters can be either stereo or mono. The voice_data_router gets called
-            once for left and once for right so in the case of stereo we   
-        */
-
-        // for(io_count = 0; io_count < gc_filter->in_buf_count; io_count++ ) {
-        //     memcpy(gc_filter->in_data_buffer[io_count], fc_buffer, len);            
-        // }       
-
-        // there are filters that just output (like wave generators)
-        // so in that case in_buf_count is 0 
-        if (gc_filter->in_buf_count > 0) {
-            memcpy(                           //  either modulo 1 or 2
-                gc_filter->in_data_buffer[0],
-                fc_buffer,
-                len
-            );
-        }
-
-        // connect all ports
-        for(i = 0; i < gc_filter->desc->PortCount; i++) {
-            gc_filter->desc->connect_port(
-                gc_filter->plugin_instance,
-                i,
-                gc_filter->port_map[i]
-            );
-        }
-        
-        // run the filter and populate the output buffer
-        printf("gcsynth_filter_run run()\n"); 
-        gc_filter->desc->run(gc_filter->plugin_instance, len);
-
-        // for(i = 0; i < len; i++) {
-        //     if (gc_filter->out_buf_count == 1) {
-        //         fc_buffer[i] = gc_filter->out_data_buffer[0][i];
-        //     } else if (gc_filter->out_buf_count == 2) {
-        //         fc_buffer[i] = (
-        //             (gc_filter->out_data_buffer[0][i] + gc_filter->out_data_buffer[1][i])
-        //         );
-        //     }
-        // }
-        
-        // output to fc_buffer from filter output
-        if (gc_filter->out_buf_count > 0) {
-            memcpy(
-                fc_buffer,
-                gc_filter->out_data_buffer[0],
-                len
-            );
-        }
-
-    } else {
-        //printf("disabled\n");
-    }
-    
-    gc_filter->frame_count++;
-
-    return 0;
-}
-
 
 
 void gcsynth_filter_enable(struct gcsynth_filter* gc_filter)

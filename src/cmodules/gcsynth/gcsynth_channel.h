@@ -70,7 +70,6 @@ void gcsynth_incr_instance_id();  called by gcsynth_start()
 
 // main entry point from fluidsynth to route synth voice data into 
 // an audio filter chain.
-void voice_data_router(void *userdata, int chan, double* buf, int len);
 
 void synth_filter_router(int channel, float* left, float* right, int samples);
 void synth_interleaved_filter_router(int chan, float* interleaved_audio, int samples);
