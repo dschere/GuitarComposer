@@ -290,7 +290,7 @@ struct voice_render_result my_tsf_voice_render(tsf* f, struct tsf_voice* v, floa
  * 
  * This is where synth instruments and effects are outputed to the sound system.
  * This is run in a FIFO thread at max priority. This function gets called approximately
- * every 2 milliseconds.
+ * once every 2 milliseconds.
  */
 TSFDEF void my_tsf_render_float(tsf* f, float* out_right, float* out_left, int samples)
 {
@@ -299,29 +299,98 @@ TSFDEF void my_tsf_render_float(tsf* f, float* out_right, float* out_left, int s
 	TSF_MEMSET(out_left, 0, n);
 	TSF_MEMSET(out_right, 0, n);
     int i;
+    // per channel, left/right array of samples.
+    float channel_buffers[NUM_CHANNELS][2][AUDIO_SAMPLES];
+    unsigned char channels_in_use[NUM_CHANNELS];
+    int channel_list[NUM_CHANNELS];
+    int num_channels_in_use = 0;
+    int chan_count;
 
+    memset(channel_buffers, 0, sizeof(channel_buffers));
+    memset(channels_in_use, 0, sizeof(channels_in_use));
+
+    // stage 1. 
+    //   Render sound font audio into buffers per channel, there will be multiple
+    //   my_tsf_render_float calls per channel
     for (; v != vEnd; v++) {
 		if (v->playingPreset != -1) {
             float chan_buffer[AUDIO_SAMPLES * 2];
             struct voice_render_result vr;
+            float* chan_left = channel_buffers[v->playingChannel][0];
+            float* chan_right = channel_buffers[v->playingChannel][1];
 
-            // render sound fount 
+            if (v->playingChannel >= NUM_CHANNELS || num_channels_in_use >= NUM_CHANNELS) {
+                // not sure what to do here, this is one of this 'it should never happen' 
+                // but it happened anyway cases ;)
+                fprintf(stderr,"Too many channels configured, cant render sf!\n");
+                continue;                
+            }
+
             memset(chan_buffer, 0, sizeof(chan_buffer));
             vr = my_tsf_voice_render(f, v, chan_buffer, samples);
 
-            // optionally process effects 
-            if (gcsynth_channel_filter_is_enabled(v->playingChannel)) { 
-                synth_filter_router(
-                    v->playingChannel, vr.outL, vr.outR, vr.out_samples);
+            if(channels_in_use[v->playingChannel] == 0) {
+                // new channel being used
+                channels_in_use[v->playingChannel] = 1;
+                channel_list[num_channels_in_use] = v->playingChannel;
+                num_channels_in_use++; 
             }
 
-            // mix this track
-            for(i = 0; i < vr.out_samples; i++) {
-                out_left[i] += vr.outL[i];
-                out_right[i] += vr.outR[i];
-            }                     
+            // accumulate multiple renderings per channel.
+            for(i = 0; i < samples; i++) {
+                chan_left[i] += vr.outL[i];
+                chan_right[i] += vr.outR[i];
+            }
         }
     }
+
+    // stage 2. 
+    //   apply audio filters if configured for that channel
+    for(chan_count = 0; chan_count < num_channels_in_use; chan_count++) {
+        int channel = channel_list[chan_count];
+        float* chan_left = channel_buffers[channel][0];
+        float* chan_right = channel_buffers[channel][1];
+
+        if (gcsynth_channel_filter_is_enabled(channel)) { 
+            synth_filter_router(
+                    channel, chan_left, chan_right, samples);
+        }
+
+        // stage 3. 
+        //   mix all channel buffers to out_right and out_left which in turn will
+        //   be routed to a ring buffer.
+        // for efficiency this can be done here, we don't have to loop through channels again. 
+        for(i = 0; i < samples; i++) {
+            out_left[i] += chan_left[i];
+            out_right[i] += chan_right[i];
+        }
+    }
+
+
+// leave commented out for reference for now.
+
+    // for (; v != vEnd; v++) {
+	// 	if (v->playingPreset != -1) {
+    //         float chan_buffer[AUDIO_SAMPLES * 2];
+    //         struct voice_render_result vr;
+
+    //         // render sound fount 
+    //         memset(chan_buffer, 0, sizeof(chan_buffer));
+    //         vr = my_tsf_voice_render(f, v, chan_buffer, samples);
+
+    //         // optionally process effects 
+    //         if (gcsynth_channel_filter_is_enabled(v->playingChannel)) { 
+    //             synth_filter_router(
+    //                 v->playingChannel, vr.outL, vr.outR, vr.out_samples);
+    //         }
+
+    //         // mix this track
+    //         for(i = 0; i < vr.out_samples; i++) {
+    //             out_left[i] += vr.outL[i];
+    //             out_right[i] += vr.outR[i];
+    //         }                     
+    //     }
+    // }
 
     //FUTURE
     // this is were I could create a master effects output 

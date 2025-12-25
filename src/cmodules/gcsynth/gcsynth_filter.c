@@ -191,6 +191,7 @@ int gcsynth_filter_run_sterio(
         }
 
         // execute ladspa plugin to populate audio buffer
+        //printf("%s called\n", gc_filter->desc->Label);
         gc_filter->desc->run(gc_filter->plugin_instance, samples);
 
         switch(gc_filter->out_buf_count) {
