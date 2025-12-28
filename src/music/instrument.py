@@ -279,7 +279,7 @@ class Instrument:
             midicode_in_use = self.string_playing[gstring]
             if midicode_in_use:       
                 for (chan, _) in chan_mix:            
-                    self.synth.noteoff(chan, midicode_in_use)
+                    self.synth.noteoff(chan, midicode_in_use, gstring)
 
                     timer_ids = self.timer_inflight.get((chan,gstring),[])
                     for timer_id in timer_ids:
@@ -299,7 +299,7 @@ class Instrument:
         midicode_in_use = self.string_playing[n.string]
         if midicode_in_use:       
             for (chan, _) in chan_mix:            
-                self.synth.noteoff(chan, midicode_in_use)
+                self.synth.noteoff(chan, midicode_in_use, n.string)
 
                 timer_ids = self.timer_inflight.get((chan,n.string),[])
                 for timer_id in timer_ids:
@@ -321,7 +321,7 @@ class Instrument:
         midicode_in_use = self.string_playing[n.string] # type: ignore
         if self.one_note_per_string and midicode_in_use:
             for (chan, velocity_mul) in chan_mix:
-                self.synth.noteoff(chan, midicode_in_use)
+                self.synth.noteoff(chan, midicode_in_use, n.string)
 
                 timer_ids = self.timer_inflight.get((chan,n.string),[])
                 for timer_id in timer_ids:
@@ -339,10 +339,10 @@ class Instrument:
             if velocity > 128:
                 velocity = 128    
             if n.rest:
-                self.synth.noteoff(chan, midicode)                        
+                self.synth.noteoff(chan, midicode, n.string)                        
             else:
                 if start_offset == 0.0:
-                    self.synth.noteon(chan, midicode, velocity)
+                    self.synth.noteon(chan, midicode, velocity, n.string)
                 else:
                     when = (start_offset * bpm/60.0)
                     timer_id = self.timer.start( when, \
