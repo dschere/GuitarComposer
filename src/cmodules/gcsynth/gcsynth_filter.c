@@ -190,8 +190,8 @@ int gcsynth_filter_run_sterio(
                 break;
         }
 
-        // execute ladspa plugin to populate audio buffer
-        //printf("%s called\n", gc_filter->desc->Label);
+        // execute ladspa plugin to populate audio buffer,
+        // THE PURPOSE OF THIS ENTIRE MODULE IS TO SETUP THIS FUNCTION CALL.
         gc_filter->desc->run(gc_filter->plugin_instance, samples);
 
         switch(gc_filter->out_buf_count) {
@@ -200,7 +200,7 @@ int gcsynth_filter_run_sterio(
             case MONO_FILTER:
                 // mono to stereo
                 for(i = 0; i < samples; i++) {
-                    left[i] = (float) gc_filter->out_data_buffer[0][i];
+                    left[i] = (float) gc_filter->out_data_buffer[0][i] * 0.5f;
                     right[i] = left[i];
                 }
                 break;    

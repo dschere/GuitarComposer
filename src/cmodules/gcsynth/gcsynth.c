@@ -302,14 +302,15 @@ static PyObject* py_gcsynth_noteon(PyObject* self, PyObject* args) {
     int channel;
     int midicode;
     int velocity;
+    int gstring = -1;
 
     // Parse the Python tuple, expecting two strings and a dictionary
-    if (!PyArg_ParseTuple(args, "iii", &channel, &midicode, &velocity )) {
+    if (!PyArg_ParseTuple(args, "iii|i", &channel, &midicode, &velocity, &gstring )) {
         return NULL;  // Return NULL to indicate an error if the parsing failed
     }
 
     timing_log("py_gcsynth_noteon","noteon");
-    gcsynth_noteon(&GcSynth, channel, midicode, velocity);
+    gcsynth_noteon(&GcSynth, channel, midicode, velocity, gstring);
 
     Py_RETURN_NONE;
 }
@@ -381,15 +382,16 @@ static PyObject* py_gcsynth_channel_set_control_by_index
 static PyObject* py_gcsynth_noteoff(PyObject* self, PyObject* args) {
     int channel;
     int midicode;
+    int gstring = -1;
 
     // Parse the Python tuple, expecting two strings and a dictionary
-    if (!PyArg_ParseTuple(args, "ii", &channel, &midicode)) {
+    if (!PyArg_ParseTuple(args, "ii|i", &channel, &midicode, &gstring)) {
         return NULL;  // Return NULL to indicate an error if the parsing failed
     }
 
     CHECK_CHANNEL_VALUE(channel)
     timing_log("py_gcsynth_noteoff","noteoff");
-    gcsynth_noteoff(&GcSynth, channel, midicode);
+    gcsynth_noteoff(&GcSynth, channel, midicode, gstring);
     
     Py_RETURN_NONE;
 }

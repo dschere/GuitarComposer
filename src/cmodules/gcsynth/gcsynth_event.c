@@ -213,7 +213,7 @@ static int dispatcher_init()
 }
 
 
-void gcsynth_noteon(struct gcsynth* gcs, int chan, int midicode, int velocity)
+void gcsynth_noteon(struct gcsynth* gcs, int chan, int midicode, int velocity, int gstring)
 {
     if (gcsynth_sf_noteon(chan, midicode, velocity) == -1) {
          gcsynth_raise_exception("gcsynth_sf_noteon");
@@ -221,7 +221,7 @@ void gcsynth_noteon(struct gcsynth* gcs, int chan, int midicode, int velocity)
 }
 
 
-void gcsynth_noteoff(struct gcsynth* gcs, int chan, int midicode)
+void gcsynth_noteoff(struct gcsynth* gcs, int chan, int midicode, int gstring)
 {
     if (gcsynth_sf_noteoff(chan, midicode) == -1) {
         gcsynth_raise_exception("gcsynth_sf_noteoff");
