@@ -120,12 +120,12 @@ class synthservice:
     def stop(self):
         return gcsynth.stop()
 
-    def noteoff(self, channel: int, midicode: int):
-        return gcsynth.noteoff(channel, midicode)
+    def noteoff(self, channel: int, midicode: int, gstring= -1):
+        return gcsynth.noteoff(channel, midicode, gstring)
 
-    def noteon(self, channel: int, midicode: int, velocity: int):
+    def noteon(self, channel: int, midicode: int, velocity: int, gstring =-1):
         #print(f"gcsynth.noteon(channel={channel}, midicode={midicode}, velocity={velocity})")
-        return gcsynth.noteon(channel, midicode, velocity)
+        return gcsynth.noteon(channel, midicode, velocity, gstring)
 
     def select(self,
                channel: int,
