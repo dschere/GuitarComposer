@@ -56,8 +56,8 @@ struct scheduled_event {
 void gcsynth_schedule(struct gcsynth* gcs, struct scheduled_event* event);
 
 // immediate execution of synth events
-void gcsynth_noteon(struct gcsynth* gcs, int chan, int midicode, int velocity);
-void gcsynth_noteoff(struct gcsynth* gcs, int chan, int midicode);
+void gcsynth_noteon(struct gcsynth* gcs, int chan, int midicode, int velocity, int gstring);
+void gcsynth_noteoff(struct gcsynth* gcs, int chan, int midicode, int gstring);
 void gcsynth_select(struct gcsynth* gcs, int chan,  int sfont_id, int bank_num, int preset_num);
 
 

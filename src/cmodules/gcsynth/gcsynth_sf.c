@@ -17,6 +17,7 @@ Also based on tsf's design one sound font is allowed on one audio client.
 #define TSF_IMPLEMENTATION
 #include "tsf.h"
 
+
 #include <SDL2/SDL.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -30,6 +31,8 @@ Also based on tsf's design one sound font is allowed on one audio client.
 #include "gcsynth_channel.h"
 #include "gcsynth_sf.h"
 #include "ringbuffer.h"
+
+#include "gcsynth_filter_graph.h"
 
 
 #define BUFSIZE      0xFFFF
@@ -172,6 +175,7 @@ struct voice_render_result my_tsf_voice_render(tsf* f, struct tsf_voice* v, floa
 	if (dynamicGain) tmpModLfoToVolume = (float)region->modLfoToVolume * 0.1f;
 	else noteGain = tsf_decibelsToGain(v->noteGainDB), tmpModLfoToVolume = 0;
 
+
 	while (numSamples)
 	{
 		float gainMono, gainLeft, gainRight;
@@ -309,6 +313,8 @@ TSFDEF void my_tsf_render_float(tsf* f, float* out_right, float* out_left, int s
     memset(channel_buffers, 0, sizeof(channel_buffers));
     memset(channels_in_use, 0, sizeof(channels_in_use));
 
+    fg_freq_domain_event_clear();
+
     // stage 1. 
     //   Render sound font audio into buffers per channel, there will be multiple
     //   my_tsf_render_float calls per channel
@@ -318,6 +324,8 @@ TSFDEF void my_tsf_render_float(tsf* f, float* out_right, float* out_left, int s
             struct voice_render_result vr;
             float* chan_left = channel_buffers[v->playingChannel][0];
             float* chan_right = channel_buffers[v->playingChannel][1];
+            float freq = midi2freq(v->playingKey);
+            float amp = v->ampenv.level;
 
             if (v->playingChannel >= NUM_CHANNELS || num_channels_in_use >= NUM_CHANNELS) {
                 // not sure what to do here, this is one of this 'it should never happen' 
@@ -328,6 +336,9 @@ TSFDEF void my_tsf_render_float(tsf* f, float* out_right, float* out_left, int s
 
             memset(chan_buffer, 0, sizeof(chan_buffer));
             vr = my_tsf_voice_render(f, v, chan_buffer, samples);
+
+            // compute frequency domain without a FFT.
+            fg_freq_domain_event_add(v->playingChannel, freq, amp, vr.outL, vr.outR);           
 
             if(channels_in_use[v->playingChannel] == 0) {
                 // new channel being used
