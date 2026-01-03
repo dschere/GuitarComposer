@@ -107,6 +107,16 @@ class KeyProcessor:
                 return self.proc_dynamic(key, te) 
 
         return True
+    
+    def proc_duration(self, key: int, te: TabEvent):
+        km = EditorKeyMap()    
+        d_change = km.dur_lookup[key] - te.duration
+        te.duration = km.dur_lookup[key]
+
+        evt = EditorEvent(EditorEvent.REST_DUR_CHANGED)  
+        evt.new_dur = km.dur_lookup[key]
+        evt.dur_change = d_change
+        Signals.editor_event.emit(evt)  
 
     def proc(self, key, te: TabEvent, tm: Track):
         km = EditorKeyMap()    
@@ -134,15 +144,7 @@ class KeyProcessor:
                 te.dotted = False
                 te.double_dotted = True
         elif key in km.dur_lookup:
-
-            d_change = km.dur_lookup[key] - te.duration
-            te.duration = km.dur_lookup[key]
-
-            evt = EditorEvent(EditorEvent.REST_DUR_CHANGED)  
-            evt.new_dur = km.dur_lookup[key]
-            evt.dur_change = d_change
-            Signals.editor_event.emit(evt)  
-
+            self.proc_duration(key, te)
         elif key == km.TIED_NOTE:
             te.toggle_tied()
         elif key == km.START_REPEAT:

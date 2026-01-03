@@ -40,7 +40,8 @@ from models.track import TabEvent, Track
 from view.events import StringBendEvent, EditorEvent, Signals
 from models.measure import TupletTypes, TUPLET_DISABLED, TupletTypes
 from view.dialogs.dynamicVariance import DynamicVarianceDialog
-
+from util.keyprocessor import KeyProcessor
+from view.config import EditorKeyMap
 
 DOTTED = GHOST_NOTEHEAD
 DOUBLE_DOTTED = DOUBLE_GHOST_NOTEHEAD
@@ -65,11 +66,11 @@ UPSTROKE_ID_VAL   = 1
 DOWNSTROKE_ID_VAL = -1
 
 
-
+# self, WHOLE_NOTE, "whole note", "duration", 4.0)
 
 class ToolbarButton(QPushButton):
     
-    def __init__(self, parent, label, tooltip, p, v=None):
+    def __init__(self, parent, label, tooltip, p, v=None, keystrokes=[]):
         super().__init__(label)
         self.setToolTip(tooltip)
         self.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
@@ -77,6 +78,7 @@ class ToolbarButton(QPushButton):
         self._param = p
         self._value = v
         self._parent = parent
+        self._keystrokes = keystrokes
         self.setFixedSize(32,32)
         
         self.label = label
@@ -151,6 +153,19 @@ class ButtonGroupContainer(QWidget):
 
 
 class EditorToolbar(QToolBar):
+    
+    """
+    Emulate the keystrokes associated with the toolbar button if provided.
+    Return True is emulation was possible or configured.
+    """
+    def _ks_emulator(self, btn: ToolbarButton):
+        if len(btn._keystrokes) > 0:
+            kp = KeyProcessor()
+            (te,_) = self.track_model.current_moment()
+            for key in btn._keystrokes:
+                kp.proc(key, te, self.track_model)
+            return True
+        return False
 
 
     def _dot_selected(self, btn: ToolbarButton):
@@ -354,25 +369,26 @@ class EditorToolbar(QToolBar):
         self.setFixedHeight(75)
         self.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
 
+        km = EditorKeyMap()
         # not duration whole -> 64th  
         
         dur_container = ButtonGroupContainer("Duration")
         self._dur_grp = MutuallyExclusiveButtonGroup()    
         self._dur_btns = (
-            ToolbarButton(self, WHOLE_NOTE, "whole note", "duration", 4.0),
-            ToolbarButton(self, HALF_NOTE, "half note", "duration", 2.0),
-            ToolbarButton(self, QUATER_NOTE, "quarter note", "duration", 1.0),
-            ToolbarButton(self, EIGHT_NOTE, "eight note", "duration", 0.5),
-            ToolbarButton(self, SIXTEENTH_NOTE, "sixteenth note", "duration", 0.25),
-            ToolbarButton(self, THRITYSEC_NOTE, "thirty second note", "duration", 0.125),
-            ToolbarButton(self, SIXTYFORTH_NOTE, "sixty forth note", "duration", 0.0625)
+            ToolbarButton(self, WHOLE_NOTE, "whole note", "duration", 4.0, [km.WHOLE_NOTE]),
+            ToolbarButton(self, HALF_NOTE, "half note", "duration", 2.0, [km.HALF_NOTE]),
+            ToolbarButton(self, QUATER_NOTE, "quarter note", "duration", 1.0, [km.QUARTER_NOTE]),
+            ToolbarButton(self, EIGHT_NOTE, "eight note", "duration", 0.5, [km.EIGHT_NOTE]),
+            ToolbarButton(self, SIXTEENTH_NOTE, "sixteenth note", "duration", 0.25, [km.SIXTEENTH_NOTE]),
+            ToolbarButton(self, THRITYSEC_NOTE, "thirty second note", "duration", 0.125, [km.THRITY_SECOND_NOTE]),
+            ToolbarButton(self, SIXTYFORTH_NOTE, "sixty forth note", "duration", 0.0625, [km.SIXTY_FORTH_NOTE])
         )
         for btn in self._dur_btns:
             self._dur_grp.addButton(btn)
             dur_container.add_item(btn)
         self.addWidget(dur_container) 
 
-        self._dur_grp.selected.connect(self._on_duration_selected)
+        self._dur_grp.selected.connect(self._ks_emulator)
         self.addSeparator()
 
         # dotted notes that alter standard note durations
@@ -383,8 +399,6 @@ class EditorToolbar(QToolBar):
             ToolbarButton(self, " ", "no dot", "clear-dots"),
             ToolbarButton(self, DOTTED, "dotted note", "dotted"),
             ToolbarButton(self, DOUBLE_DOTTED, "double dotted", "double-dotted"),
-#            ToolbarButton(self, "3" + QUATER_NOTE, "triplet", "triplet"),
-#            ToolbarButton(self, "5" + QUATER_NOTE, "quintuplet", "quintuplet"),
             ToolbarButton(self, u'\u1D17', "tied note", "tied-note")
         )
         for btn in self._dot_btns:
