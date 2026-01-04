@@ -7,7 +7,8 @@ from models.measure import TUPLET_DISABLED, TupletTypes
 
 from view.dialogs.msgboxes import alert
 from PyQt6.QtWidgets import QWidget
-
+import logging
+import traceback
 @singleton
 class PasteBufferSingleton:
     highlighted_items : List[TabEventPresenter] = [] 
@@ -19,7 +20,12 @@ class PasteBufferSingleton:
 
     def clear(self):
         for item in self.highlighted_items:
-            item.clear_copy_highlight()
+            try:
+                item.clear_copy_highlight()
+            except RuntimeError:
+                logging.warning("Workaround for deallocation error, we can continue since buffer is being cleared anyway.")
+                logging.warning(traceback.format_exc())
+
         self.highlighted_items : List[TabEventPresenter] = []
 
     def get_tab_events(self) -> List[TabEvent]:
