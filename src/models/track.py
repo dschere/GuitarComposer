@@ -20,6 +20,15 @@ class MomentCursor:
         self.current_tab_event = m.current_tab_event
         return m.tab_events[self.current_tab_event]
     
+    def start_of_previous_measure(self):
+        if self.current_measure > 0:
+            self.current_measure -= 1
+        self.current_tab_event = 0
+
+        m = self.t.measures[self.current_measure]
+        return m.tab_events[self.current_tab_event]
+
+    
     def next(self) -> TabEvent | None:
         self.current_tab_event += 1
         m = self.t.measures[self.current_measure]
@@ -112,6 +121,24 @@ class Track:
         if m.current_tab_event >= len(m.tab_events):
             m.current_tab_event = len(m.tab_events) - 1
 
+    def disable_tuplet_group_if_needed(self):
+        "Note: This function is meant to be called in conjunction with a delete tab"
+        cursor = MomentCursor(self)
+        te = cursor.first()
+
+        if te.tuplet_group_id is not None:
+            gid = te.tuplet_group_id
+            end_measure = cursor.current_measure + 1
+
+            te = cursor.start_of_previous_measure()
+            while te is not None and cursor.current_measure < end_measure:
+                if te.tuplet_group_id is not None and  te.tuplet_group_id == gid:
+                    te.tuplet_group_id = None 
+                    te.tuplet_code = TUPLET_DISABLED
+                    te.tuplet_selected_enabled = True
+                te = cursor.next()           
+
+
     def tuplet_alteration(self, code, beats) -> bool:
         
         # if current -> number of beats tab events are rests then
@@ -123,6 +150,7 @@ class Track:
         
         cursor = MomentCursor(self)
         first_te = cursor.first()
+        gid = str(uuid.uuid4())
 
         if first_te.tuplet_code == code:
             return False #-> no alteration took place
@@ -170,10 +198,16 @@ class Track:
                 te_n = te.clone()
                 te_n.tuplet_code = code
                 te_n.tuplet_selected_enabled = i == 0
+                # associate this tab with a tuplet group id
+                te_n.tuplet_group_id = gid
+
                 insList.append(te_n)
             else:
                 te_n = ref_tab.clone()
                 te_n.tuplet_selected_enabled = False
+                # associate this tab with a tuplet group id
+                te_n.tuplet_group_id = gid
+
                 insList.append(te_n)
 
         c_te, c_m = self.current_moment()

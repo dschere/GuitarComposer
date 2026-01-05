@@ -208,6 +208,11 @@ class TabEvent:
         self.effects : Effects | None = None
         self.num_gstrings = num_gstrings
 
+        # tuplets such as triplets and quintuplets are all tagged as part of a group
+        # if one tab event of that group is removed then all other members are marked as not
+        # part of a tuplet. So you can have only two notes as part of triplet, or 4 in a quintuplet. 
+        self.tuplet_group_id : str | None = None
+
 
     def getDynamic(self):
         if self.dynamic:
