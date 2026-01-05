@@ -132,6 +132,13 @@ class TrackPresenter(QWidget):
                 mp.reset_presentation()
 
     def delete_tab(self):
+        "Delete current tab event"
+
+        # First we have to handle tuplets which if you delete one the tuplet must 
+        # revert back to a non tuplet so a triplet eigth notes if you remove one become
+        # two eight notes. 
+        self.track_model.disable_tuplet_group_if_needed()
+
         if len(self.current_measure.tab_events) == 1:
             # delete measure
             self.delete_current_measure()
