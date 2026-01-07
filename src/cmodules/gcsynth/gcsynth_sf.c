@@ -571,6 +571,83 @@ static void *audio_render_thread(void *arg) {
 }
 
 
+static int generate_instruments_info_file(char* sf_file[], int num_font_files)
+{
+    int i, j;
+    char filepath[1024];
+    char* data_dir = getenv("GC_DATA_DIR");
+    FILE* fptr;
+
+    if (data_dir == NULL) {
+        fprintf(stderr,
+            "generate_instruments_info_file: Environment variable GC_DATA_DIR not setup!");
+        return -1;
+    }
+
+    sprintf(filepath,"%s/sf_info/instruments.json", data_dir);
+//    sprintf(filepath,"/tmp/instruments.json");
+    if ((fptr = fopen(filepath,"w")) == NULL) {
+        fprintf(stderr,
+            "generate_instruments_info_file: Unable to open %s for writing!\n", filepath);
+        return -1;
+    }
+
+    fprintf(fptr,"[\n");
+
+    for(i = 0; i < num_font_files; i++ ) {
+        struct tsf* sf = AudioThreads[i].g_TinySoundFont;
+        int sfont_id = i + 1;
+        char* sf_filename = sf_file[i];
+
+        char* sf_info_footer_fmt = 
+            "     ],\n"
+            "     \"sf_filename\":\"%s\",\n" 
+            "     \"sfont_id\":%d\n"
+            "}%s\n"
+        ;
+            
+        char* sf_info_header = 
+            "    {\n"
+            "    \"instruments\": [\n"
+        ;      
+
+        char* sf_info_preset_fmt = 
+            "        {\n"
+            "           \"bank_num\": %d,\n"
+            "           \"name\": \"%s\",\n"
+            "           \"preset_num\": %d\n"
+            "        }%s\n"
+        ;
+
+        fprintf(fptr,"%s", sf_info_header);
+
+        for(j = 0; j < sf->presetNum; j++) {
+            struct tsf_preset* preset = &sf->presets[j];
+            int bank_num = preset->bank;
+            char* name = preset->presetName;
+            int preset_num = preset->preset;
+
+            fprintf(fptr, sf_info_preset_fmt,
+                bank_num, 
+                name,
+                preset_num,
+                ((j+1) < sf->presetNum) ? ",":""
+            );
+        }
+
+        fprintf(fptr, sf_info_footer_fmt,
+            sf_filename,
+            sfont_id,
+            ((i+1) < num_font_files) ? ",": ""
+        );        
+    }
+
+    fprintf(fptr,"]\n");
+    fclose(fptr);
+
+    return 0;
+}
+
 /*
     api methods for outside this module.
 */
@@ -706,8 +783,9 @@ int gcsynth_sf_init(char* sf_file[], int num_font_files, AudioChannelFilter filt
             }
         }
     }
-    
-    return 0;
+
+    // write out the data/sf_info/instruments.json file
+    return generate_instruments_info_file(sf_file, num_font_files);
 }
 
 

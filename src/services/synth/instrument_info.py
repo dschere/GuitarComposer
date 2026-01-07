@@ -2,24 +2,7 @@ import os
 import glob
 import re
 import json
-
-pattern = "([0-9]+)-([0-9]+) ([^\n]+)"
-select_parser = re.compile(pattern)
-
-"""
-Creates a structure as follows
-
-sfpaths = [... list of sound font files ...]
-instruments = [{
-    sfont_id: ..
-    sf_filename: ...
-    instruments: [{
-        bank_num,
-        preset_num,
-        name
-    }]
-}]
-"""
+import sys
 
 
 class instrument_spec:
@@ -29,60 +12,46 @@ class instrument_spec:
         self.sfont_id = -1
         self.bank_num = -1
         self.preset_num = -1
+        self.type = ""
 
 
 class instrument_info:
     prefered_font = "27mg_Symphony_Hall_Bank.SF2"
 
     def find(self, name):
-        return self.prefered.get(name, self.lookup.get(name))
-
-    def __init__(self):
-        script = os.environ['GC_BASE_DIR']+"/scripts/print_instrument_info.sh"
-        sf_dir = os.environ['GC_DATA_DIR']+"/sf"
+        return self.prefered.get(name, self.default_data.get(name))
+    
+    def setup(self):
         sf_info_file = os.environ['GC_DATA_DIR']+"/sf_info/instruments.json"
+        if not os.access(sf_info_file,os.F_OK):
+            raise RuntimeError("instrument info file missing is gcsyth running?")      
+        sf_info_list = json.loads(open(sf_info_file).read())
+        for sf_info in sf_info_list:
+            sf_filename = sf_info['sf_filename']
+            sfont_id = sf_info['sfont_id']
+            # fill either the prefered 
+            table = self.prefered if self.prefered_font in sf_filename else self.default_data 
+            
+            for instrument_data in sf_info['instruments']:
+                spec = instrument_spec()
+                spec.preset_num = instrument_data['preset_num']
+                spec.name = instrument_data['name']
+                spec.bank_num = instrument_data['bank_num']
+                spec.sf_filename = sf_filename
+                spec.sfont_id = sfont_id
+
+                table[spec.name] = spec
+
+            self.instruments.append(sf_info)
+
+            
+    def __init__(self):
+        sf_dir = os.environ['GC_DATA_DIR']+"/sf"
         self.sfpaths = glob.glob(sf_dir+"/*")
+
         self.instruments = []
 
         # give preference to this sound font
-
         self.prefered = {}
         # all others
-        self.lookup = {}
-
-        sfont_id = 0
-        for sf_filename in [f.split("/")[-1] for f in self.sfpaths]:
-            script = os.environ['GC_BASE_DIR'] + \
-                "/scripts/print_instrument_info.sh"
-            cmd = "%s %s" % (script, sf_filename)
-            sfont_id += 1
-            sf_info = {
-                "sfont_id": sfont_id,
-                "sf_filename": sf_filename,
-                "instruments": []
-            }
-            for line in os.popen(cmd).readlines():
-                m = select_parser.match(line)
-                if m:
-                    spec = instrument_spec()
-                    spec.sfont_id = sfont_id
-                    spec.sf_filename = sf_filename
-                    spec.name = m.group(3)
-                    spec.bank_num = int(m.group(1))
-                    spec.preset_num = int(m.group(2))
-
-                    if sf_filename == self.prefered_font:
-                        self.prefered[spec.name] = spec
-                    else:
-                        self.lookup[spec.name] = spec
-
-                    sf_info["instruments"].append({
-                        "bank_num": int(m.group(1)),
-                        "preset_num": int(m.group(2)),
-                        "name": m.group(3)
-                    })
-            self.instruments.append(sf_info)
-
-        f = open(sf_info_file, "w")
-        f.write(json.dumps(self.instruments, indent=4, sort_keys=True))
-        f.close()
+        self.default_data = {}
