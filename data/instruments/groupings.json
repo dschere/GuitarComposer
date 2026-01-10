@@ -1,0 +1,47 @@
+{
+    "__doc__": {
+        "groups": "list of instrument group names",
+        "name": "name of group",
+        "match_string": "list of sub strings to perform a match",
+        "exclude_string": "list of sub string that if match indicate this instrument is not part of the group",
+        "regex_string": "regular expression match"
+    },
+    "groups": [{
+        "name": "guitar",
+        "match_string": [
+            "Gt",
+            "Guitar",
+            "GT",
+            "Gtr",
+            "Nylon + Steel"
+        ]
+    }, {
+        "name": "piano",
+        "match_string": [
+            "Piano",
+            "ElecGrand",
+            "Grand"
+        ]
+    }, {
+        "name": "organ",
+        "match_string": [
+            "Organ"
+        ]
+    }, {
+        "name": "bass",
+        "match_string": [
+            "Bass"
+        ],
+        "exclude_string": [
+            "Bassoon",
+            "Bass Clarinet"
+        ]
+    }, {
+        "name": "tuned percussion",
+        "match_string": [
+            "Steel Drums",
+            "Melo Tom",
+            "Synth Drum"
+        ]
+    }]
+}
