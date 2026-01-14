@@ -43,5 +43,14 @@
             "Melo Tom",
             "Synth Drum"
         ]
+    },{
+        "name": "drums",
+        "match_string": [
+            "kit",
+            "Kit"
+        ],
+        "exclude_string": [
+            "Kitty"
+        ]
     }]
 }

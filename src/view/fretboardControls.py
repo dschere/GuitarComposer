@@ -8,12 +8,15 @@ from util.scale import MusicScales
 from view.config import LabelText
 from view.events import Signals, ScaleSelectedEvent, ClearScaleEvent
 from music.instrument import getInstrumentList
-
+from view.widgets.instrumentPicker import instrumentPicker
 
 class FretboardControls(QWidget):
 
     def on_inst_select(self):
         name = self.instr_combo_box.currentText()
+        Signals.fretboard_inst_select.emit(name)
+
+    def on_inst_select2(self, name):
         Signals.fretboard_inst_select.emit(name)
 
     def __init__(self):
@@ -39,7 +42,11 @@ class FretboardControls(QWidget):
         instr_list = getInstrumentList()
         self.instr_combo_box.addItems(instr_list)
         instrument_layout.addWidget(instrument_label)
-        instrument_layout.addWidget(self.instr_combo_box)
+        ip = instrumentPicker("12-str.GT")
+        ip.instrument_selected.connect(self.on_inst_select2)
+        instrument_layout.addWidget(ip)
+
+        #instrument_layout.addWidget(self.instr_combo_box)
 
         # Create the filter label and filter input
         filter_layout = QHBoxLayout()
