@@ -1,6 +1,6 @@
 import os
 import json
-from typing import List
+from typing import List, Dict, Tuple
 import time
 import logging
 
@@ -391,6 +391,15 @@ def getInstrumentList():
             names.append(instr_spec['name'])
     names.sort()
     return names
+
+def getInstrumentGroups() -> Tuple[Dict[str, List[str]], List[str]]:
+    custom_instruments = CustomInstruments()
+    synth = synthservice()
+
+    groups = synth.instrument_groups()
+    names = list(custom_instruments.db.keys())
+    
+    return groups, names
 
 if __name__ == '__main__':
     import time

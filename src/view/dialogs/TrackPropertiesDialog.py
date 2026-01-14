@@ -18,6 +18,8 @@ from services.effectRepo import EffectRepository
 
 from view.editor.glyphs.common import KEYS
 
+from view.widgets.instrumentPicker import instrumentPicker
+
 """
 The sub widget that draws a
 
@@ -102,19 +104,21 @@ class TrackPropertiesDialog(QDialog):
         return group_box
          
 
-    def _filter_instruments(self):
-        ftext = self.filter_input.text().lower()
-        self.instruments_combo_box.clear()
+    # def _filter_instruments(self):
+    #     ftext = self.filter_input.text().lower()
+    #     self.instruments_combo_box.clear()
 
-        # Filter combo box items based on the text input
-        filtered_items = [
-            item for item in self.instrument_names if ftext in item.lower()]
-        self.instruments_combo_box.addItems(filtered_items)
+    #     # Filter combo box items based on the text input
+    #     filtered_items = [
+    #         item for item in self.instrument_names if ftext in item.lower()]
+    #     self.instruments_combo_box.addItems(filtered_items)
+
+    def _on_percussion_selected(self, state):
+        self.drum_track = state    
         
-
-    def _on_instrument_selected(self):
-        instrument_name = self.instruments_combo_box.currentText()
+    def _on_instrument_selected(self, instrument_name):
         self.track_model.instrument_name = instrument_name
+
         
     def tuning_section(self):
         """ 
@@ -178,8 +182,7 @@ class TrackPropertiesDialog(QDialog):
         m.key = self.key_cb.currentText()
         m.timesig = self.getTimeSig()
         m.bpm = self.bpm_sb.value()
-        self.track_model.instrument_name = self.instruments_combo_box.currentText()
-        self.track_model.drum_track = self.drum_track_enable.isChecked()
+        self.track_model.drum_track = self.drum_track  
 
         evt = EditorEvent()
         evt.ev_type = EditorEvent.ADD_MODEL
@@ -193,7 +196,7 @@ class TrackPropertiesDialog(QDialog):
         super().__init__(parent)
         self.setWindowTitle(LabelText.nav_track_properties)
         self.track_model = track_model
-        #self.track_qmodel_item = track_qmodel_item
+        self.drum_track = track_model.drum_track
 
         _, m = self.track_model.current_moment()
         self.ts, self.bpm, self.key, self.cleff = track_model.getMeasureParams(m)
@@ -210,47 +213,22 @@ class TrackPropertiesDialog(QDialog):
 
         # line 1 is text box that allows the user to search an instrument.
         instr_group_box = QGroupBox(LabelText.instruments)
-
-        filter_layout = QHBoxLayout()
-        filter_label = QLabel("filter", self)
-        self.filter_input = QLineEdit(self)
-        self.filter_input.setPlaceholderText("Type to filter...")
-        self.filter_input.textChanged.connect(self._filter_instruments)
-
-        filter_layout.addWidget(filter_label)
-        filter_layout.addWidget(self.filter_input)
-
-        # line 2 is a combobox of sorted instruments
-        combo_label = QLabel("name", self)
-        self.instruments_combo_box = QComboBox(self)
-        self.instruments_combo_box.addItems(self.instrument_names)
-        self.instruments_combo_box.setCurrentText(
-            self.track_model.instrument_name)
-        f = self._on_instrument_selected
-        self.instruments_combo_box.currentIndexChanged.connect(f)
-
-
-        percussion_label = QLabel("percussion")
-        self.drum_track_enable = QCheckBox()
-        self.drum_track_enable.setChecked(track_model.drum_track) 
     
         instruments_layout = QGridLayout()
-        instruments_layout.addWidget(filter_label, 0, 0)
-        instruments_layout.addWidget(self.filter_input, 0, 1)
-        instruments_layout.addWidget(combo_label, 1, 0)
-        instruments_layout.addWidget(self.instruments_combo_box, 1, 1)
-        instruments_layout.addWidget(percussion_label, 2, 0)
-        instruments_layout.addWidget(self.drum_track_enable, 2, 1)
+        self.ip = instrumentPicker(self.track_model.instrument_name)
+        self.ip.instrument_selected.connect(self._on_instrument_selected)
+        self.ip.percussion_selected.connect(self._on_percussion_selected)
 
+        instruments_layout.addWidget(self.ip)
         instr_group_box.setLayout(instruments_layout)
 
-        # line 3 tuning
+        # line 2 tuning
         tuning_box = self.tuning_section()
 
-        # line 4 key accents
+        # line 3 key accents
         key_box = self.key_list_section()
 
-        # line 5 time signature
+        # line 4 time signature
         timesig = self.timesig_section()
 
         effects_btn = QPushButton() 
