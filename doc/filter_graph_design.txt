@@ -1,0 +1,55 @@
+
+Overview
+--------
+
+This is a rough idea of how I want to implement a filtergraph in this project.
+From the user's perspective it is a graph of audio filters that can apply effects 
+to a track. The simplest case is a list of effects from left to right (compressor,
+noise gate followed by an eqalizer, then a echo reverb etc)
+
+The idea of graph comes in if the user wants to apply different effects based on 
+pitch or amplitude.
+
+Lets say I want to apply distortion only to frequencies over the e4 note and apply
+heavy reverb to notes below middle C. That requires a graph, there needs to be a muxer
+and demuxer that use band pass filters. 
+
+To implement this I need to represent the graph as a graph database. The user would 
+have the ability to edit a graph and connect effects/muxers/band pass filters from 
+an input to an output. The graph would have to be validated. 
+
+The graph items would also have to have the ability to be updated. Perhaps in the 
+middle of a peice I want to change settings on an effect on a specific beat. 
+
+The good news is that I alreaDY HAVE THE the building blocks with the 
+gcsynth_filter module. 
+
+
+Graph model 
+
+   - python object that represents the filter graph 
+   - the graph model sets up a data structure within gcsynth_filter 
+   - each object in the graph has a uuid which is used to identify it.
+   - each gcsynth_filter object is associated with this uuid.
+
+   - the graph model is maintained in the app 
+   - underlying implementation is in the gcsynth module. 
+
+
+gcsynth model
+    dictionary of audio effects, band pass filters muxers and demuxers.
+    a wiring list of how the items are connected to form a filter.
+
+python model
+    a python graph containing configuration data for each gcsynth item 
+    - generates a wiring list
+    - sets enable/disable 
+    - sets parameters
+    - the model is part of the TabEvent 
+
+
+
+
+
+
+
