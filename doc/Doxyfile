@@ -1,0 +1,31 @@
+PROJECT_NAME           = "GuitarComposer"
+OUTPUT_DIRECTORY       = doc
+INPUT                  = src
+RECURSIVE              = YES
+FILE_PATTERNS          = *.c *.h *.py *.cpp 
+
+# Output Settings
+GENERATE_HTML          = YES
+HTML_OUTPUT            = html
+GENERATE_LATEX         = NO
+
+# Graphviz / Call Graph Settings
+# This enables the "tracking" of calls you requested
+HAVE_DOT               = YES
+CALL_GRAPH             = YES
+CALLER_GRAPH           = YES
+GRAPHICAL_HIERARCHY    = YES
+DIRECTORY_GRAPH        = YES
+DOT_IMAGE_FORMAT       = svg
+INTERACTIVE_SVG        = YES
+
+# Source Browsing
+SOURCE_BROWSER         = YES
+INLINE_SOURCES         = YES
+REFERENCED_BY_RELATION = YES
+REFERENCES_RELATION    = YES
+
+# Extraction Settings
+EXTRACT_ALL            = YES
+EXTRACT_PRIVATE        = YES
+EXTRACT_STATIC         = YES
