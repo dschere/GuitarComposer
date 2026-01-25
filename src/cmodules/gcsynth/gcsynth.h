@@ -57,7 +57,7 @@ void gcsynth_raise_exception(char* text);
 // if so then the log will be created in /tmp/gcsynth_timing.log
 #define TIMING_LOGPATH "/tmp/gcsynth_timing.log"
 #define TIMING_LOG_ENV "GCSYNTH_DEBUG_TIMINGLOG"
-void timing_log(char* caller, char *method);
+void timing_log(char* caller, char *method, ...);
 
 
 /**

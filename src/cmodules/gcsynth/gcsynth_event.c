@@ -247,6 +247,9 @@ void gcsynth_schedule(struct gcsynth* gcs, struct scheduled_event* s_event)
 void gcsynth_sequencer_remove_channel_events(struct gcsynth* gcs, int chan)
 {
     // todo?
+    // rename to gcsynth_reset_channel
+    // 1. send message to deactivate any playing notes for this channel
+    // 2. delete any effects for this channel. 
 }
 
 
