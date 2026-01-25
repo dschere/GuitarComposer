@@ -63,6 +63,22 @@ DADGADTuning = [
 
 
 class Instrument:
+    """ 
+    An instrument allocates one or more channels in gcsynth to play a track.
+
+    Normally its one channel for one track, but this app has the concept of
+    custom instruments where the user may blend multiple instruments to create
+    a 'virtual' instrument such as assigning a harp to the high E string of a guitar
+    and a basson to the low E string.
+
+    Instrument lifecycle:
+       allocate channels 
+
+       Respond to TabEvents, musical moments that play/pause notes and configure effects.
+
+       Upon deletion this object frees the channels it used.  
+    """
+
     # get references to singletons
     custom_instruments = CustomInstruments()
     synth = synthservice()
