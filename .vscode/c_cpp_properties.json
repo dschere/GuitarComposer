@@ -5,9 +5,14 @@
             "includePath": [
                 "/usr/include/python3.11/**",
                 "/usr/include/glib-2.0",
+                "/usr/include/glib-2.0/**",
                 "/usr/lib/x86_64-linux-gnu/glib-2.0/include",
+                "/usr/lib/x86_64-linux-gnu/glib-2.0/include/**",
                 "${workspaceFolder}/src/cmodules/gcsynth",
-                "${workspaceFolder}/**"
+                "${workspaceFolder}/**",
+                "/usr/include/glib-2.0",
+                "/usr/include/glib-2.0/**",
+                "/usr/lib/x86_64-linux-gnu/glib-2.0/include"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/clang",
@@ -18,7 +23,14 @@
         {
             "name": "linux-configuration",
             "includePath": [
-                "${workspaceFolder}/**"
+                "/usr/include/python3.11/**",
+                "/usr/include/glib-2.0",
+                "/usr/lib/x86_64-linux-gnu/glib-2.0/include",
+                "${workspaceFolder}/src/cmodules/gcsynth",
+                "${workspaceFolder}/**",
+                "/usr/include/glib-2.0",
+                "/usr/include/glib-2.0/**",
+                "/usr/lib/x86_64-linux-gnu/glib-2.0/include"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/clang",

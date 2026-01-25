@@ -6,130 +6,162 @@
 #include "gcsynth.h"
 #include "gcsynth_filter.h"
 
+#ifndef AUDIO_SAMPLES
+#define AUDIO_SAMPLES 64
+#endif
 
-enum 
+enum
 {
-    FGO_NODE,
-    FGO_EDGE,
-    FGO_INPUT,
-    FGO_OUTPUT,
-
-    FGO_GRAPH
+    EFFECT_CHAIN_ALLPASS,
+    EFFECT_CHAIN_LOWPASS,
+    EFFECT_CHAIN_HIGHPASS,
+    EFFECT_CHAIN_BANDPASS
 };
 
-#define UUID_LENGTH 36
-
-struct fg_object
-{
-    char uuid[UUID_LENGTH+1];
-    int id;
-    int otype;
-};
-
-struct fg_io
-{
-    struct fg_object base;
-    float left[AUDIO_SAMPLES];
-    float right[AUDIO_SAMPLES];
-};
-
-struct fg_node
-{
-    struct fg_object base;
-    struct gcsynth_filter* filter;
-};
-
-
-struct fg_edge 
-{
-    struct fg_object base;
-    int num_outputs;
-    struct fg_object* outputs;
-    struct gcsynth_filter* filter;
-};
-
+// maximum filter chains per channel
+#define MAX_FILTER_CHAINS 8
 
 /**
- * Manages a graph of filters, each graph has two inputs left/right audio and two
- * outpus left/right
- * 
- */
++-------+                                          +--------------------+
++ input |----- demux (port 1) ---                 -| muxer              |--> output 
++  pre  +         balance                          |   chan balance     |
+                  bandpass/highpass/lowpass        |   chan equalizer   |
+               demux (port 2) ---                 -|
+                  balance                          |
+                  bandpass/highpass/lowpass        | 
+               demux (port 3) ---                 -|    
+
+pre: effects applied before demux such as compressor, noise gate etc.
+
+*/
+
+
+struct fg_effect_chain
+{
+    int chain_pass_type;
+    float low_freq;
+    float high_freq;
+    float freq;
+    int enabled;
+
+    float balance;
+    float gain;
+
+    GList* effects;
+    /**
+     * Per frame: 
+     * 
+     * copy from gcsynth_filter_graph->input_left/right
+     *   use optional band pass to determine if chain should be called.
+     *   apply optional balance and gain
+     * walk through effects applying effects to left/right
+     * 
+     * when finished left/right gets mixed using the demux  
+     */
+    int populated; // if 0 then left/right buffers were not populated
+                   // they will be skipped by the muxer.   
+    float  left[AUDIO_SAMPLES];
+    float  right[AUDIO_SAMPLES];
+};
+
+struct fg_demux 
+{
+    int num_chains; // number of filter chains in use.
+    struct fg_effect_chain effect_chains[MAX_FILTER_CHAINS];
+};
+
 struct gcsynth_filter_graph 
 {
-    struct fg_object base; // FGO_GRAPH
-    GList* node_list;
-    GList* edges;
+    float in_left[AUDIO_SAMPLES];
+    float in_right[AUDIO_SAMPLES];
+    float* out_left;
+    float* out_right;
 
-    struct fg_io input, output;
+    GList* pre_demux_effects; // works in in_left/right prior to demux
+    float balance; // out_left/right -1.0 all left, 1.0 all right
+    float gain;    // default 1.0
+
+    int enabled;
+
+    int filter_enabled_count;
+
+    struct fg_demux demuxer;
+    // mux is a mixer function taking the dexumer left/right buffers and outputting
+    // them to out_left/right while applying balance and gain.
 };
 
-/**
- * graph filter api 
- *    The application supplies uuid's that are used to 
- *  tag various objects created. Once assigned and configured 
- *  it is assigned to a channel which will send a message to 
- *  audio rendering thread to assign teh graph to process audio
- *  for that channel.
- *  
- *  Real time chanes can be made by sending subsiquent messages 
- *  that can alter effects parameters and activate deactivate them
- *  
- */
+// initialization
+void fg_init(struct gcsynth_filter_graph* fg);
 
-struct fg_param_cfg 
+
+// run the filter graph on the stereo audio data 
+void fg_run(struct gcsynth_filter_graph* fg, int channel, float* left, float* right);
+
+
+void fg_enable(struct gcsynth_filter_graph* fg, int enabled);
+ 
+
+// demux functions
+void pre_demux_proc(struct gcsynth_filter_graph* fg, float* left, float* right);
+void demux_proc(struct gcsynth_filter_graph* fg, int channel);
+
+void fg_demux_enable_chain(struct gcsynth_filter_graph* fg, int chain_idx, int enable);
+void fg_demux_num_chains(struct gcsynth_filter_graph* fg, int num_chains);
+void fg_demux_chain_balance(struct gcsynth_filter_graph* fg, int chain_idx, float balance);
+void fg_demux_chain_gain(struct gcsynth_filter_graph* fg, int chain_idx, float gain);
+
+int fg_create_filter(
+    struct gcsynth_filter_graph* fg,
+    int chain_idx, // -1 means this filter is applied pre-demux
+    const char* pathname, 
+    char* label 
+);
+
+int fg_remove_filter(
+    struct gcsynth_filter_graph* fg,
+    int chain_idx, // -1 means this filter is applied pre-demux
+    const char* pathname
+);
+
+// allow fg_find_filter to return multiple variables.
+struct fg_find_filter_result 
 {
-    char* graph_uuid;
-    char* filter_uuid;
-    char* filename;
-    char* label;
-    char* param_name;
-    float value;
+    GList** list; // this list where the item lives
+    GList* iter; // the item within the list
+    struct gcsynth_filter* filter; // the filter itself 
+    int found;
 };
 
-struct fg_connect_args
-{
-    char* graph_uuid;
-    char* connector_uuid;
-    
-    char* input_uuid;
-    char* output_uuid;
-    int using_midi;
-    
-    int is_low_pass;
-    float low_pass_freq;
-
-    int is_high_pass;
-    float high_pass_freq;
-};
+// primitive that searches for a filter by label in a filter chain
+// or pre demux filter. 
+struct fg_find_filter_result fg_find_filter(
+    struct gcsynth_filter_graph* fg,
+    int chain_idx, // -1 means this filter is applied pre-demux
+    char* label
+);
 
 
+void fg_enable_filter(
+    struct gcsynth_filter_graph* fg,
+    int chain_idx, // -1 means this filter is applied pre-demux
+    char* label, int enable
+);
 
-int fg_create(char* graph_uuid);
-int fg_unassign(char* graph_uuid, int channel);
-// also acts as a replace unassign then assign new.
-int fg_assign(char* graph_uuid, int channel);
-// must be unassigned or else this will error
-int fg_destroy(char* graph_uuid);
+int fg_demux_set_param_byindex(struct gcsynth_filter_graph* fg, int chain_idx,
+    char* label, int pidx, float value);
 
-int fg_add_filter(struct fg_param_cfg* param);
-int fg_update_filter_param(struct fg_param_cfg* param);
-int fg_activate_filter(struct fg_param_cfg* param);
-int fg_deactivate_filter(struct fg_param_cfg* param);
+int fg_demux_set_param_byname(struct gcsynth_filter_graph* fg, int chain_idx,
+    char* label, char* name, float value);
+   
 
-/**
- * Create a connection or a splitter if called repeatedly with 
- * the same input.
- * 
- * In the case of a connection only one call will connect an input to
- * an output.
- * 
- * Calling this repeatedly with the same input but different outputs creates
- * a one to many splitter. Extra args such as low/high pass sets the conditions
- * in which the input is sent to the output. If no conditions then this simply
- * copies the input to multiple outputs.
- * 
- */
-int fg_connect(struct fg_connect_args* args);
+// called mix audio from demuxer filter chains into left/right output. provided by fg_run   
+void muxer_proc(struct gcsynth_filter_graph* fg);
+
+// utility functions
+void fg_proc_balance_gain(float balance, float gain, float* left, float* right);
+
+
+
 
 
 //-----------------------------------------------------------
@@ -150,6 +182,11 @@ void midi_filter_created();
 void midi_filter_destroyed();
 
 float midi2freq(int midi_key);
+
+int fg_bandpass_filter(int channel, float low, float high, float* left, float* right);
+int fg_highpass_filter(int channel, float freq, float* left, float* right);
+int fg_lowpass_filter(int channel, float freq, float* left, float* right);
+
 
 
 

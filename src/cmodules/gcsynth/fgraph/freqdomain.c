@@ -81,4 +81,80 @@ float midi2freq(int midi_key)
     return 440.0 * pow(2, p);
 }
 
+/*
+   band/high/low pass filters.
+   
+   A return > 0 means a match if 0 then left/right are unchanged.
+   Otherwise they are populated by audio data within frequence range. 
+*/
 
+enum
+{
+    OP_BANDPASS,
+    OP_LOWPASS,
+    OP_HIGHPASS
+};
+
+
+static void fs_copy_samples(int count, struct freq_sample* fs, float* left, float *right) 
+{
+    int i;
+    for(i = 0; i < AUDIO_SAMPLES; i++) {
+        if (count == 0) {
+            left[i] = fs->left[i];
+            right[i] = fs->right[i];    
+        } else {
+            left[i] += fs->left[i];
+            right[i] += fs->right[i];
+        }
+    }
+}
+
+static int bandpass_op(int channel, int op, float low, float high, float* left, float* right)
+{
+    //FUTURE if this channel is live we then need to use a FT to analyze the frequency domain.
+    // or disable the call completely.
+    struct freq_sample* fs;
+    int count = 0;
+
+    for(fs = FreqDomain.channels[channel]; fs != NULL; fs=fs->next) {
+        switch( op )
+        {
+            case OP_BANDPASS:
+                if (fs->freq >= low && fs->freq <= high) {
+                    fs_copy_samples(count, fs, left, right);
+                    count++;    
+                } 
+                break;
+            case OP_HIGHPASS:
+                if (fs->freq >= high) {
+                    fs_copy_samples(count, fs, left, right);
+                    count++;
+                }
+                break;
+            case OP_LOWPASS:
+                if (fs->freq <= low) {
+                    fs_copy_samples(count, fs, left, right);
+                    count++;
+                }
+                break;
+        }
+    }
+
+    return count;
+}
+
+int fg_bandpass_filter(int channel, float low, float high, float* left, float* right)
+{
+    return bandpass_op(channel, OP_BANDPASS, low, high, left, right);
+}
+
+int fg_highpass_filter(int channel, float freq, float* left, float* right)
+{
+    return bandpass_op(channel, OP_HIGHPASS, freq, freq, left, right);
+}
+
+int fg_lowpass_filter(int channel, float freq, float* left, float* right)
+{
+    return bandpass_op(channel, OP_LOWPASS, freq, freq, left, right);
+}

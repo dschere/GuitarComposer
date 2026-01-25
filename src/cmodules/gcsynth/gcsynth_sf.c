@@ -290,7 +290,7 @@ struct voice_render_result my_tsf_voice_render(tsf* f, struct tsf_voice* v, floa
 
 
 /**
- * WE HAVE ARRIVED AT THE MOST IMPORTANT FUNCTION IN THE SYSTEM/
+ * WE HAVE ARRIVED AT THE MOST IMPORTANT FUNCTION IN THE SYSTEM:
  * 
  * This is where synth instruments and effects are outputed to the sound system.
  * This is run in a FIFO thread at max priority. This function gets called approximately
@@ -377,31 +377,6 @@ TSFDEF void my_tsf_render_float(tsf* f, float* out_right, float* out_left, int s
         }
     }
 
-
-// leave commented out for reference for now.
-
-    // for (; v != vEnd; v++) {
-	// 	if (v->playingPreset != -1) {
-    //         float chan_buffer[AUDIO_SAMPLES * 2];
-    //         struct voice_render_result vr;
-
-    //         // render sound fount 
-    //         memset(chan_buffer, 0, sizeof(chan_buffer));
-    //         vr = my_tsf_voice_render(f, v, chan_buffer, samples);
-
-    //         // optionally process effects 
-    //         if (gcsynth_channel_filter_is_enabled(v->playingChannel)) { 
-    //             synth_filter_router(
-    //                 v->playingChannel, vr.outL, vr.outR, vr.out_samples);
-    //         }
-
-    //         // mix this track
-    //         for(i = 0; i < vr.out_samples; i++) {
-    //             out_left[i] += vr.outL[i];
-    //             out_right[i] += vr.outR[i];
-    //         }                     
-    //     }
-    // }
 
     //FUTURE
     // this is were I could create a master effects output 
