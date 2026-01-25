@@ -74,6 +74,25 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "Generate Documentation",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "/usr/bin/doxygen",
+            "args": ["${workspaceFolder}/doc/Doxyfile"],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "MIMode": "gdb"
+        },
+        {
+            "name": "Generate C Diagrams",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/doc/generate_c_diagrams.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}"
         }
     ]
 }
