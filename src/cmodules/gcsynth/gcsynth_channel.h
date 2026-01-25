@@ -3,20 +3,13 @@
 
 
 #include <glib.h>
+#include "gcsynth_filter_graph.h"
+
 
 #define IN_AUDIO_SAMPLE_SIZE 64*64
 #define IN_AUDIO_BUFSIZE IN_AUDIO_SAMPLE_SIZE * (2 * sizeof(float))
 #define MAX_STRINGS 7
 
-struct gcsynth_channel {
-    // filter chain  
-    GList* filter_chain;
-    GMutex mutex;
-    int initialized;
-    int at_least_one_filter_enabled;
-    float gain; // per channel gain adjustment 0 means no change.
-    float in_audio_buffer[IN_AUDIO_BUFSIZE];
-};
 
 //Note channel has already been range checked prior to these function calls.
 
@@ -39,7 +32,11 @@ int gcsynth_channel_set_control_by_index(int channel, char* plugin_label,
 int gcsynth_channel_set_control_by_name(int channel, char* plugin_label, 
     char* control_name, float value);
 
-
+/**
+ * 1. Use the new filter graph for existing code (no demux filter chains)
+ * 2. extend with new demux/mux capability.
+ * 
+ */
 
 
 struct gcsynth_active_state {
@@ -69,14 +66,9 @@ void gcsynth_incr_instance_id();  called by gcsynth_start()
 
 */    
 
-// main entry point from fluidsynth to route synth voice data into 
-// an audio filter chain.
 
 void synth_filter_router(int channel, float* left, float* right, int samples);
 void synth_interleaved_filter_router(int chan, float* interleaved_audio, int samples);
 void synth_unweaved_filter_router(int chan, float* unweaved_audio, int samples);
-
-
-float *synth_get_in_buf(int chan);
 
 #endif

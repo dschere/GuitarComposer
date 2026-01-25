@@ -48,6 +48,59 @@ python model
     - the model is part of the TabEvent 
 
 
+filter graph
+   input 
+      demuxer
+         filter chain per output
+            ladspa effects
+      muxer
+         take outputs from all filter chains mux to a single output 
+    
+
+
++-------+                                          +--------------------+
++ input |----- demux (port 1) ---                 -| muxer              |--> output 
++-------+         balance                          |   master balance   |
+                  bandpass/highpass/lowpass        |   master equalizer |
+               demux (port 2) ---                 -|
+                  balance                          |
+                  bandpass/highpass/lowpass        | 
+               demux (port 3) ---                 -|   
+
+
+Control
+   channel
+   demux port # 
+
+
+
+
+
+mock up of how a graph is created within the app using gcsynth.
+
+gcsynth.fg_enable(channel)
+
+# initialy creates a demux and mux with a single filter chain.
+
+# -- add a new demux filter chain 
+gcsynth.fg_demux_set_num_chains(channel, number_of_filter_chains)
+gcsynth.fg_demux_add_chain(channel, chain_idx)
+
+gcsynth.fg_demux_add_chain_lowpass(chan, chain_idx, midi_note_code)
+gcsynth.fg_demux_add_chain_highpass(chan, chain_idx, midi_note_code)
+gcsynth.fg_demux_add_chain_bandpass(chan, chain_idx, low_midi_note_code, high_midi_note_code)
+gcsynth.fg_demux_add_chain_balance(chan, chain_idx, left_right // -1.0 to 1.0 ) 
+
+# ladspa effects filter chains
+gcsynth.fg_demux_chain_effect_add(chan, chain_idx, filter_uuid, path,label)
+gcsynth.fg_demux_chain_effect_remove(chan, filter_uuid)
+gcsynth.fg_demux_chain_effect_enable(chan, filter_uuid)
+gcsynth.fg_demux_chain_effect_disable(chan, filter_uuid)
+gcsynth.fg_demux_chain_effect_config(chan, filter_uuid, key=value ...)
+
+
+
+
 
 
 

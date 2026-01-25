@@ -39,8 +39,10 @@ CSOURCES = [
     'gcsynth_acapture.c',
     'ringbuffer.c',
     'repeater_loop.c',
-    'gsynth_filter_graph.c',
-    'fgraph/freqdomain.c'
+    'fgraph/freqdomain.c',
+    'fgraph/demuxer.c',
+    'fgraph/muxer.c',
+    'fgraph/fgraph.c'
 ]
 
 """

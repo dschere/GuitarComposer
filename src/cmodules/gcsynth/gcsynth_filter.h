@@ -4,9 +4,7 @@
 #include "gcsynth.h"
 #include "gcsynth_sf.h"
 
-#ifndef FLUID_BUFSIZE
-#define FLUID_BUFSIZE 64
-#endif
+#include <gmodule.h>
 
 #define MAX_LADSPA_CONTROLS 32
 #define MAX_LADSPA_PORTS    MAX_LADSPA_CONTROLS + 4
@@ -38,7 +36,6 @@ enum {
     NUM_IO_PORTMAPS
 };
 
-#include <glib-2.0/gmodule.h>
 
 struct gcsynth_filter {
     GModule* gmodule;

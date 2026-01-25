@@ -2,10 +2,21 @@
 #include <math.h>
 
 #include "gcsynth.h"
-
 #include "gcsynth_channel.h"
 #include "gcsynth_filter.h"
 #include "gcsynth_sf.h"
+
+
+struct gcsynth_channel {
+    struct gcsynth_filter_graph fg;
+
+    // filter chain  
+    GList* filter_chain;
+    GMutex mutex;
+    int initialized;
+    int at_least_one_filter_enabled;
+    float gain; // per channel gain adjustment 0 means no change.
+};
 
 
 static struct gcsynth_channel ChannelFilters[NUM_CHANNELS];
@@ -138,10 +149,6 @@ void synth_filter_router(int chan, float* left, float* right, int samples)
         }
         unlock_channel(chan);
     }
-}
-
-float *synth_get_in_buf(int chan) {
-    return ChannelFilters[chan].in_audio_buffer;
 }
 
 //TSF_STEREO_UNWEAVED
@@ -351,6 +358,8 @@ static void set_channel_state(int channel, char* plugin_label, int enabled)
         }
     }  
 
+    // replace with primitive in gcsynth_filter_graph.
+
     c->at_least_one_filter_enabled = 0;
     for(iter = g_list_first(c->filter_chain);
             (iter != NULL) && (c->at_least_one_filter_enabled == 0);
@@ -363,11 +372,6 @@ static void set_channel_state(int channel, char* plugin_label, int enabled)
     }  
 }
 
-/*
-static GMutex StateMutex;
-static int    StateMutexInitialized;
-static struct gcsynth_active_state GcsynthState;
-*/
 struct gcsynth_active_state gcsynth_get_active_state()
 {
     struct gcsynth_active_state state;
