@@ -24,6 +24,7 @@
 
 static PyObject *GcsynthException = NULL;
 static struct gcsynth GcSynth;
+static int DEBUG_MODE;
 
 
 #define PyDict_SetItemString2(dict, key, py_value) \
@@ -229,7 +230,17 @@ static PyObject* py_gcsynth_event(PyObject* self, PyObject* args) {
 
     if (PyDict_Check(event_params)) {
         s_event = event_from_pydata(event_params);
+
+        
+
         if (s_event) {
+            timing_log("py_gcsynth_event","gcsynth_event",
+                "s_event.event_id=%d, s_event.ev_type=%d, s_event.channel=%d," 
+                "s_event.midi_code=%d, s_event.velocity=%d",
+            s_event->event_id,
+            s_event->ev_type, s_event->channel, s_event->midi_code, s_event->velocity);
+
+
             evt_id_list = PyList_New(1);
 
             gcsynth_schedule(&GcSynth, s_event);
@@ -308,8 +319,10 @@ static PyObject* py_gcsynth_noteon(PyObject* self, PyObject* args) {
     if (!PyArg_ParseTuple(args, "iii|i", &channel, &midicode, &velocity, &gstring )) {
         return NULL;  // Return NULL to indicate an error if the parsing failed
     }
+    CHECK_CHANNEL_VALUE(channel)
 
-    timing_log("py_gcsynth_noteon","noteon");
+    timing_log("py_gcsynth_noteon","noteon","channel=%d midicode=%d velocity=%d gstring=%d", channel, midicode, velocity, gstring);
+
     gcsynth_noteon(&GcSynth, channel, midicode, velocity, gstring);
 
     Py_RETURN_NONE;
@@ -329,6 +342,8 @@ static PyObject* py_fluid_synth_program_select(PyObject* self, PyObject* args) {
     }
 
     CHECK_CHANNEL_VALUE(channel)
+    timing_log("py_fluid_synth_program_select","gcsynth_select", 
+        "channel=%d sfont_id=%d bank_num=%d preset_num=%d", channel, sfont_id, bank_num, preset_num);
 
     gcsynth_select(&GcSynth, channel, sfont_id, bank_num, preset_num);
     
@@ -350,7 +365,10 @@ static PyObject* py_gcsynth_channel_set_control_by_name
     }
 
     CHECK_CHANNEL_VALUE(channel)
+    timing_log("py_gcsynth_channel_set_control_by_name","gcsynth_channel_set_control_by_name", 
+        "channel=%d plugin_label=%s control_name=%s value=%f", channel, plugin_label, control_name, value);
 
+    //
     gcsynth_channel_set_control_by_name(channel, plugin_label, 
         control_name, value);
 
@@ -372,6 +390,8 @@ static PyObject* py_gcsynth_channel_set_control_by_index
     }
 
     CHECK_CHANNEL_VALUE(channel)
+    timing_log("py_gcsynth_channel_set_control_by_index","gcsynth_channel_set_control_by_index", 
+        "channel=%d plugin_label=%s control_num=%d value=%f", channel, plugin_label, control_num, value);
 
     gcsynth_channel_set_control_by_index(channel, plugin_label, 
         control_num, value);
@@ -390,7 +410,7 @@ static PyObject* py_gcsynth_noteoff(PyObject* self, PyObject* args) {
     }
 
     CHECK_CHANNEL_VALUE(channel)
-    timing_log("py_gcsynth_noteoff","noteoff");
+    timing_log("py_gcsynth_noteoff","noteoff","channel=%d midicode=%d gstring=%d", channel, midicode, gstring);
     gcsynth_noteoff(&GcSynth, channel, midicode, gstring);
     
     Py_RETURN_NONE;
@@ -404,6 +424,7 @@ static PyObject* py_fluid_synth_reset_basic_channel(PyObject* self, PyObject* ar
     }
 
     CHECK_CHANNEL_VALUE(channel)
+    timing_log("py_fluid_synth_reset_basic_channel","gcsynth_sequencer_remove_channel_events","channel=%d", channel);
     
     gcsynth_sequencer_remove_channel_events(&GcSynth, channel);
 
@@ -421,7 +442,9 @@ static PyObject* py_gcsynth_channel_remove_filter(PyObject* self, PyObject* args
     }
 
     CHECK_CHANNEL_VALUE(channel)
-    
+    timing_log("py_gcsynth_channel_remove_filter","gcsynth_channel_remove_filter", 
+        "channel=%d plugin_label=%s", channel, plugin_label_or_all);
+
     gcsynth_channel_remove_filter(channel, plugin_label_or_all);
 
     Py_RETURN_NONE;
@@ -435,6 +458,10 @@ static PyObject* py_gcsynth_sf_pitchrange(PyObject* self, PyObject* args) {
     if (!PyArg_ParseTuple(args, "if", &chan, &semitones)) {
         return NULL;  // Return NULL to indicate an error if the parsing failed
     }
+
+    CHECK_CHANNEL_VALUE(chan)
+    timing_log("py_gcsynth_sf_pitchrange","gcsynth_sf_pitchrange", 
+        "chan=%d semitones=%f", chan, semitones);
 
     gcsynth_sf_pitchrange(chan, semitones);
     Py_RETURN_NONE;
@@ -450,12 +477,18 @@ static PyObject* py_gcsynth_sf_pitchwheel(PyObject* self, PyObject* args) {
         return NULL;  // Return NULL to indicate an error if the parsing failed
     }
 
+    CHECK_CHANNEL_VALUE(chan)
+    timing_log("py_gcsynth_sf_pitchwheel","gcsynth_sf_pitchwheel", 
+        "chan=%d semitones=%f", chan, semitones);
+
     gcsynth_sf_pitchwheel(chan, semitones);
     Py_RETURN_NONE;
 }
 
 
 static PyObject* py_gcsynth_stop(PyObject* self, PyObject* args) {
+    timing_log("py_gcsynth_stop","gcsynth_stop");
+
     gcsynth_stop(&GcSynth);
     gcsynth_remove_all_filters();
     Py_RETURN_NONE;
@@ -646,7 +679,7 @@ struct timespec start_time, end_time;
 static FILE* TimingLog = NULL;
 static struct timespec TimingLogRefTime;
 
-void timing_log(char* caller, char *method)
+void timing_log(char* caller, char *method, ...)
 {
     if (TimingLog != NULL) {
         struct timespec ts;
@@ -663,14 +696,28 @@ void timing_log(char* caller, char *method)
             nanoseconds += 1000000000;
         }
         
-        fprintf(TimingLog,"%10ld.%09ld %12s %12s\n",
+        fprintf(TimingLog,"%10ld.%09ld %12s %12s : ",
             seconds, nanoseconds, caller, method);
+        
+        va_list args;
+        va_start(args, method); // 'format' is the last fixed argument before '...'
+        char* format = va_arg(args, char*);
+
+        vfprintf(TimingLog, format, args);
+
+        fprintf(TimingLog, "\n");
+
+        va_end(args);
+        fflush(TimingLog);
+        
     }
 }
+
 
 // Initialization function
 PyMODINIT_FUNC PyInit_gcsynth(void) {
     char* timing_log_env = getenv(TIMING_LOG_ENV);
+ 
     if (SDL_Init(SDL_INIT_AUDIO) < 0) {
         fprintf(stderr, "SDL_Init failed: %s\n", SDL_GetError());
         return NULL;
