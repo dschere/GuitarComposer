@@ -127,30 +127,32 @@ class TupletGroupRederer:
         for tg in self.tuplet_groups:
             tg.render_line(painter, self.overlay)
 
+    def flush(self):
+        if self.current_tuple_group:
+            self.tuplet_groups.append(self.current_tuple_group)
+            self.current_tuple_group = None
 
     def on_tab_event(self, tab_event: TabEvent, mp: MeasurePresenter):
 
-        # reached a non tuplet, push an existing group 
-        # is there is one and set the current tuplet grouo to none
-        if tab_event.tuplet_code == TUPLET_DISABLED:
-            if isinstance(self.current_tuple_group, TupletGroup):
-                self.tuplet_groups.append(self.current_tuple_group)
-                self.current_tuple_group = None 
+        # If we have a current group, check if we should continue it
+        if self.current_tuple_group:
+            # If code matches (and not disabled), add to group
+            if tab_event.tuplet_code == self.current_tuple_group.tuplet_code:
+                self.current_tuple_group.add(tab_event, mp) # type: ignore
+                if self.current_tuple_group.isFull():
+                    self.tuplet_groups.append(self.current_tuple_group)
+                    self.current_tuple_group = None
+                return
+            
+            # Code mismatch or disabled, flush current group
+            self.flush()
 
-        else:
-            if isinstance(self.current_tuple_group, TupletGroup):
-                if self.current_tuple_group.tuplet_code == tab_event.tuplet_code:
-                    self.current_tuple_group.add(tab_event, mp) # type: ignore
-                    if self.current_tuple_group.isFull():
-                        # all notes for tuplet apend and setup for the next call.
-                        self.tuplet_groups.append(self.current_tuple_group)
-                        self.current_tuple_group = None 
-            else:
-                # new tuplet group with no current group.
-                tg = TupletGroup()
-                tg.tuplet_code = tab_event.tuplet_code
-                tg.add(tab_event, mp)
-                self.current_tuple_group = tg 
+        if tab_event.tuplet_code != TUPLET_DISABLED:
+            # new tuplet group with no current group.
+            tg = TupletGroup()
+            tg.tuplet_code = tab_event.tuplet_code
+            tg.add(tab_event, mp)
+            self.current_tuple_group = tg 
 
     
 
@@ -198,6 +200,7 @@ class OverlayWidget(QWidget):
                 # populate beizer line array for tied notes. 
                 tnr.on_tab_event(tab_event, mp)
                 self.tgr.on_tab_event(tab_event, mp)
+        self.tgr.flush()
 
         # schedule a paintEvent to render beizer curves.
         self.update()          

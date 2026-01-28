@@ -1,4 +1,5 @@
 import time, copy
+import threading
 
 from models.song import Song
 from models.track import Track
@@ -8,11 +9,14 @@ from view.editor.trackEditorView import TrackEditorView
 from view.events import Signals, EditorEvent, PlayerEvent
 from services.player import PlayMoment, Player
 
+from util.synchronized_method import synchronized_method
+
 class PlayerController:
     """ 
     Listens to events from Signals and controls a service.player object.
     """
 
+    @synchronized_method
     def _handle_editor_event(self, evt : EditorEvent):
         if evt.ev_type == EditorEvent.ADD_MODEL:
             assert(evt.model)
@@ -23,6 +27,7 @@ class PlayerController:
         elif evt.ev_type == EditorEvent.ADD_TRACK_EDITOR:
             self.track_editor = evt.track_editor     
 
+    @synchronized_method
     def _handle_song_selected(self, song: Song):
         self.current_song = song
 
@@ -42,6 +47,7 @@ class PlayerController:
         self.current_instr : Instrument | None = None
         self.track_editor : TrackEditorView | None = None
         self.p : Player | None = None
+        self._lock = threading.RLock()
         
         Signals.editor_event.connect(self._handle_editor_event)
         Signals.song_selected.connect(self._handle_song_selected)
@@ -56,10 +62,12 @@ class PlayerController:
     def play_tracks(self, selected_tracks):
         pass 
 
+    @synchronized_method
     def pause(self):
         if self.p is not None:
             self.p.pause()
 
+    @synchronized_method
     def play(self):
         if self.current_song:
             if self.p is not None:
@@ -68,11 +76,13 @@ class PlayerController:
                 self.p = Player(self.current_song.tracks)
                 self.p.play()
 
+    @synchronized_method
     def stop(self):
         if self.p is not None:
             self.p.stop()
             self.p = None
-
+            
+    @synchronized_method
     def play_current_moment(self):
         if self.current_track and self.current_instr:
             PlayMoment(self.current_track, self.current_instr)

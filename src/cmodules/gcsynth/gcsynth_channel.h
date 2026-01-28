@@ -13,6 +13,11 @@
 
 //Note channel has already been range checked prior to these function calls.
 
+/*
+This is the pre filter graph api when effects are stored as a simple list. This is
+the same as adding effects the pre demux filter chain the filter graph.
+ */
+
 // load the plugin and assign an instance of the plugin to a filter chain associated
 // with a channel.
 int gcsynth_channel_add_filter(int channel, const char* filepath, char* plugin_label);
@@ -32,9 +37,13 @@ int gcsynth_channel_set_control_by_index(int channel, char* plugin_label,
 int gcsynth_channel_set_control_by_name(int channel, char* plugin_label, 
     char* control_name, float value);
 
+// end pre filter graph api. 
+/////////////////////////////////////////////////////////////////////////
+
+
 /**
  * 1. Use the new filter graph for existing code (no demux filter chains)
- * 2. extend with new demux/mux capability.
+ * 2. extend api with new demux/mux capability.
  * 
  */
 
