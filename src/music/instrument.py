@@ -3,6 +3,7 @@ import json
 from typing import List, Dict, Tuple
 import time
 import logging
+import threading
 
 from singleton_decorator import singleton
 from music.constants import Dynamic
@@ -82,7 +83,7 @@ class Instrument:
     # get references to singletons
     custom_instruments = CustomInstruments()
     synth = synthservice()
-
+    data_lock = threading.Lock()
 
     def __init__(self, name, tuning=StandardTuning):
         self.string_playing = [None] * len(tuning)
@@ -292,12 +293,14 @@ class Instrument:
         s = self.synth.getSequencer()
         
         for (gstring,chan_mix) in enumerate(self.string_map):
-            midicode_in_use = self.string_playing[gstring]
+            with self.data_lock:
+                midicode_in_use = self.string_playing[gstring]
             if midicode_in_use:       
                 for (chan, _) in chan_mix:            
                     self.synth.noteoff(chan, midicode_in_use, gstring)
 
-                    timer_ids = self.timer_inflight.get((chan,gstring),[])
+                    with self.data_lock:
+                        timer_ids = self.timer_inflight.get((chan,gstring),[])
                     for timer_id in timer_ids:
                         self.timer.cancel(timer_id)
 
@@ -309,21 +312,20 @@ class Instrument:
             for s in range(len(self.tuning)):
                 n.string = s 
                 self.noteoff_events(n, bpm, start_offset)
-            return
-
-        chan_mix = self.string_map[n.string]
-        midicode_in_use = self.string_playing[n.string]
-        if midicode_in_use:       
-            for (chan, _) in chan_mix:            
-                self.synth.noteoff(chan, midicode_in_use, n.string)
-
-                timer_ids = self.timer_inflight.get((chan,n.string),[])
-                for timer_id in timer_ids:
-                    self.timer.cancel(timer_id)
+        else:
+            chan_mix = self.string_map[n.string]
+            with self.data_lock:
+                midicode_in_use = self.string_playing[n.string]
+            if midicode_in_use:       
+                for (chan, _) in chan_mix:            
+                    self.synth.noteoff(chan, midicode_in_use, n.string)
+                    with self.data_lock:
+                        timer_ids = self.timer_inflight.get((chan,n.string),[])
+                    for timer_id in timer_ids:
+                        self.timer.cancel(timer_id)
 
 
     def note_event(self, n: Note, bpm=120, start_offset=0.0):
-
         "play note on potentially multiple channels"
         if n.string is None:
             logging.warning(f"note_event: Unexpected guitar string was None")
@@ -334,12 +336,14 @@ class Instrument:
 
         # If we are already playing a note on this string
         # then perform a noteoff.
-        midicode_in_use = self.string_playing[n.string] # type: ignore
+        with self.data_lock:
+            midicode_in_use = self.string_playing[n.string] # type: ignore
         if self.one_note_per_string and midicode_in_use:
             for (chan, velocity_mul) in chan_mix:
                 self.synth.noteoff(chan, midicode_in_use, n.string)
 
-                timer_ids = self.timer_inflight.get((chan,n.string),[])
+                with self.data_lock:
+                    timer_ids = self.timer_inflight.get((chan,n.string),[])
                 for timer_id in timer_ids:
                     self.timer.cancel(timer_id)
 
@@ -365,7 +369,8 @@ class Instrument:
                         self.synth.noteon, (chan, midicode,velocity))
                     timer_ids.add(timer_id)
 
-                self.string_playing[n.string] = midicode # type: ignore
+                with self.data_lock:
+                    self.string_playing[n.string] = midicode # type: ignore
 
 
             # is there a pitch bend?
@@ -390,7 +395,8 @@ class Instrument:
 
             # save collection of timers used for audio events
             if len(timer_ids) > 0:
-                self.timer_inflight[(chan,n.string)] = timer_ids    
+                with self.data_lock:
+                    self.timer_inflight[(chan,n.string)] = timer_ids    
 
         # play any scheduled events if they exist.  
         s.play()
