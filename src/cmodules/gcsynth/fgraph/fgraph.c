@@ -13,7 +13,7 @@ void fg_enable(struct gcsynth_filter_graph* fg, int enabled)
     fg->enabled = enabled;
 }
 
-
+// 
 void fg_proc_balance_gain(float balance, float gain, float* left, float* right)
 {
     int i;
