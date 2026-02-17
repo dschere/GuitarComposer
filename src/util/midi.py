@@ -4,6 +4,7 @@ such as A#4 -> A# forth octave -> midi code and visa versa.
 """
 from singleton_decorator import singleton
 import re
+import math
 
 
 FLAT_SIGN = "\u266d"
@@ -44,10 +45,10 @@ class _midi_codes:
         ('A#', 'Bb'),
         ('B', 'B')]
 
-    for midi_code in range(min_midi_value, max_midi_value):
-        octave = int((midi_code - 24) / 12)
-        s_name = names[midi_code % 12][SHARP_INDEX] + str(octave)
-        b_name = names[midi_code % 12][FLAT_INDEX] + str(octave)
+    for midi_code in range(min_midi_value, max_midi_value): # type: ignore
+        octave = int((midi_code - 24) / 12) # type: ignore
+        s_name = names[midi_code % 12][SHARP_INDEX] + str(octave) # type: ignore
+        b_name = names[midi_code % 12][FLAT_INDEX] + str(octave) # type: ignore
 
         if s_name == b_name:
             all_names.append(s_name)
@@ -71,6 +72,13 @@ class _midi_codes:
         elif self.re_key_only.match(name):
             name += "3"
             return self.name_to_code[name]
+        
+    def freq_from_midi_code(self, midi_code):        
+        """
+        Converts a MIDI note number to frequency in Hz.
+        """
+        return 440.0 * math.pow(2, (midi_code - 69) / 12.0)
+    
 
     def generic_names(self):
         return self.all_names

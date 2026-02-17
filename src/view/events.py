@@ -16,6 +16,7 @@ from models.param import EffectParameter
 from models.track import Track
 from models.effect import Effect, Effects
 from models.song import Song
+from models.filterGraph import GraphNode
  
 
 #from view.dialogs.effectsControlDialog.dialog import EffectChanges, EffectPreview
@@ -239,6 +240,10 @@ class _Signals(QObject):
     player_visual_event = pyqtSignal(PlayerVisualEvent)
 
     tab_select = pyqtSignal(MouseSelTab)
+    graph_node_changed = pyqtSignal(GraphNode)
+    graph_node_selected = pyqtSignal(GraphNode)
+
+
 
 
 Signals = _Signals()

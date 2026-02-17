@@ -10,6 +10,66 @@ import copy
 EFFECT_CFG_FILE = os.environ['GC_DATA_DIR']+"/effect_config/config.json"
 LADSPA_FILE_SPEC = os.environ.get('LADSPA_PATH','/usr/lib/ladspa')+"/*.so"
 
+
+classification_data = [
+    {
+        "tag": "compressor",
+        "include": ["compress"],
+        "exclude": []
+    },
+    {
+        "tag": "reverb",
+        "include": ["reverb","gverb","freeverb"],
+        "exclude": []
+    },
+    {
+        "tag": "distortion",
+        "include": ["distortion"],
+        "exclude": ["pointerCastDistortion"]
+    },
+    {
+        "tag": "echo",
+        "include": ["echo"],
+        "exclude": []
+    },
+    {
+        "tag": "chorus",
+        "include": ["chorus"],
+        "exclude": []
+    },
+    {
+        "tag": "flanger",
+        "include": ["flanger"],
+        "exclude": []
+    },
+    {
+        "tag": "delay",
+        "include": ["delay"],
+        "exclude": []
+    }
+]
+
+
+def classifier(label):
+    effect_class = "other"
+    lc_label = label.lower()
+
+    def match(cd, lc_label, t):      
+        for m in cd[t]:
+            if m.lower() in lc_label:
+                return True 
+        return False    
+
+    for cd in classification_data:
+        if match(cd, lc_label, 'exclude'):
+            continue
+        if match(cd, lc_label, 'include'):
+            effect_class = cd['tag']
+            break 
+
+    return effect_class
+
+
 @singleton
 class EffectRepository:
 
@@ -21,6 +81,9 @@ class EffectRepository:
     
     def getEffects(self) -> List[Effect]:
         return list(self.effects.values())
+    
+    def getEffect(self, name) -> Effect | None:
+        return self.effects.get(name)
     
     def update(self, elist: List[Effect]):
         data = open(EFFECT_CFG_FILE).read()
@@ -57,15 +120,18 @@ class EffectRepository:
                 label = t[0]
                 name = t[1]
                 ladspa_labels.add(label)
+                eclass = classifier(label)
                 # newly detected effect
                 if label not in cfg:
                     controls = gcsynth.filter_query(filepath, label)
-                    e = Effect(name, label, filepath, controls)
+                    
+                    e = Effect(name, label, filepath, controls, eclass)
                     cfg[label] = {
                         'controls': controls,
                         'name': name,
                         'label': label,
-                        'path': filepath
+                        'path': filepath,
+                        'class': eclass
                     }
                     self.effects[label] = e
                     print(f"{label} {name} {filepath}")
@@ -73,7 +139,7 @@ class EffectRepository:
                     # previously loaded
                     d = cfg[label]
                     controls = d['controls']
-                    e = Effect(name, label, filepath, controls)
+                    e = Effect(name, label, filepath, controls, eclass)
                     self.effects[label] = e
 
         data = json.dumps(cfg, indent=4, sort_keys=True)

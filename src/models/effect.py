@@ -34,8 +34,9 @@ class Effect:
 
     version = "1.0"
 
-    def __init__(self, name, label, path, controls):
-        self.name = name 
+    def __init__(self, name, label, path, controls, eclass = 'other'):
+        self._name = name 
+        self.eclass = eclass
         self.label = label
         # has this effect been selected for use ?
         self.selected = False
@@ -86,11 +87,13 @@ class Effect:
         return self.label
 
     def get_name(self) -> str:
-        return self.name 
+        return self._name 
 
     def get_param_by_name(self, name) -> EffectParameter:
         return self.params[name] 
-        
+            
+    def get_eclass(self):
+        return self.eclass    
     
 
 

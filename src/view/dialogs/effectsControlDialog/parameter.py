@@ -30,6 +30,8 @@ REV_COL     = 4
 
         
 class ParameterRow(QObject):
+    value_changed = pyqtSignal(float)
+
     def _set_default_btn_css(self, ep: EffectParameter):
         css = ""
         if ep.current_value != ep.default_value:
@@ -63,6 +65,7 @@ class ParameterRow(QObject):
         def lit_value_changed(text):
             v = float(text)
             ep.current_value = v
+            self.value_changed.emit(ep.current_value)
             self._set_default_btn_css(ep)
 
         grid.addWidget(lit_value, row, TEXT_COL)
@@ -78,6 +81,7 @@ class ParameterRow(QObject):
         def on_value_change(*args):
             v = 1.0 if bool_value_ctrl.isChecked() else 0.0
             ep.current_value = v 
+            self.value_changed.emit(ep.current_value)
             self._set_default_btn_css(ep) 
 
         # setup style for default button.
@@ -85,6 +89,24 @@ class ParameterRow(QObject):
 
         bool_value_ctrl.clicked.connect(on_value_change)
         grid.addWidget(bool_value_ctrl, row, BOOL_COL)   
+
+        def fallback(v):
+            bool_value_ctrl.setChecked({
+                1.0: True,
+                0.0: False
+            }.get(v,False))
+            ep.current_value = v
+            self.value_changed.emit(ep.current_value)
+            self._set_default_btn_css(ep)
+
+        if not ep.has_default:  
+            self.default_button.setDisabled(True)
+        else:    
+            self.default_button.clicked.connect(lambda: fallback(ep.default_value))
+            
+        self.revert_button.clicked.connect(lambda: fallback(self.original_value))
+
+
 
 
     def _setup_bounded(self, grid: QGridLayout, row: int, ep: EffectParameter):
@@ -116,6 +138,7 @@ class ParameterRow(QObject):
 
         def slider_value_changed(i: int):
             ep.current_value = ep.choices[i]
+            self.value_changed.emit(ep.current_value)
             literal_value.textChanged.disconnect(lit_value_changed)
             if ep.is_integer:
                 literal_value.setText("%7d" % int(ep.current_value))
@@ -139,9 +162,14 @@ class ParameterRow(QObject):
             slider_value_ctrl.valueChanged.connect(slider_value_changed)
             
             ep.current_value = ep.choices[i]
+            self.value_changed.emit(ep.current_value)
             self._set_default_btn_css(ep)
 
-        self.default_button.clicked.connect(lambda: lit_value_changed(str(ep.default_value)))
+        if not ep.has_default:  
+            self.default_button.setDisabled(True)
+        else:    
+            self.default_button.clicked.connect(lambda: lit_value_changed(str(ep.default_value)))
+
         self.revert_button.clicked.connect(lambda: lit_value_changed(str(self.original_value)))
 
         slider_value_ctrl.valueChanged.connect(slider_value_changed)
@@ -151,12 +179,10 @@ class ParameterRow(QObject):
         grid.addWidget(literal_value, row, TEXT_COL)
         
 
-        
+
     def __init__(self, grid: QGridLayout, row: int, ep: EffectParameter):
         super().__init__()
         self.original_value = ep.current_value 
-        self.value_changed = pyqtSignal(float)
-        
 
         param_name = QLabel()
         param_name.setText(ep.name)
