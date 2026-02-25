@@ -171,14 +171,17 @@ class GraphScene(QGraphicsScene):
         self.temp_line = None
         self.start_port = None
         self.node_items = {} # uuid -> NodeItem
-        self.connection_items = {} # uuid -> ConnectionItem
+        self.input_node = None
+        self.output_node = None
+
 
         Signals.graph_node_changed.connect(self.update_node_item)
 
     def clear(self):
         super().clear()
         self.node_items = {}
-        self.connection_items = {}
+        self.input_node = None
+        self.output_node = None
         self.temp_line = None
         self.start_port = None
         self.update()
@@ -251,7 +254,7 @@ class GraphScene(QGraphicsScene):
             node_item = node_item.parentItem()
             
         if isinstance(node_item, SceneNodeItem):
-            if node_item.node_data.type in ("INPUT", "OUTPUT"):
+            if isinstance(node_item.node_data, InputNode) or isinstance(node_item.node_data, OutputNode):
                 return
 
             if self.parent():
@@ -265,6 +268,8 @@ class GraphScene(QGraphicsScene):
         if event.key() == Qt.Key.Key_Delete:
             for item in self.selectedItems():
                 if isinstance(item, SceneNodeItem):
+                    if isinstance(item.node_data, InputNode) or isinstance(item.node_data, OutputNode):
+                        return
                     if self.parent():
                         self.parent().remove_node(item)
                 elif isinstance(item, ConnectionItem):
@@ -290,14 +295,23 @@ class GraphScene(QGraphicsScene):
     def connect_nodes(self, uuid1, out_idx, uuid2, in_idx):
         node1 = self.node_items[uuid1]
         node2 = self.node_items[uuid2]
-        conn = ConnectionItem(node1.outputs[out_idx], node2.inputs[in_idx])
-        self.addItem(conn)
-        self.connection_items[conn.uuid] = conn
+
+        port1 = node1.outputs[out_idx]
+        port2 = node2.inputs[in_idx]
 
         gnode1 : GraphNode = node1.node_data
         gnode2 : GraphNode = node2.node_data
 
+        port2_usage = gnode2.in_ports[in_idx].inuse()
+        if port2_usage:
+            return
+
+        conn = ConnectionItem(port1, port2)
+        self.addItem(conn)
+
         gc = GraphConnection()
+        # from left to right
+        # output port of gnode1 connected to input port of g2 
         gc.in_uuid = gnode2.uuid
         gc.in_idx = in_idx
         gc.out_uuid = gnode1.uuid
@@ -306,6 +320,8 @@ class GraphScene(QGraphicsScene):
         gnode2.in_ports[in_idx] = gc
         gnode1.out_ports[out_idx] = gc
 
+
+        #print(f"connect_nodes: connected {gnode1.__class__.__name__}'s output port {gc.in_idx} to {gnode2.__class__.__name__}'s input port {gc.out_idx} ")
 
 
 

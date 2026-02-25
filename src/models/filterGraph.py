@@ -15,6 +15,12 @@ class GraphConnection:
     """
     Represents a connection between a port of a graph node to another port on a different
     graph node. 
+
+    +---------------+
+    | node out port |  <- connection in_uuid/in_idx      +--------------+
+    |               |     connection out_uuid/out_idx -> | node in port | 
+    +---------------+                                    +--------------+
+    
     """
     def __init__(self):
         self.uuid = str(uuid.uuid4())
@@ -22,6 +28,17 @@ class GraphConnection:
         self.in_idx = 0    # GraphNode port number input
         self.out_uuid = "" # GraphNode uuid output
         self.out_idx = 0   # GraphNode port number output
+        
+    def clear(self):
+        self.in_uuid = ""
+        self.in_idx = 0
+        self.out_uuid = ""
+        self.out_idx = 0    
+
+    def inuse(self):
+        "Is this connection in use?"
+        return self.in_uuid != "" and self.out_uuid != ""
+
 
 
 
@@ -38,7 +55,7 @@ class GraphNode:
         self.y = 0.0
         self.in_ports : List[GraphConnection] = []
         self.out_ports : List[GraphConnection] = []
-
+        
     def changed(self, other):
 
         def non_presentation_data(obj : GraphNode):
@@ -58,6 +75,15 @@ class GraphNode:
                 p['out_port_data'].append(port_data)
             if hasattr(obj, 'properties'):
                 p['properties'] = getattr(obj,'properties')
+            if hasattr(obj,'enabled'):
+                p['enabled'] = getattr(obj,'enabled')
+            if hasattr(obj,'threshold'):
+                p['threshold'] = getattr(obj,'threshold')
+            if hasattr(obj,'low_threshold'):
+                p['low_threshold'] = getattr(obj,'low_threshold')
+            if hasattr(obj,'high_threshold'):
+                p['high_threshold'] = getattr(obj,'high_threshold')
+
             return p
         
         return non_presentation_data(self) != non_presentation_data(other)

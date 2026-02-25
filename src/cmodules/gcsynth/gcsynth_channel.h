@@ -3,7 +3,6 @@
 
 
 #include <glib.h>
-#include "gcsynth_filter_graph.h"
 
 
 #define IN_AUDIO_SAMPLE_SIZE 64*64
@@ -79,5 +78,7 @@ void gcsynth_incr_instance_id();  called by gcsynth_start()
 void synth_filter_router(int channel, float* left, float* right, int samples);
 void synth_interleaved_filter_router(int chan, float* interleaved_audio, int samples);
 void synth_unweaved_filter_router(int chan, float* unweaved_audio, int samples);
+
+int gcsynth_channel_freqdomain_buffers_needed(int channel);
 
 #endif

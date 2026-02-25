@@ -53,6 +53,8 @@ void fg_freq_domain_event_clear()
 
 void fg_freq_domain_event_add(int channel, float freq, float amp, float* left, float* right)
 {
+    //todo this gets replaced with asking the filter graph structure 
+    //for this channel if a filter graph is in use.
     if (MidiFilterCount > 0) {
         struct freq_sample* c_item = &freq_sample_memory[freq_sample_memory_idx];
         int i;
