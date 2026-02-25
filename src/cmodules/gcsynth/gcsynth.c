@@ -20,7 +20,7 @@
 #include "pyutil.h"
 #include "gcsynth_acapture.h"
 
-
+#include "fgraph/py_graph_api.h"
 
 static PyObject *GcsynthException = NULL;
 static struct gcsynth GcSynth;
@@ -637,6 +637,7 @@ static PyMethodDef GCSynthMethods[] = {
 
     {"channel_gain",py_channel_gain,METH_VARARGS,"channel_gain(chan,v) v = 0 no change"},
     {"reset_channel",py_fluid_synth_reset_basic_channel,METH_VARARGS,"reset_channel(chan)"},
+    {"fgraph_api",py_fgraph_api,METH_VARARGS,"fgraph_api(cmd_id,...)"},
 
     {NULL, NULL, 0, NULL}
 };
@@ -735,6 +736,12 @@ PyMODINIT_FUNC PyInit_gcsynth(void) {
 
     // Add the custom exception to the module
     PyModule_AddObject(module, "GcsynthException", GcsynthException);
+
+    // gilter graph initialization and more constants 
+    if (init_filter_graph_subsys(module) == -1) {
+        return NULL;
+    }
+
 
     // add constants
     PyModule_AddIntConstant(module, "EV_NOTEON", EV_NOTEON);

@@ -3,40 +3,24 @@
         {
             "name": "Linux",
             "includePath": [
-                "/usr/include/python3.11/**",
-                "/usr/include/glib-2.0",
-                "/usr/include/glib-2.0/**",
-                "/usr/lib/x86_64-linux-gnu/glib-2.0/include",
-                "/usr/lib/x86_64-linux-gnu/glib-2.0/include/**",
-                "${workspaceFolder}/src/cmodules/gcsynth",
                 "${workspaceFolder}/**",
                 "/usr/include/glib-2.0",
-                "/usr/include/glib-2.0/**",
-                "/usr/lib/x86_64-linux-gnu/glib-2.0/include"
-            ],
-            "defines": [],
-            "compilerPath": "/usr/bin/clang",
-            "cStandard": "c17",
-            "cppStandard": "c++14",
-            "intelliSenseMode": "linux-clang-x64"
-        },
-        {
-            "name": "linux-configuration",
-            "includePath": [
-                "/usr/include/python3.11/**",
-                "/usr/include/glib-2.0",
                 "/usr/lib/x86_64-linux-gnu/glib-2.0/include",
-                "${workspaceFolder}/src/cmodules/gcsynth",
-                "${workspaceFolder}/**",
-                "/usr/include/glib-2.0",
-                "/usr/include/glib-2.0/**",
-                "/usr/lib/x86_64-linux-gnu/glib-2.0/include"
+                "/usr/include/python3.11/**",
+                "${workspaceFolder}/src/cmodules/gcsynth"
             ],
-            "defines": [],
-            "compilerPath": "/usr/bin/clang",
+            "compilerPath": "/usr/bin/gcc",
             "cStandard": "c17",
-            "cppStandard": "c++14",
-            "intelliSenseMode": "linux-clang-x64"
+            "cppStandard": "c++17",
+            "intelliSenseMode": "linux-gcc-x64",
+            "customConfigurationVariables": {},
+            "compilerArgs": [],
+            "mergeConfigurations": false,
+            "macFrameworkPath": [],
+            "dotConfig": "",
+            "defines": [],
+            "forcedInclude": [],
+            "browse": {}
         }
     ],
     "version": 4

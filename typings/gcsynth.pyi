@@ -11,6 +11,44 @@ EV_PITCH_WHEEL: int
 NUM_CHANNELS: int
 LIVE_CAPTURE_CHANNEL: int
 
+
+
+FG_CONNECTION: int
+FG_LOW_PASS: int
+FG_HIGH_PASS: int
+FG_BAND_PASS: int
+FG_EFFECT: int
+FG_INPUT: int
+FG_OUTPUT: int
+FG_MIXER: int
+FG_SPLITTER: int
+FG_GAIN_BALANCE: int
+FG_GRAPH: int
+
+AID_ENABLE_FALLBACK_METHOD: int
+AID_DISABLE_FALLBACK_METHOD: int
+AID_GAIN: int
+AID_BALANCE: int
+AID_LOW_PASS_FREQ: int
+AID_HIGH_PASS_FREQ: int
+AID_BAND_PASS_LOW_FREQ: int
+AID_BAND_PASS_HIGH_FREQ: int
+AID_ENABLE: int
+AID_DISABLE: int
+
+
+FG_API_DESTROY: int
+FG_API_CREATE: int
+FG_API_ASSIGN_TO_CHANNEL: int
+FG_API_UNASSIGN_TO_CHANNEL: int
+FG_API_ADD_NODE: int
+FG_API_REMOVE_NODE: int
+FG_API_ADD_CONNECTION: int
+FG_API_REMOVE_CONNECTION: int
+FG_API_SET_ATTR: int
+
+
+
 class GcsynthException(Exception): ...
 
 def channel_gain(chan, v) -> Any: ...
@@ -35,3 +73,4 @@ def ladspa_plugin_labels(filepath: str): ...
 def list_capture_devices() -> List[str]: ...
 def start_capture(devices: str): ...
 def stop_capture(): ...
+def fgraph_api(*args, **kwargs): ...

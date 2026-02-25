@@ -40,20 +40,12 @@ CSOURCES = [
     'ringbuffer.c',
     'repeater_loop.c',
     'fgraph/freqdomain.c',
-    'fgraph/demuxer.c',
-    'fgraph/muxer.c',
-    'fgraph/fgraph.c'
+#    'fgraph/demuxer.c',
+#    'fgraph/muxer.c',
+    'fgraph/bandpass.c',
+    'fgraph/fgraph.c',
+    'fgraph/py_graph_api.c'
 ]
-
-"""
-ra_comp = [
-    #os.popen("pkgconf -cflags alsa").read()[:-1]
-]
-
-extra_libs = [
-    os.popen("pkgconf -libs alsa").read()[:-1]
-]
-"""
 
 # Define the extension module with the extra include and library directories
 gcsynth_module = Extension(

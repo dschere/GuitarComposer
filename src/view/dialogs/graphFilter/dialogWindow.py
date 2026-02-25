@@ -90,17 +90,24 @@ class FilterGraphDialog(QDialog):
     def create_connection(self, start_port, end_port):
         start_node = start_port.parentItem().node_data
         end_node = end_port.parentItem().node_data
-        self.graph_scene.connect_nodes(start_node.uuid, start_port.index, end_node.uuid, end_port.index)
+
+        return self.graph_scene.connect_nodes(start_node.uuid, start_port.index, end_node.uuid, end_port.index)
 
     def remove_connection(self, connection):
+        start_node = connection.start_port.parentItem().node_data
+        start_port = connection.start_port.index
+        end_node = connection.end_port.parentItem().node_data
+        end_port = connection.end_port.index
+
+        start_node.out_ports[start_port].clear()
+        end_node.in_ports[end_port].clear()
+
         if connection.start_port and connection in connection.start_port.connections:
             connection.start_port.connections.remove(connection)
         if connection.end_port and connection in connection.end_port.connections:
             connection.end_port.connections.remove(connection)
 
         self.graph_scene.removeItem(connection)
-        if connection.uuid in self.graph_scene.connection_items:
-            del self.graph_scene.connection_items[connection.uuid]
 
     def remove_node(self, node_item):
         for port in node_item.inputs + node_item.outputs:
@@ -161,25 +168,25 @@ class FilterGraphDialog(QDialog):
         self.properties_panel.clear()
         self.model = FilterGraph()
 
-        input_node = InputNode()
-        output_node = OutputNode()
+        self.input_node = InputNode()
+        self.output_node = OutputNode()
 
-        input_node.x = 50
-        input_node.y = 250
-        output_node.x = 600
-        output_node.y = 250
+        self.input_node.x = 50
+        self.input_node.y = 250
+        self.output_node.x = 600
+        self.output_node.y = 250
 
-        self.model.add_node(input_node)
-        self.model.add_node(output_node)
+        self.model.add_node(self.input_node)
+        self.model.add_node(self.output_node)
         
-        self.graph_scene.add_node_item(input_node)
-        self.graph_scene.add_node_item(output_node)
+        self.graph_scene.add_node_item(self.input_node)
+        self.graph_scene.add_node_item(self.output_node)
 
-        self.graph_scene.connect_nodes(input_node.uuid, 0, output_node.uuid, 0)
+        self.graph_scene.connect_nodes(self.input_node.uuid, 0, self.output_node.uuid, 0)
         gc = GraphConnection()
-        gc.out_uuid = output_node.uuid
+        gc.out_uuid = self.output_node.uuid
         gc.out_idx = 0
-        gc.in_uuid = input_node.uuid
+        gc.in_uuid = self.input_node.uuid
         gc.in_idx = 0
         self.model.add_connection(gc)
 

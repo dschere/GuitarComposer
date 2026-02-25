@@ -4,6 +4,7 @@
 #include "ladspa.h"
 
 #include "gcsynth_channel.h"
+#include "fgraph/py_graph_api.h"
 
 #define MAX_SOUNDFONTS 255
 #define ERRMSG_SIZE 4096

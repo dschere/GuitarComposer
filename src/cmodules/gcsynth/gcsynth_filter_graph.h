@@ -10,6 +10,34 @@
 #define AUDIO_SAMPLES 64
 #endif
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Unused code to be used as reference for new code
+// will be removed.
+
 enum
 {
     EFFECT_CHAIN_ALLPASS,
@@ -91,7 +119,7 @@ struct gcsynth_filter_graph
 };
 
 // initialization
-void fg_init(struct gcsynth_filter_graph* fg);
+//void fg_init(struct gcsynth_filter_graph* fg);
 
 
 // run the filter graph on the stereo audio data 
@@ -120,7 +148,7 @@ int fg_create_filter(
 int fg_remove_filter(
     struct gcsynth_filter_graph* fg,
     int chain_idx, // -1 means this filter is applied pre-demux
-    const char* pathname
+    char* pathname
 );
 
 // allow fg_find_filter to return multiple variables.
@@ -152,14 +180,12 @@ int fg_demux_set_param_byindex(struct gcsynth_filter_graph* fg, int chain_idx,
 
 int fg_demux_set_param_byname(struct gcsynth_filter_graph* fg, int chain_idx,
     char* label, char* name, float value);
-   
 
 // called mix audio from demuxer filter chains into left/right output. provided by fg_run   
 void muxer_proc(struct gcsynth_filter_graph* fg);
 
 // utility functions
 void fg_proc_balance_gain(float balance, float gain, float* left, float* right);
-
 
 
 

@@ -32,8 +32,8 @@ Also based on tsf's design one sound font is allowed on one audio client.
 #include "gcsynth_sf.h"
 #include "ringbuffer.h"
 
-#include "gcsynth_filter_graph.h"
-
+//#include "gcsynth_filter_graph.h"
+#include "fgraph/freqdomain.h"
 
 #define BUFSIZE      0xFFFF
 #define MAX_ATHREADS 13 

@@ -6,9 +6,16 @@
 #include "gcsynth_filter.h"
 #include "gcsynth_sf.h"
 
+#include "fgraph/fgraph.h"
+
 
 struct gcsynth_channel {
-    struct gcsynth_filter_graph fg;
+    struct fgraph *fg; // current filter graph assigned to channel
+    
+//    struct gcsynth_filter_graph fg;
+//    int filter_graph_enabled;
+    int freq_domain_preproc_needed;
+    int is_live_channel;
 
     // filter chain  
     GList* filter_chain;
@@ -108,6 +115,21 @@ int gcsynth_channel_set_control_by_index(int channel, char* plugin_label,
     unlock_channel(channel);
     return ret;
 }   
+
+int gcsynth_channel_freqdomain_buffers_needed(int channel)
+{
+    int ret = 0;
+    struct gcsynth_channel* c;
+    c = lock_channel(channel);
+    if (c) {
+        // not a channel for live audio and using at least one
+        // low/high or band pass filter.
+        ret = c->freq_domain_preproc_needed && (!c->is_live_channel);
+        unlock_channel(channel);
+    }
+    return ret;
+}
+ 
 
 int gcsynth_channel_set_control_by_name(int channel, char* plugin_label, 
     char* control_name, float value)
