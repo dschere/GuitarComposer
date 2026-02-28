@@ -37,7 +37,7 @@ void fg_set_band_attribute(struct fgraph_node *node, int att_id, int ival, float
                     bandpass->freq_high = fval;
                     break;
                 case AID_ENABLE_FALLBACK_METHOD:
-                    bandpass->node.using_fallback_method_for_freqdomain = 1;
+                    node->using_fallback_method_for_freqdomain = 1;
                     bandpass->fallback_lowpass = gcsynth_filter_new_ladspa(
                         FALLBACK_LOWPASS_FILTER_DEF_PATH, 
                         FALLBACK_LOWPASS_FILTER_DEF_NAME);
@@ -48,7 +48,7 @@ void fg_set_band_attribute(struct fgraph_node *node, int att_id, int ival, float
                     gcsynth_filter_enable(bandpass->fallback_highpass);
                     break;
                 case AID_DISABLE_FALLBACK_METHOD:
-                    bandpass->node.using_fallback_method_for_freqdomain = 1;
+                    node->using_fallback_method_for_freqdomain = 0;
                     gcsynth_filter_disable(bandpass->fallback_lowpass);
                     gcsynth_filter_disable(bandpass->fallback_highpass);
 

@@ -13,10 +13,15 @@ from models.filterGraph import *
 import gcsynth 
 
 
+## Agents
+
+""" 
+Agents represent data structures within the gcsynth extension module. The graphical
+data structure for teh filter graph is eventually represented here are agents that
+control C data structures. 
+"""
 
 class NodeAgent:
-
-    
     def __init__(self, graph: 'FilterGraphAgent', model : GraphNode, typeid: int):
         self.model = model
         self.graph = graph
@@ -25,6 +30,10 @@ class NodeAgent:
         graph_id = graph.handle
 
         gcsynth.fgraph_api(gcsynth.FG_API_ADD_NODE, graph_id, typeid, self.handle)
+
+    def __del__(self):
+        gcsynth.fgraph_api(gcsynth.FG_API_REMOVE_NODE, self.graph.handle, self.handle)
+
 
 class InputNodeAgent(NodeAgent):
     def __init__(self, graph: 'FilterGraphAgent', model : InputNode):
@@ -97,11 +106,13 @@ class FilterGraphAgent(QtCore.QObject):
             pass
 
     def setup(self):
+        """ 
+        Construct a gcsynth filter graph based on the Filter Graph model. 
+        """
         self.input_node = None 
         self.output_node = None
 
         # setup nodes first.
-        self.node_agents = {}
         for gn_model in self.model.nodes.values():
             nagent = agent_from_model(self, gn_model)
             if isinstance(gn_model, InputNode):
@@ -121,10 +132,13 @@ class FilterGraphAgent(QtCore.QObject):
                 gcsynth.fgraph_api(gcsynth.FG_API_ADD_CONNECTION, 
                     self.handle, in_uuid, in_idx, out_uuid, out_idx)
         
+        # filter setup, now enable it.
+        gcsynth.fgraph_api(gcsynth.FG_API_ENABLE, self.handle)
 
     def __init__(self, model : FilterGraph):
         super().__init__()
 
+        self.node_agents = {}
         self.model = model
         self.updated.connect(self.on_update)
         self.handle = model.uuid 
@@ -134,6 +148,15 @@ class FilterGraphAgent(QtCore.QObject):
 
     def __del__(self):
         if self.handle is not None:
+            # first disable this filter.
+            #TODO.
+            gcsynth.fgraph_api(gcsynth.FG_API_DISABLE, self.handle)
+
+            # remove the nodes 
+            for uuid in list(self.node_agents.keys()):
+                # cleanup resources.
+                del self.node_agents[uuid]
+           
             gcsynth.fgraph_api(gcsynth.FG_API_DESTROY, self.handle)
 
 
