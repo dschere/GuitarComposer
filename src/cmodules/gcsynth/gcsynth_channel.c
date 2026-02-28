@@ -53,24 +53,30 @@ static void set_channel_state(int channel, char* plugin_label, int enabled);
 
 void gcsynth_channel_gain(int channel, float gain)
 {
-    lock_channel(channel);
-    ChannelFilters[channel].gain = gain;
-    unlock_channel(channel);
+    struct gcsynth_channel* c = lock_channel(channel);
+    if (c != NULL) {
+        c->gain = gain;
+        unlock_channel(channel);
+    }
 }
 
 
 void gcsynth_channel_enable_filter(int channel, char* plugin_label)
 {
-    lock_channel(channel);
-    set_channel_state(channel, plugin_label,1);
-    unlock_channel(channel);
+    struct gcsynth_channel* c = lock_channel(channel);
+    if (c != NULL) {
+        set_channel_state(channel, plugin_label,1);
+        unlock_channel(channel);
+    }
 }
 
 void gcsynth_channel_disable_filter(int channel, char* plugin_label)
 {
-    lock_channel(channel);
-    set_channel_state(channel, plugin_label,0);
-    unlock_channel(channel);
+    struct gcsynth_channel* c =  lock_channel(channel);
+    if (c != NULL) {
+        set_channel_state(channel, plugin_label,0);
+        unlock_channel(channel);
+    }
 }
 
 

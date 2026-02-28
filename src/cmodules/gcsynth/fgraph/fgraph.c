@@ -56,6 +56,18 @@ void fg_create(char* uuid)
     }
 }
 
+void fg_set_enable(char* uuid, int enabled)
+{
+    struct fgraph* fg = g_hash_table_lookup(fgraph_db, uuid);
+
+    if (fg == NULL) {
+        return;
+    }
+
+    fg->enabled = enabled;
+}
+
+
 void fg_destroy(char* uuid)
 {
     if (fgraph_db != NULL) {

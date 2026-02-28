@@ -72,7 +72,7 @@ struct fgraph_base
 struct fgraph_node
 {
     struct fgraph_base base;
-    int enabled
+    int enabled;
     GList* in_ports; // list of fgraph_connections for inputs
     GList* out_ports; // list of fgraph_connections for inputs
 
@@ -142,6 +142,7 @@ struct fgraph_connection
 
 struct fgraph
 {
+    int enabled;
     struct fgraph_base base;
     struct fgraph_connection 
         *input_node, 
@@ -158,6 +159,7 @@ int fg_init();
 // create and destroy a filter graph
 void fg_create(char* uuid);
 void fg_api_destroy(char* uuid);
+//TODO enable and disable of filter graph and connecting this to the py_module.
 
 // lookup a filter fraph object, the caller will then cast the pointer 
 // to a specific type. If expected_type == -1 then it is ignored.
@@ -166,6 +168,7 @@ struct fgraph_base* lookup_fgraph_object(char* uuid, int expected_type);
 // create a node within a graph.
 int fg_create_node(char* fg_uuid, char* node_uuid, int node_type);
 int fg_delete_node(char* fg_uuid, char* node_uuid);
+void fg_set_enable(char* uuid, int enabled);
 
 // create/delete a connection of nodes
 int fg_connect_nodes(char* fg_uuid, char* conn_uuid, 

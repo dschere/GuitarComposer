@@ -102,39 +102,39 @@ int gcsynth_filter_setbyindex(struct gcsynth_filter* gc_filter, int control_num,
         result = update_ctrl_val(control, value);
     }
 
-    return 0;
+    return result;
 }
 
 
-static
-int gcsynth_interleaved_filter_run(struct gcsynth_filter* gc_filter, LADSPA_Data* fc_buffer, int len) 
-{
-    int i,  j;
+// static
+// int gcsynth_interleaved_filter_run(struct gcsynth_filter* gc_filter, LADSPA_Data* fc_buffer, int len) 
+// {
+//     int i,  j;
 
-    for(i =0, j=0; i < len; i += 2, j++) {
-        gc_filter->in_data_buffer[0][j] = fc_buffer[i];
-        gc_filter->in_data_buffer[1][j] = fc_buffer[i+1];
-    }
+//     for(i =0, j=0; i < len; i += 2, j++) {
+//         gc_filter->in_data_buffer[0][j] = fc_buffer[i];
+//         gc_filter->in_data_buffer[1][j] = fc_buffer[i+1];
+//     }
 
-    for(i = 0; i < (int) gc_filter->desc->PortCount; i++) {
-        gc_filter->desc->connect_port(
-            gc_filter->plugin_instance,
-            i,
-            gc_filter->port_map[i]
-        );
-    }
+//     for(i = 0; i < (int) gc_filter->desc->PortCount; i++) {
+//         gc_filter->desc->connect_port(
+//             gc_filter->plugin_instance,
+//             i,
+//             gc_filter->port_map[i]
+//         );
+//     }
     
-    // run the filter and populate the output buffer
-    printf("gcsynth_interleaved_filter_run run()\n");
-    gc_filter->desc->run(gc_filter->plugin_instance, len/2);
+//     // run the filter and populate the output buffer
+//     printf("gcsynth_interleaved_filter_run run()\n");
+//     gc_filter->desc->run(gc_filter->plugin_instance, len/2);
 
-    for(i =0, j=0; i < len; i += 2, j++) {
-        fc_buffer[i] = gc_filter->out_data_buffer[0][j];
-        fc_buffer[i+1] = gc_filter->out_data_buffer[1][j];
-    } 
+//     for(i =0, j=0; i < len; i += 2, j++) {
+//         fc_buffer[i] = gc_filter->out_data_buffer[0][j];
+//         fc_buffer[i+1] = gc_filter->out_data_buffer[1][j];
+//     } 
 
-    return 0;
-}
+//     return 0;
+// }
 
 
 int gcsynth_filter_run_sterio(

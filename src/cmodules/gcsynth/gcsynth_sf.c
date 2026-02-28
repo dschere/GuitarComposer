@@ -481,7 +481,7 @@ static void audio_consumer(void *userdata, Uint8 *stream, int len) {
         // how many frames are ready
         int frames = ring_buffer_count(at->rb);
 
-        g_async_queue_push(at->request_frames, (frames == 0) ? 2: 1);
+        g_async_queue_push(at->request_frames, (frames == 0) ? 2: 1 );
         
         // process current frame.    
         if (ring_buffer_pop(at->rb, left, right) == 0) {
@@ -525,7 +525,7 @@ static void *audio_render_thread(void *arg) {
     while (running) {
         int i;
         // block until frames requested.
-        int requested_frames = (int) g_async_queue_pop(at->request_frames);
+        int requested_frames = (uintptr_t) g_async_queue_pop(at->request_frames);
 
         // process commands that start/stop sf voices. prior to audio rendering
         proc_at_msgs(at);

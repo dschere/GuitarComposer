@@ -45,6 +45,25 @@ PyObject* py_fgraph_api(PyObject* self, PyObject* args)
                 fg_create(uuid);
             }
             break;
+        case FG_API_ENABLE:{
+                char* uuid;
+                int enabled=1;
+                if (!PyArg_ParseTuple(args,"is", &cmd, &uuid)) {
+                    return NULL;
+                }
+                fg_set_enable(uuid, enabled);
+            }
+            break;
+        case FG_API_DISABLE:{
+                char* uuid;
+                int enabled=0;
+                if (!PyArg_ParseTuple(args,"is", &cmd, &uuid)) {
+                    return NULL;
+                }
+                fg_set_enable(uuid, enabled);
+            }
+            break;
+        
         case FG_API_SET_ATTR:
             {
                 char* node_uuid;
@@ -94,6 +113,8 @@ int init_filter_graph_subsys(PyObject *module)
 
     PyModule_AddIntConstant(module, "FG_API_DESTROY", FG_API_DESTROY);
     PyModule_AddIntConstant(module, "FG_API_CREATE", FG_API_CREATE);
+    PyModule_AddIntConstant(module, "FG_API_ENABLE", FG_API_ENABLE);
+    PyModule_AddIntConstant(module, "FG_API_DISABLE", FG_API_DISABLE);
     PyModule_AddIntConstant(module, "FG_API_ASSIGN_TO_CHANNEL", FG_API_ASSIGN_TO_CHANNEL);
     PyModule_AddIntConstant(module, "FG_API_UNASSIGN_TO_CHANNEL", FG_API_UNASSIGN_TO_CHANNEL);
     PyModule_AddIntConstant(module, "FG_API_ADD_NODE", FG_API_ADD_NODE);
