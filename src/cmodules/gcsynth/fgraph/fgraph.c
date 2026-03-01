@@ -6,12 +6,13 @@
 #include <stdio.h>
 #include <malloc.h>
 #include <string.h>
+#include <pthread.h>
 
 #include "bandpass.h"
 
 
 static GHashTable* fgraph_db = NULL;
-
+static pthread_mutex_t fgraph_db_mutex;
 
 int fg_init()
 {
@@ -19,6 +20,12 @@ int fg_init()
         fprintf(stderr,"Unable to create fgraph hash table!\n");
         return -1;
     }
+
+    if (pthread_mutex_init(&fgraph_db_mutex, NULL) != 0) {
+        perror("Mutex initialization failed");
+        return 1;
+    }
+
     return 0;
 }
 
@@ -27,11 +34,17 @@ struct fgraph_base* lookup_fgraph_object(char* uuid, int expected_type)
     struct fgraph_base* item = NULL;
 
     if (fgraph_db != NULL) {
+        pthread_mutex_lock(&fgraph_db_mutex);
         item = g_hash_table_lookup(fgraph_db, uuid);
+        pthread_mutex_unlock(&fgraph_db_mutex);
+
         if (item != NULL) {
             if ((expected_type != -1) && (item->type != expected_type)) {
+                char errmsg[1024];
+                sprintf(errmsg,"lookup_fgraph_object wrong type! received %d expected %d\n", item->type, expected_type);
+                fprintf(stderr, "%s", errmsg);
+                gcsynth_raise_exception(errmsg);
                 item = NULL;
-                gcsynth_raise_exception("lookup_fgraph_object wrong type!");
             }
         }
     }
@@ -104,11 +117,11 @@ int fg_create_node(char* fg_uuid, char* node_uuid, int node_type)
     if (fg != NULL) {
         switch(node_type) {
             // create a low pass filter
-            case FG_LOW_PASS: {
+            case  FG_NODE_TYPE_LOWPASS: {
                     struct fgraph_lowpass* node = malloc(sizeof(struct fgraph_lowpass));
                     memset(node, 0, sizeof(struct fgraph_lowpass));
                     strncpy(node->node.base.uuid, node_uuid, sizeof(node->node.base.uuid)-1);
-                    node->node.base.type = FG_LOW_PASS;
+                    node->node.base.type =  FG_NODE_TYPE_LOWPASS;
                     node->freq = 261.63;
                     node->node.run = lowpass_run;
                     node->node.enabled = 1;
@@ -116,22 +129,22 @@ int fg_create_node(char* fg_uuid, char* node_uuid, int node_type)
                 }
                 break;
             // create a high pass filter
-            case FG_HIGH_PASS:{
+            case  FG_NODE_TYPE_HIGHPASS:{
                     struct fgraph_highpass* node = malloc(sizeof(struct fgraph_highpass));
                     memset(node, 0, sizeof(struct fgraph_lowpass));
                     strncpy(node->node.base.uuid, node_uuid, sizeof(node->node.base.uuid)-1);
-                    node->node.base.type = FG_HIGH_PASS;
+                    node->node.base.type =  FG_NODE_TYPE_HIGHPASS;
                     node->freq = 261.63;
                     node->node.run = highpass_run;
                     node->node.enabled = 1;
                     g_hash_table_insert(fg->nodes, node->node.base.uuid, node);
                 }
                 break;
-            case FG_BAND_PASS:{
+            case FG_NODE_TYPE_BANDPASS:{
                     struct fgraph_bandpass* node = malloc(sizeof(struct fgraph_bandpass));
                     memset(node, 0, sizeof(struct fgraph_lowpass));
                     strncpy(node->node.base.uuid, node_uuid, sizeof(node->node.base.uuid)-1);
-                    node->node.base.type = FG_BAND_PASS;
+                    node->node.base.type = FG_NODE_TYPE_BANDPASS;
                     node->freq_high = 261.63;
                     node->freq_low = 261.63;
                     node->node.run = bandpass_run;
@@ -139,17 +152,30 @@ int fg_create_node(char* fg_uuid, char* node_uuid, int node_type)
                     g_hash_table_insert(fg->nodes, node->node.base.uuid, node);
                 }
                 break;
-            case FG_EFFECT:
-            case FG_INPUT:
-            case FG_OUTPUT:
-            case FG_MIXER:
-            case FG_SPLITTER:
-            case FG_GAIN_BALANCE:
+            case FG_NODE_TYPE_EFFECT:
+                break;
+            case FG_NODE_TYPE_OUTPUT:
+            case FG_NODE_TYPE_INPUT: {
+                    struct fgraph_node* node = malloc(sizeof(struct fgraph_node));
+                    memset(node, 0, sizeof(struct fgraph_node));
+                    strncpy(node->base.uuid, node_uuid, sizeof(node->base.uuid)-1);
+                    node->base.type = node_type;
+                    node->enabled = 1;
+                    g_hash_table_insert(fg->nodes, node->base.uuid, node);
+                }
+                break;
+            case FG_NODE_TYPE_MIXER:
+            case FG_NODE_TYPE_SPLITTER:
+            case FG_NODE_TYPE_GAIN_BALANCE:
+                break;
         }
 
 
     } else {
-        fprintf(stderr,"No match for fg_uuid = %s or type mismatch not a graph.\n", fg_uuid);
+        char errmsg[1024];
+
+        sprintf(errmsg,"No match for fg_uuid = %s or type mismatch not a graph.\n", fg_uuid);
+        gcsynth_raise_exception(errmsg);
         ret = -1;
     }
     
@@ -159,6 +185,25 @@ int fg_create_node(char* fg_uuid, char* node_uuid, int node_type)
 
 int fg_delete_node(char* fg_uuid, char* node_uuid)
 {
+    struct fgraph* fg = g_hash_table_lookup(fgraph_db, fg_uuid);
+
+    if (fg == NULL) {
+        return;
+    }
+
+    struct fgraph_node* node = g_hash_table_lookup(fg->nodes, node_uuid);
+    if (node == NULL) {
+        return;
+    }
+
+    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    /*
+     Warning: The python layer needs to make sure that connections are removed prior to this
+     call. 
+     */
+    g_hash_table_destroy(fg->nodes);
+    free(node);
+
     return 0;
 }
 
@@ -187,9 +232,9 @@ int fg_set_node_attribute(char* node_uuid, int type,
             // specific attributes for different node types.  
                 switch(type) {
                     // specific attributes for band/low/high pass filters
-                    case FG_LOW_PASS:
-                    case FG_HIGH_PASS:
-                    case FG_BAND_PASS:
+                    case  FG_NODE_TYPE_LOWPASS:
+                    case  FG_NODE_TYPE_HIGHPASS:
+                    case FG_NODE_TYPE_BANDPASS:
                         fg_set_band_attribute(node, att_id, ival, fval, sval);
                         break;
                     default:

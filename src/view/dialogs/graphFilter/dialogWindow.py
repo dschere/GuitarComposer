@@ -151,7 +151,7 @@ class FilterGraphDialog(QDialog):
         if preset_name == "":
             show_alert(self, text="No preset name provided", icon="error")
             return
-        
+
         existing_presets = self.store.get_presets()
         if preset_name in existing_presets:
             yes = ask_question(self, "Preset already exists", "Do you wish to overwrite?")

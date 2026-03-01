@@ -29,7 +29,8 @@ class NodeAgent:
 
         graph_id = graph.handle
 
-        gcsynth.fgraph_api(gcsynth.FG_API_ADD_NODE, graph_id, typeid, self.handle)
+
+        gcsynth.fgraph_api(gcsynth.FG_API_ADD_NODE, graph_id, self.handle, typeid)
 
     def __del__(self):
         gcsynth.fgraph_api(gcsynth.FG_API_REMOVE_NODE, self.graph.handle, self.handle)
@@ -37,38 +38,38 @@ class NodeAgent:
 
 class InputNodeAgent(NodeAgent):
     def __init__(self, graph: 'FilterGraphAgent', model : InputNode):
-        super().__init__(graph, model, gcsynth.FG_INPUT)
+        super().__init__(graph, model, gcsynth.FG_NODE_TYPE_INPUT)
 
 
 class OutputNodeAgent(NodeAgent):
     def __init__(self, graph: 'FilterGraphAgent', model : OutputNode):
-        super().__init__(graph, model, gcsynth.FG_OUTPUT)
+        super().__init__(graph, model, gcsynth.FG_NODE_TYPE_OUTPUT)
 
 
 class SplitterNodeAgent(NodeAgent):
     def __init__(self, graph: 'FilterGraphAgent', model : SplitterNode):
-        super().__init__(graph, model, gcsynth.FG_SPLITTER)
+        super().__init__(graph, model, gcsynth.FG_NODE_TYPE_SPLITTER)
 
 
 class MixerNodeAgent(NodeAgent):
     def __init__(self, graph: 'FilterGraphAgent', model : GraphNode):
-        super().__init__(graph, model, gcsynth.FG_MIXER)
+        super().__init__(graph, model, gcsynth.FG_NODE_TYPE_MIXER)
 
 class EffectNodeAgent(NodeAgent):
     def __init__(self, graph: 'FilterGraphAgent', model : GraphNode):
-        super().__init__(graph, model, gcsynth.FG_EFFECT)
+        super().__init__(graph, model, gcsynth.FG_NODE_TYPE_EFFECT)
 
 class LowPassNodeAgent(NodeAgent):
     def __init__(self, graph: 'FilterGraphAgent', model : GraphNode):
-        super().__init__(graph, model, gcsynth.FG_LOW_PASS)
+        super().__init__(graph, model, gcsynth.FG_NODE_TYPE_LOWPASS)
 
 class HighPassNodeAgent(NodeAgent):
     def __init__(self, graph: 'FilterGraphAgent', model : GraphNode):
-        super().__init__(graph, model, gcsynth.FG_HIGH_PASS)
+        super().__init__(graph, model, gcsynth.FG_NODE_TYPE_HIGHPASS)
 
 class BandPassNodeAgent(NodeAgent):
     def __init__(self, graph: 'FilterGraphAgent', model : GraphNode):
-        super().__init__(graph, model, gcsynth.FG_BAND_PASS)
+        super().__init__(graph, model, gcsynth.FG_NODE_TYPE_BANDPASS)
 
 
 def agent_from_model(graph: 'FilterGraphAgent', model : GraphNode):
@@ -165,10 +166,79 @@ class FilterGraphAgent(QtCore.QObject):
 if __name__ == '__main__':
     from services.synth.synthservice import synthservice
 
+    def connect_nodes(gnode1 : GraphNode, out_idx : int, gnode2 : GraphNode, in_idx : int):
+        gc = GraphConnection()
+        # from left to right
+        # output port of gnode1 connected to input port of g2 
+        gc.in_uuid = gnode2.uuid
+        gc.in_idx = in_idx
+        gc.out_uuid = gnode1.uuid
+        gc.out_idx = out_idx
+        
+        try:
+            gnode2.in_ports[in_idx] = gc
+            gnode1.out_ports[out_idx] = gc
+        except:
+            print(gnode2)
+            print(f"{gnode2.__class__.__name__} {gnode2.in_ports} {in_idx}")
+            print(f"{gnode1.out_ports}")
+            raise
+
+
     s = synthservice()
     s.start()
-    
+
+    from services.effectRepo import EffectRepository
+
     model = FilterGraph()
+
+    input_node = InputNode()
+    output_node = OutputNode()
+
+    input_node.x = 50
+    input_node.y = 250
+    output_node.x = 600
+    output_node.y = 250
+
+    splitter_node = SplitterNode()
+    splitter_node.set_num_in_ports(1)
+    splitter_node.set_num_out_ports(2)
+
+    repo = EffectRepository()
+    effects = repo.getEffects()
+    assert(len(effects) > 2)
+    
+
+    effect1 = EffectNode(effects[0])
+    effect1.set_num_in_ports(1)
+    effect1.set_num_out_ports(1)
+    
+    effect2 = EffectNode(effects[1])
+    effect2.set_num_in_ports(1)
+    effect2.set_num_out_ports(1)
+
+
+    mixer_node = MixerNode()
+    mixer_node.set_num_in_ports(2)
+    mixer_node.set_num_out_ports(1)
+
+    # wire the nodes 
+    connect_nodes(input_node, 0, splitter_node, 0)
+    connect_nodes(splitter_node, 0, effect1, 0)
+    connect_nodes(splitter_node, 1, effect2, 0)
+    connect_nodes(effect1, 0, mixer_node, 0)
+    connect_nodes(effect2, 0, mixer_node, 1)
+    connect_nodes(mixer_node, 0, output_node, 0)
+
+
+    model.add_node(input_node)
+    model.add_node(output_node)
+    model.add_node(splitter_node)
+    model.add_node(effect1)
+    model.add_node(effect2)
+    model.add_node(mixer_node)
+
+
     fga = FilterGraphAgent(model)
     del fga
 
