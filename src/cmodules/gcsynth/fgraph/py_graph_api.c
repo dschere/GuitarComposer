@@ -63,6 +63,31 @@ PyObject* py_fgraph_api(PyObject* self, PyObject* args)
                 fg_set_enable(uuid, enabled);
             }
             break;
+        case FG_API_ADD_NODE: {
+                char* fg_uuid;
+                char* node_uuid;
+                int node_type;
+
+                if (!PyArg_ParseTuple(args,"issi", &cmd, &fg_uuid, &node_uuid, &node_type)) {
+                    return NULL;
+                }
+                if (fg_create_node(fg_uuid, node_uuid, node_type) == -1) {
+                    fprintf(stderr,"%s\n", "fg_create_node failed!");
+                    return NULL;
+                }
+            }
+            break;   
+        case FG_API_REMOVE_NODE: {
+                char* fg_uuid;
+                char* node_uuid;
+
+                if (!PyArg_ParseTuple(args,"iss", &cmd, &fg_uuid, &node_uuid)) {
+                    return NULL;
+                }
+                fg_delete_node(fg_uuid, node_uuid);
+                
+            }
+            break;
         
         case FG_API_SET_ATTR:
             {
@@ -94,13 +119,19 @@ PyObject* py_fgraph_api(PyObject* self, PyObject* args)
                     att_id, ival, fval,  sval);
                 break;
             }
+        case FG_API_ADD_CONNECTION: {
+                
+            }
+            break;
         case FG_API_ASSIGN_TO_CHANNEL:
         case FG_API_UNASSIGN_TO_CHANNEL:
             break;
         case -1:
             fprintf(stderr,"Unable to parse get command id\n");
+            gcsynth_raise_exception("Unable to parse get command id\n");
             return NULL;
         default:
+            gcsynth_raise_exception("Unknown command!");
             return NULL;
     }
 

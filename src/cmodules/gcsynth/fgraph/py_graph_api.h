@@ -9,21 +9,6 @@
 #include <Python.h>
 #include "fgraph/fgraph.h"
 
-enum 
-{
-    FG_NODE_TYPE_LOWPASS,
-    FG_NODE_TYPE_HIGHPASS,
-    FG_NODE_TYPE_BANDPASS,
-    FG_NODE_TYPE_EFFECT,
-    FG_NODE_TYPE_INPUT,
-    FG_NODE_TYPE_OUTPUT,
-    FG_NODE_TYPE_MIXER,
-    FG_NODE_TYPE_SPLITTER,
-    FG_NODE_TYPE_GAIN_BALANCE,
-
-    FGRAPH_NUM_NODE_TYPES
-};
-
 enum
 {
     FG_API_DESTROY,

@@ -25,24 +25,23 @@ struct fgraph_base; // mixer and splitter are just configurations.
 #define FALLBACK_HIGHPASS_FILTER_NAME    "highpass_iir"
 #define FALLBACK_HIGHASS_FILTER_DEF_PATH "/usr/lib/ladspa/highpass_iir_1890.so"
 
+#define FG_CONNECTION 100
+#define FG_GRAPH 101
 
-enum 
-{
-    FG_CONNECTION, 
+enum  {
+    FG_NODE_TYPE_LOWPASS,
+    FG_NODE_TYPE_HIGHPASS,
+    FG_NODE_TYPE_BANDPASS,
+    FG_NODE_TYPE_EFFECT,
+    FG_NODE_TYPE_INPUT,
+    FG_NODE_TYPE_OUTPUT,
+    FG_NODE_TYPE_MIXER,
+    FG_NODE_TYPE_SPLITTER,
+    FG_NODE_TYPE_GAIN_BALANCE,
 
-    FG_LOW_PASS,
-    FG_HIGH_PASS,
-    FG_BAND_PASS,
-    FG_EFFECT,
-    FG_INPUT,
-    FG_OUTPUT,
-    FG_MIXER,
-    FG_SPLITTER,
-    FG_GAIN_BALANCE,
-    FG_GRAPH,
-
-    NUM_FG_ENTITY_TYPES
+    FGRAPH_NUM_NODE_TYPES
 };
+
 
 enum 
 {
@@ -72,6 +71,7 @@ struct fgraph_base
 struct fgraph_node
 {
     struct fgraph_base base;
+
     int enabled;
     GList* in_ports; // list of fgraph_connections for inputs
     GList* out_ports; // list of fgraph_connections for inputs
@@ -89,22 +89,23 @@ struct fgraph_node
 struct fgraph_lowpass 
 {
     struct fgraph_node node;
-    float freq;
 
+    float freq;
     struct gcsynth_filter* fallback_lowpass;
 };
 
 struct fgraph_highpass 
 {
     struct fgraph_node node;
-    float freq;
 
+    float freq;
     struct gcsynth_filter* fallback_highpass;
 };
 
 struct fgraph_bandpass 
 {
     struct fgraph_node node;
+
     float freq_low;
     float freq_high;
 
@@ -115,12 +116,14 @@ struct fgraph_bandpass
 struct fgraph_effect 
 {
     struct fgraph_node node;
+
     struct gcsynth_filter* filter;
 };
 
 struct fgraph_gain_balance
 {
     struct fgraph_node node;
+
     float gain;
     float balance;
 };
@@ -142,8 +145,9 @@ struct fgraph_connection
 
 struct fgraph
 {
-    int enabled;
     struct fgraph_base base;
+ 
+ 
     struct fgraph_connection 
         *input_node, 
         *output_node
@@ -151,6 +155,7 @@ struct fgraph
 
     GHashTable* nodes;       // uuid -> struct fg_node_* 
     GHashTable* connections; // uuid -> struct fg_connection 
+    int enabled;
 };
 
 // initialize global resources for supporting audio filter graphs.

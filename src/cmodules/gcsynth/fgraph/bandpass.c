@@ -27,7 +27,7 @@ void fg_set_band_attribute(struct fgraph_node *node, int att_id, int ival, float
     struct fgraph_highpass* highpass = NULL;
 
     switch(node->base.type) {
-        case FG_BAND_PASS:
+        case FG_NODE_TYPE_BANDPASS:
             bandpass = (struct fgraph_bandpass*) node;
             switch(att_id) {
                 case AID_BAND_PASS_LOW_FREQ:
@@ -57,10 +57,10 @@ void fg_set_band_attribute(struct fgraph_node *node, int att_id, int ival, float
                     break;    
             } 
             break;
-        case FG_LOW_PASS:
+        case  FG_NODE_TYPE_LOWPASS:
             lowpass = (struct fgraph_lowpass*) node;
             break;
-        case FG_HIGH_PASS:
+        case  FG_NODE_TYPE_HIGHPASS:
             highpass = (struct fgraph_highpass*) node;
             break;
         default: {
