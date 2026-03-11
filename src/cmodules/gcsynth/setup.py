@@ -42,6 +42,10 @@ CSOURCES = [
     'fgraph/freqdomain.c',
 #    'fgraph/demuxer.c',
 #    'fgraph/muxer.c',
+    'fgraph/mixer.c',
+    'fgraph/splitter.c',
+    'fgraph/effect.c',
+    'fgraph/gainbalance.c',
     'fgraph/bandpass.c',
     'fgraph/fgraph.c',
     'fgraph/py_graph_api.c'

@@ -9,6 +9,10 @@
 #include <pthread.h>
 
 #include "bandpass.h"
+#include "gainbalance.h"
+#include "mixer.h"
+#include "splitter.h"
+#include "effect.h"
 
 
 static GHashTable* fgraph_db = NULL;
@@ -28,6 +32,25 @@ int fg_init()
 
     return 0;
 }
+
+struct fgraph_node* fg_lookup_node(struct fgraph* fg, char* uuid)
+{
+    struct fgraph_node* n = NULL; 
+    if (fg != NULL) {
+        n = g_hash_table_lookup(fg->nodes, uuid);
+    }
+    return n;
+}
+
+struct fgraph_connection* fg_lookup_connection(struct fgraph* fg, char* uuid)
+{
+    struct fgraph_connection* c = NULL; 
+    if (fg != NULL) {
+        c = g_hash_table_lookup(fg->connections, uuid);
+    }
+    return c;
+}
+
 
 struct fgraph_base* lookup_fgraph_object(char* uuid, int expected_type)
 {
@@ -108,6 +131,43 @@ void fg_destroy(char* uuid)
     }
 }
 
+int fg_setup_effect(char* fg_uuid, char* node_uuid, char* path, char* label)
+{
+    int ret = -1;
+    char errmsg[256];
+    struct fgraph* fg = g_hash_table_lookup(fgraph_db, fg_uuid);
+    struct fgraph_base* n;
+    struct fgraph_effect* e;
+
+    
+    if (fg == NULL) {
+        sprintf(errmsg,"fg_setup_effect: Unable to find filter graph for uuid %s\n", fg_uuid);
+        gcsynth_raise_exception(errmsg);
+    } else {
+        n = fg_lookup_node(fg_uuid, node_uuid);
+
+        if (e == NULL) {
+            sprintf(errmsg,"fg_setup_effect: no match for effect uuid %s\n", node_uuid);
+            gcsynth_raise_exception(errmsg);
+        } else if (n->type != FG_NODE_TYPE_EFFECT) {
+            sprintf(errmsg,"fg_setup_effect: graph node not an effect type!\n");
+            gcsynth_raise_exception(errmsg);
+        } else {
+            e = (struct fgraph_effect *) n; // safe to cast.
+
+            //Note: this function calls gcsynth_raise_exception if null is returned,
+            e->filter = gcsynth_filter_new_ladspa(path, label);
+            if (e->filter != NULL) {
+                printf("initialized %s from %s\n", label, path);
+                ret = 0;
+            } 
+        }  
+    }
+
+    return ret;
+}
+
+
 
 int fg_create_node(char* fg_uuid, char* node_uuid, int node_type)
 {
@@ -126,6 +186,7 @@ int fg_create_node(char* fg_uuid, char* node_uuid, int node_type)
                     node->node.run = lowpass_run;
                     node->node.enabled = 1;
                     g_hash_table_insert(fg->nodes, node->node.base.uuid, node);
+                    //printf("Created node type %d with uuid = %s\n", node->node.base.type, node_uuid); 
                 }
                 break;
             // create a high pass filter
@@ -138,6 +199,7 @@ int fg_create_node(char* fg_uuid, char* node_uuid, int node_type)
                     node->node.run = highpass_run;
                     node->node.enabled = 1;
                     g_hash_table_insert(fg->nodes, node->node.base.uuid, node);
+                    //printf("Created node type %d with uuid = %s\n", node->node.base.type, node_uuid); 
                 }
                 break;
             case FG_NODE_TYPE_BANDPASS:{
@@ -150,10 +212,11 @@ int fg_create_node(char* fg_uuid, char* node_uuid, int node_type)
                     node->node.run = bandpass_run;
                     node->node.enabled = 1;
                     g_hash_table_insert(fg->nodes, node->node.base.uuid, node);
+                    //printf("Created node type %d with uuid = %s\n", node->node.base.type, node_uuid); 
                 }
                 break;
-            case FG_NODE_TYPE_EFFECT:
-                break;
+            case FG_NODE_TYPE_MIXER: 
+            case FG_NODE_TYPE_SPLITTER:
             case FG_NODE_TYPE_OUTPUT:
             case FG_NODE_TYPE_INPUT: {
                     struct fgraph_node* node = malloc(sizeof(struct fgraph_node));
@@ -161,12 +224,55 @@ int fg_create_node(char* fg_uuid, char* node_uuid, int node_type)
                     strncpy(node->base.uuid, node_uuid, sizeof(node->base.uuid)-1);
                     node->base.type = node_type;
                     node->enabled = 1;
+
+                    switch(node_type) {
+                        // functionally the input is the same as splitter only one output
+                        case FG_NODE_TYPE_INPUT:
+                        case FG_NODE_TYPE_SPLITTER:
+                            node->run = splitter_run;
+                            break;
+
+                        // likewise the output is the same as a mixer with one input 
+                        case FG_NODE_TYPE_OUTPUT:
+                        case FG_NODE_TYPE_MIXER:
+                            node->run = mixer_run;
+                            break;        
+                    }
+
                     g_hash_table_insert(fg->nodes, node->base.uuid, node);
+                    //printf("Created node type %d with uuid = %s\n", node_type, node_uuid); 
                 }
                 break;
-            case FG_NODE_TYPE_MIXER:
-            case FG_NODE_TYPE_SPLITTER:
-            case FG_NODE_TYPE_GAIN_BALANCE:
+            case FG_NODE_TYPE_GAIN_BALANCE: {
+                    struct fgraph_gain_balance* gb = malloc(sizeof(struct fgraph_gain_balance));
+                    struct fgraph_node* node = &gb->node;
+                    memset(node, 0, sizeof(struct fgraph_node));
+                    strncpy(node->base.uuid, node_uuid, sizeof(node->base.uuid)-1);
+                    node->base.type = node_type;
+                    node->enabled = 1;
+                    node->run = gainbalance_run;
+
+                    gb->balance = 1.0; // left -1.0 right 1.0
+                    gb->gain = 1.0;  
+                    
+                    g_hash_table_insert(fg->nodes, node->base.uuid, gb);
+                    //printf("Created node type %d with uuid = %s\n", node_type, node_uuid); 
+                }
+                break;
+            case FG_NODE_TYPE_EFFECT: {
+                    struct fgraph_effect* e = malloc(sizeof(struct fgraph_effect));
+                    struct fgraph_node* node = &e->node;
+                    memset(node, 0, sizeof(struct fgraph_node));
+                    strncpy(node->base.uuid, node_uuid, sizeof(node->base.uuid)-1);
+                    node->base.type = node_type;
+                    node->enabled = 0; // not ready until effect initialization is called.
+                    node->run = fg_effect_run;
+                    e->filter = NULL; 
+                    g_hash_table_insert(fg->nodes, node->base.uuid, e);
+                }
+                break;
+            
+            default:
                 break;
         }
 
@@ -201,7 +307,9 @@ int fg_delete_node(char* fg_uuid, char* node_uuid)
      Warning: The python layer needs to make sure that connections are removed prior to this
      call. 
      */
-    g_hash_table_destroy(fg->nodes);
+    
+    //g_hash_table_destroy(fg->nodes);
+    g_hash_table_remove(fg->nodes, node_uuid);
     free(node);
 
     return 0;
@@ -274,15 +382,17 @@ int fg_connect_nodes(char* fg_uuid, char* conn_uuid,
         strncpy(conn->uuid_out, output_uuid, sizeof(conn->uuid_out)-1); 
         conn->port_out = output_port;
 
-        conn->in_node = (struct fgraph_node*) lookup_fgraph_object(input_uuid, -1);
-        conn->out_node = (struct fgraph_node*) lookup_fgraph_object(output_uuid, -1);
+        conn->in_node = (struct fgraph_node*) fg_lookup_node(fg, input_uuid);
+        conn->out_node = (struct fgraph_node*) fg_lookup_node(fg, output_uuid);
 
         if (conn->in_node == NULL) {
             ret = -1;
+            fprintf(stderr,"fg_connect_nodes: no match for input uuid %s\n", input_uuid );
             gcsynth_raise_exception("fg_connect_nodes no match for input uuid\n");
         }
         else if (conn->out_node == NULL) {
             ret = -1;
+            fprintf(stderr,"fg_connect_nodes: no match for output uuid %s\n", output_uuid );
             gcsynth_raise_exception("fg_connect_nodes no match for output uuid\n");
         }
         else {

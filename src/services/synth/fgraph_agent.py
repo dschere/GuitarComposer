@@ -59,6 +59,19 @@ class EffectNodeAgent(NodeAgent):
     def __init__(self, graph: 'FilterGraphAgent', model : GraphNode):
         super().__init__(graph, model, gcsynth.FG_NODE_TYPE_EFFECT)
 
+    def setup(self, path: str, label: str):
+        "Setup internal ladspa filter"
+        fg_uuid = self.graph.handle
+        effect_uuid = self.handle          
+        cmd = gcsynth.FG_API_EFFECT_SETUP
+        gcsynth.fgraph_api(cmd, fg_uuid, effect_uuid, path, label)
+
+    def __del__(self):
+        # TODO
+        # deallocate ladspa filter
+        super().__del__()
+
+
 class LowPassNodeAgent(NodeAgent):
     def __init__(self, graph: 'FilterGraphAgent', model : GraphNode):
         super().__init__(graph, model, gcsynth.FG_NODE_TYPE_LOWPASS)
@@ -130,8 +143,15 @@ class FilterGraphAgent(QtCore.QObject):
                 out_idx = conn_model.out_idx
                 in_uuid = conn_model.in_uuid
                 out_uuid = conn_model.out_uuid
-                gcsynth.fgraph_api(gcsynth.FG_API_ADD_CONNECTION, 
-                    self.handle, in_uuid, in_idx, out_uuid, out_idx)
+
+                gcsynth.fgraph_api(
+                   gcsynth.FG_API_ADD_CONNECTION, 
+                   self.handle, 
+                   conn_model.uuid, 
+                   in_uuid, 
+                   in_idx, 
+                   out_uuid, 
+                   out_idx)
         
         # filter setup, now enable it.
         gcsynth.fgraph_api(gcsynth.FG_API_ENABLE, self.handle)

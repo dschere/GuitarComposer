@@ -161,6 +161,9 @@ struct fgraph
 // initialize global resources for supporting audio filter graphs.
 int fg_init();
 
+struct fgraph_node* fg_lookup_node(struct fgraph* fg, char* uuid);
+struct fgraph_connection* fg_lookup_connection(struct fgraph* fg, char* uuid);
+
 // create and destroy a filter graph
 void fg_create(char* uuid);
 void fg_api_destroy(char* uuid);
@@ -183,9 +186,14 @@ int fg_delete_connection(char* fg_uuid, char* conn_uuid);
 
 // control ladspa ports
 int fg_set_effect_property(char* fg_uuid, char* node_uuid, char* property, float value);
+int fg_setup_effect(char* fg_uuid, char* node_uuid, char* path, char* label);
+
+
 // set not attributes (enabled etc.)
 
 int fg_set_node_attribute(char* node_uuid, int type, 
     int att_id, int ival, float fval,  char* sval);
+
+
 
 #endif //__FGRAPH_H__

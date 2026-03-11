@@ -117,10 +117,51 @@ PyObject* py_fgraph_api(PyObject* self, PyObject* args)
 
                 fg_set_node_attribute(node_uuid, type, 
                     att_id, ival, fval,  sval);
-                break;
-            }
-        case FG_API_ADD_CONNECTION: {
                 
+            }
+            break;
+        case FG_API_EFFECT_SETUP: {
+            char* fg_uuid;
+            char* effect_uuid;
+            char* label;
+            char* path;
+
+            if (!PyArg_ParseTuple(args,"issss", &cmd, &fg_uuid, &effect_uuid, &path, &label)) {
+                return NULL;
+            }
+
+            // load ladspa audio effect.            
+            if (fg_setup_effect(fg_uuid, effect_uuid, path, label) == -1) {
+                return NULL;
+            }
+
+            }
+            break;
+        case FG_API_ADD_CONNECTION: {
+                char* fg_uuid;
+                char* conn_uuid;
+                char* input_uuid;
+                int input_port;
+                char* output_uuid;
+                int output_port;
+
+
+                if (!PyArg_ParseTuple(args,"isssisi", 
+                    &cmd, 
+                    &fg_uuid, 
+                    &conn_uuid, 
+                    &input_uuid,
+                    &input_port,
+                    &output_uuid,
+                    &output_port))  {
+                    return NULL;
+                }
+
+                if (fg_connect_nodes(fg_uuid, conn_uuid, input_uuid, input_port, output_uuid, output_port) == -1) {
+                    fprintf(stderr,"%s\n", "fg_connect_nodes failed!");
+                    return NULL;
+                }
+
             }
             break;
         case FG_API_ASSIGN_TO_CHANNEL:
@@ -152,6 +193,7 @@ int init_filter_graph_subsys(PyObject *module)
     PyModule_AddIntConstant(module, "FG_API_REMOVE_NODE", FG_API_REMOVE_NODE);
     PyModule_AddIntConstant(module, "FG_API_ADD_CONNECTION", FG_API_ADD_CONNECTION);
     PyModule_AddIntConstant(module, "FG_API_REMOVE_CONNECTION", FG_API_REMOVE_CONNECTION);
+    PyModule_AddIntConstant(module, "FG_API_EFFECT_SETUP", FG_API_EFFECT_SETUP);
 
     PyModule_AddIntConstant(module, "FG_NODE_TYPE_LOWPASS", FG_NODE_TYPE_LOWPASS);
     PyModule_AddIntConstant(module, "FG_NODE_TYPE_HIGHPASS", FG_NODE_TYPE_HIGHPASS);

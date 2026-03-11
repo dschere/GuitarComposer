@@ -76,19 +76,19 @@ void fg_set_band_attribute(struct fgraph_node *node, int att_id, int ival, float
 }
 
 
-void lowpass_run(struct fgraph_lowpass* node, float* left, float* right)
+void lowpass_run(struct fgraph_node* node, float* left, float* right)
 {
     
 }
 
 
-void highpass_run(struct fgraph_highpass* node, float* left, float* right)
+void highpass_run(struct fgraph_node* node, float* left, float* right)
 {
     
 }
 
 
-void bandpass_run(struct fgraph_bandpass* node, float* left, float* right)
+void bandpass_run(struct fgraph_node* node, float* left, float* right)
 {
     
 }
