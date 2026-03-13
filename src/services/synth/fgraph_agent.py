@@ -56,8 +56,6 @@ class MixerNodeAgent(NodeAgent):
         super().__init__(graph, model, gcsynth.FG_NODE_TYPE_MIXER)
 
 class EffectNodeAgent(NodeAgent):
-    def __init__(self, graph: 'FilterGraphAgent', model : GraphNode):
-        super().__init__(graph, model, gcsynth.FG_NODE_TYPE_EFFECT)
 
     def setup(self, path: str, label: str):
         "Setup internal ladspa filter"
@@ -65,6 +63,15 @@ class EffectNodeAgent(NodeAgent):
         effect_uuid = self.handle          
         cmd = gcsynth.FG_API_EFFECT_SETUP
         gcsynth.fgraph_api(cmd, fg_uuid, effect_uuid, path, label)
+
+    def __init__(self, graph: 'FilterGraphAgent', model : GraphNode):
+        super().__init__(graph, model, gcsynth.FG_NODE_TYPE_EFFECT)
+        if isinstance(model, EffectNode):
+            effect = model.get_effect() 
+            path = effect.path 
+            label = effect.label 
+            self.setup(path, label)
+
 
     def __del__(self):
         # TODO
@@ -134,6 +141,13 @@ class FilterGraphAgent(QtCore.QObject):
             elif isinstance(gn_model, OutputNode):
                 self.output_node = nagent
             else:
+                # if isinstance(gn_model, EffectNode):
+                #     effect = gn_model.get_effect() 
+                #     if isinstance(nagent, EffectNodeAgent):
+                #         path = effect.path 
+                #         label = effect.label 
+                #         nagent.setup(path, label)
+
                 self.node_agents[gn_model.uuid] = nagent
 
         # setup connections.
@@ -232,6 +246,7 @@ if __name__ == '__main__':
     effect1 = EffectNode(effects[0])
     effect1.set_num_in_ports(1)
     effect1.set_num_out_ports(1)
+    
     
     effect2 = EffectNode(effects[1])
     effect2.set_num_in_ports(1)
