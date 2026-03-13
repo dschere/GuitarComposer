@@ -18,6 +18,24 @@
 static GHashTable* fgraph_db = NULL;
 static pthread_mutex_t fgraph_db_mutex;
 
+
+static void
+print_entry(gpointer key, gpointer value, gpointer user_data)
+{
+    const char *skey = key;               /* key is a NUL-terminated string */
+    struct fgraph_base* base = value;
+
+    printf("        key (%s), value node type %d\n", skey, base->type);
+}
+
+static void print_fgraph(struct fgraph* fg)
+{
+    printf("Contents of filter graph:\n");
+
+    printf("    node table:\n");
+    g_hash_table_foreach(fg->nodes, print_entry, NULL);
+}
+
 int fg_init()
 {
     if ((fgraph_db = g_hash_table_new(g_str_hash, g_str_equal)) == NULL) {
@@ -35,8 +53,8 @@ int fg_init()
 
 struct fgraph_node* fg_lookup_node(struct fgraph* fg, char* uuid)
 {
-    struct fgraph_node* n = NULL; 
-    if (fg != NULL) {
+    struct fgraph_node* n = NULL;
+    if (fg != NULL && fg->nodes != NULL) {
         n = g_hash_table_lookup(fg->nodes, uuid);
     }
     return n;
@@ -138,16 +156,16 @@ int fg_setup_effect(char* fg_uuid, char* node_uuid, char* path, char* label)
     struct fgraph* fg = g_hash_table_lookup(fgraph_db, fg_uuid);
     struct fgraph_base* n;
     struct fgraph_effect* e;
-
     
     if (fg == NULL) {
         sprintf(errmsg,"fg_setup_effect: Unable to find filter graph for uuid %s\n", fg_uuid);
         gcsynth_raise_exception(errmsg);
     } else {
-        n = fg_lookup_node(fg_uuid, node_uuid);
-
-        if (e == NULL) {
-            sprintf(errmsg,"fg_setup_effect: no match for effect uuid %s\n", node_uuid);
+        n = fg_lookup_node(fg, node_uuid);
+        if (n == NULL) {
+            sprintf(errmsg,"fg_setup_effect: no match for effect uuid (%s) in fg %s\n", 
+                node_uuid, fg_uuid);
+            print_fgraph(fg);
             gcsynth_raise_exception(errmsg);
         } else if (n->type != FG_NODE_TYPE_EFFECT) {
             sprintf(errmsg,"fg_setup_effect: graph node not an effect type!\n");
@@ -267,7 +285,7 @@ int fg_create_node(char* fg_uuid, char* node_uuid, int node_type)
                     node->base.type = node_type;
                     node->enabled = 0; // not ready until effect initialization is called.
                     node->run = fg_effect_run;
-                    e->filter = NULL; 
+                    e->filter = NULL;
                     g_hash_table_insert(fg->nodes, node->base.uuid, e);
                 }
                 break;
@@ -387,12 +405,12 @@ int fg_connect_nodes(char* fg_uuid, char* conn_uuid,
 
         if (conn->in_node == NULL) {
             ret = -1;
-            fprintf(stderr,"fg_connect_nodes: no match for input uuid %s\n", input_uuid );
+            fprintf(stderr,"fg_connect_nodes: no match for input uuid (%s)\n", input_uuid );
             gcsynth_raise_exception("fg_connect_nodes no match for input uuid\n");
         }
         else if (conn->out_node == NULL) {
             ret = -1;
-            fprintf(stderr,"fg_connect_nodes: no match for output uuid %s\n", output_uuid );
+            fprintf(stderr,"fg_connect_nodes: no match for output uuid (%s)\n", output_uuid );
             gcsynth_raise_exception("fg_connect_nodes no match for output uuid\n");
         }
         else {

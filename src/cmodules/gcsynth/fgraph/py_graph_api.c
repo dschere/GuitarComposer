@@ -135,7 +135,7 @@ PyObject* py_fgraph_api(PyObject* self, PyObject* args)
                 return NULL;
             }
 
-            }
+        }
             break;
         case FG_API_ADD_CONNECTION: {
                 char* fg_uuid;

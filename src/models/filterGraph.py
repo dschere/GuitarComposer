@@ -174,6 +174,8 @@ class EffectNode(GraphNode):
     def set_enabled(self, enabled):
         self.enabled = enabled
 
+    def get_effect(self) -> Effect:
+        return self.effect    
 
     def __init__(self, effect : Effect):
         super().__init__()
