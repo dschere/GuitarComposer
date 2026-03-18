@@ -1,5 +1,5 @@
-#include "../gcsynth_filter_graph.h"
 #include "../gcsynth.h"
+#include "../gcsynth_filter_graph.h"
 
 #include <string.h>
 #include <math.h>
