@@ -2,7 +2,7 @@
 
 #include <assert.h>
 
-void gainbalance_run(struct fgraph_node* node, float* left, float* right)
+int gainbalance_run(struct fgraph_node* node, float* left, float* right)
 {
     struct fgraph_gain_balance* gb = (struct fgraph_gain_balance*) node;
     
@@ -33,5 +33,6 @@ void gainbalance_run(struct fgraph_node* node, float* left, float* right)
             right[i] *= right_mu;
         }
     }
- 
+    
+    return 0;
 }

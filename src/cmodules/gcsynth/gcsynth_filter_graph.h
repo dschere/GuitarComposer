@@ -123,7 +123,7 @@ struct gcsynth_filter_graph
 
 
 // run the filter graph on the stereo audio data 
-void fg_run(struct gcsynth_filter_graph* fg, int channel, float* left, float* right);
+//void fg_run(struct gcsynth_filter_graph* fg, int channel, float* left, float* right);
 
 
 void fg_enable(struct gcsynth_filter_graph* fg, int enabled);

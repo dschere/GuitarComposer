@@ -8,6 +8,10 @@
 
 #define UUID_LEN 37
 
+#ifndef AUDIO_SAMPLES
+#define AUDIO_SAMPLES 64
+#endif
+
 struct fgraph_node;
 struct fgraph_bandpass;
 struct fgraph_effect;
@@ -75,12 +79,21 @@ struct fgraph_node
     int enabled;
     GList* in_ports; // list of fgraph_connections for inputs
     GList* out_ports; // list of fgraph_connections for inputs
-
+    
     // if set to true then iir filters are used not precalculated buffers.
     int using_fallback_method_for_freqdomain;
 
-    void (*run)(struct fgraph_node* node, float* left, float* right);
-    
+    int (*run)(struct fgraph_node* node, float* left, float* right);
+
+    // incremented every time an input/output port connection has had its
+    // left/right buffers populated. Using modulo math we can determine when 
+    // all ports are about to be filled.
+    unsigned long in_port_update_count; 
+    unsigned long out_port_update_count;
+
+    // book keeping variables used for audio processing.
+
+    int channel; // channel assigned to audio
 };
 
 
@@ -138,6 +151,9 @@ struct fgraph_connection
     char uuid_out[UUID_LEN];
     int port_out;
 
+    float left[AUDIO_SAMPLES];
+    float right[AUDIO_SAMPLES];
+
     struct fgraph_node *in_node; 
     struct fgraph_node *out_node;
 };
@@ -148,7 +164,7 @@ struct fgraph
     struct fgraph_base base;
  
  
-    struct fgraph_connection 
+    struct fgraph_node 
         *input_node, 
         *output_node
     ;
@@ -156,6 +172,7 @@ struct fgraph
     GHashTable* nodes;       // uuid -> struct fg_node_* 
     GHashTable* connections; // uuid -> struct fg_connection 
     int enabled;
+
 };
 
 // initialize global resources for supporting audio filter graphs.
@@ -166,6 +183,8 @@ struct fgraph_connection* fg_lookup_connection(struct fgraph* fg, char* uuid);
 
 // create and destroy a filter graph
 void fg_create(char* uuid);
+void fg_destroy(char* uuid);
+
 void fg_api_destroy(char* uuid);
 //TODO enable and disable of filter graph and connecting this to the py_module.
 
@@ -188,12 +207,15 @@ int fg_delete_connection(char* fg_uuid, char* conn_uuid);
 int fg_set_effect_property(char* fg_uuid, char* node_uuid, char* property, float value);
 int fg_setup_effect(char* fg_uuid, char* node_uuid, char* path, char* label);
 
-
 // set not attributes (enabled etc.)
 
-int fg_set_node_attribute(char* node_uuid, int type, 
+int fg_set_node_attribute(char* graph_uuid, char* node_uuid, int type, 
     int att_id, int ival, float fval,  char* sval);
 
+
+// process a filter graph and overwrite the left/right buffers with the output.
+// both left and right buffers are AUDIO_SAMPLES (64) in length.    
+void fg_run(struct fgraph* fg, int channel, float* left, float* right);
 
 
 #endif //__FGRAPH_H__

@@ -3,7 +3,7 @@
 
 #include "fgraph.h" 
 
-void gainbalance_run(struct fgraph_node* node, float* left, float* right);
+int gainbalance_run(struct fgraph_node* node, float* left, float* right);
 
 
 

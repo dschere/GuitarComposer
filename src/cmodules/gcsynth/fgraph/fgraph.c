@@ -154,7 +154,7 @@ int fg_setup_effect(char* fg_uuid, char* node_uuid, char* path, char* label)
     int ret = -1;
     char errmsg[256];
     struct fgraph* fg = g_hash_table_lookup(fgraph_db, fg_uuid);
-    struct fgraph_base* n;
+    struct fgraph_node* n;
     struct fgraph_effect* e;
     
     if (fg == NULL) {
@@ -167,7 +167,7 @@ int fg_setup_effect(char* fg_uuid, char* node_uuid, char* path, char* label)
                 node_uuid, fg_uuid);
             print_fgraph(fg);
             gcsynth_raise_exception(errmsg);
-        } else if (n->type != FG_NODE_TYPE_EFFECT) {
+        } else if (n->base.type != FG_NODE_TYPE_EFFECT) {
             sprintf(errmsg,"fg_setup_effect: graph node not an effect type!\n");
             gcsynth_raise_exception(errmsg);
         } else {
@@ -246,12 +246,16 @@ int fg_create_node(char* fg_uuid, char* node_uuid, int node_type)
                     switch(node_type) {
                         // functionally the input is the same as splitter only one output
                         case FG_NODE_TYPE_INPUT:
+                            fg->input_node = node;
+                            break;
                         case FG_NODE_TYPE_SPLITTER:
                             node->run = splitter_run;
                             break;
 
                         // likewise the output is the same as a mixer with one input 
                         case FG_NODE_TYPE_OUTPUT:
+                            fg->output_node = node;
+                            break;
                         case FG_NODE_TYPE_MIXER:
                             node->run = mixer_run;
                             break;        
@@ -312,12 +316,12 @@ int fg_delete_node(char* fg_uuid, char* node_uuid)
     struct fgraph* fg = g_hash_table_lookup(fgraph_db, fg_uuid);
 
     if (fg == NULL) {
-        return;
+        return -1;
     }
 
     struct fgraph_node* node = g_hash_table_lookup(fg->nodes, node_uuid);
     if (node == NULL) {
-        return;
+        return -1;
     }
 
     //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -335,49 +339,103 @@ int fg_delete_node(char* fg_uuid, char* node_uuid)
 
 int fg_set_effect_property(char* fg_uuid, char* node_uuid, char* property, float value)
 {
-    return 0;
-}
-
-int fg_set_node_attribute(char* node_uuid, int type, 
-    int att_id, int ival, float fval,  char* sval)
-{
+    char errmsg[256];
     int ret = 0;
-    struct fgraph_node* node = (struct fgraph_node*)
-        lookup_fgraph_object(node_uuid, type);
+    struct fgraph* fg = (struct fgraph*) lookup_fgraph_object(fg_uuid, FG_GRAPH);
+    
+    errmsg[0] = '\0';
 
-    if (node != NULL) {
-        switch(att_id) {
-            // common attribuates for all nodes.
-            case AID_ENABLE:
-                node->enabled = 1;
-                break;
-            case AID_DISABLE:
-                node->enabled = 0;
-                break;
-            default:
-            // specific attributes for different node types.  
-                switch(type) {
-                    // specific attributes for band/low/high pass filters
-                    case  FG_NODE_TYPE_LOWPASS:
-                    case  FG_NODE_TYPE_HIGHPASS:
-                    case FG_NODE_TYPE_BANDPASS:
-                        fg_set_band_attribute(node, att_id, ival, fval, sval);
-                        break;
-                    default:
-                        fprintf(stderr,
-                            "fg_set_node_attribute unsupported attribute %d in node type %d\n",
-                               att_id, type);
-                        ret = -1;
-                        break;
-                }
-        }
-
+    if (fg == NULL) {
+        sprintf(errmsg,"fg_set_effect_property no match for graph %s\n", fg_uuid);
     } else {
-        ret = -1;
-        gcsynth_raise_exception("fg_set_node_attribute no match for uuid or type\n");
+        struct fgraph_node* node = (struct fgraph_node*)
+            fg_lookup_node(fg, node_uuid);
+
+        if (node == NULL) {
+            sprintf(errmsg,"fg_set_effect_property no match for effect node uuid %s\n",
+                node_uuid);
+        } else if (node->base.type != FG_NODE_TYPE_EFFECT) {
+            sprintf(errmsg,"fg_set_effect_property node type mismatch node uuid %s expected effect type got %d\n",
+                node_uuid, node->base.type);
+        } else {
+            struct fgraph_effect* e = (struct fgraph_effect *) node;
+
+            if (e->filter == NULL) {
+                sprintf(errmsg,"fg_set_effect_property null filter\n");
+            } else {
+                ret = gcsynth_filter_setbyname(e->filter, property, value);
+            }
+        }
     }
 
-    return 0;
+    if (errmsg[0] != '\0') {
+        gcsynth_raise_exception(errmsg);
+        ret = -1;
+    }
+
+    return ret;
+}
+
+int fg_set_node_attribute(char* graph_uuid, char* node_uuid, int type, 
+    int att_id, int ival, float fval,  char* sval)
+{
+    char errmsg[256];
+    int ret = 0;
+    struct fgraph* fg = (struct fgraph*) lookup_fgraph_object(graph_uuid, FG_GRAPH);
+    
+    errmsg[0] = '\0';
+
+    if (fg == NULL) {
+        sprintf(errmsg,"fg_set_node_attribute no match for graph %s\n", graph_uuid);
+    } else {
+        struct fgraph_node* node = (struct fgraph_node*)
+            fg_lookup_node(fg, node_uuid);
+
+        if (node != NULL) {
+            switch(att_id) {
+                // common attribuates for all nodes.
+                case AID_ENABLE:
+                    node->enabled = 1;
+                    if (type == FG_NODE_TYPE_EFFECT) {
+                        struct fgraph_effect* e = (struct fgraph_effect*) node;
+                        gcsynth_filter_enable(e->filter);
+                    }
+                    break;
+                case AID_DISABLE:
+                    node->enabled = 0;
+                    if (type == FG_NODE_TYPE_EFFECT) {
+                        struct fgraph_effect* e = (struct fgraph_effect*) node;
+                        gcsynth_filter_disable(e->filter);
+                    }
+                    break;
+                default:
+                    // specific attributes for different node types.  
+                    switch(type) {
+                        // specific attributes for band/low/high pass filters
+                        case FG_NODE_TYPE_LOWPASS:
+                        case FG_NODE_TYPE_HIGHPASS:
+                        case FG_NODE_TYPE_BANDPASS:
+                            fg_set_band_attribute(node, att_id, ival, fval, sval);
+                            break;
+                        default:
+                            sprintf(errmsg,
+                                "fg_set_node_attribute unsupported attribute %d in node type %d\n",
+                                att_id, type);
+                            break;
+                    }
+            }
+        } else {
+            sprintf(errmsg,"fg_set_node_attribute no match for node uuid %s\n",
+                node_uuid);
+        }
+    }
+
+    if (errmsg[0] != '\0') {
+        gcsynth_raise_exception(errmsg);
+        ret = -1;
+    }
+
+    return ret;
 }
 
 /**
@@ -414,6 +472,11 @@ int fg_connect_nodes(char* fg_uuid, char* conn_uuid,
             gcsynth_raise_exception("fg_connect_nodes no match for output uuid\n");
         }
         else {
+            // the index of the output port of the INPUT node of the connection.
+            conn->port_out = g_list_length(conn->in_node->out_ports);
+            // the index of the input port of the OUTPUT node of the connection.
+            conn->port_in = g_list_length(conn->out_node->in_ports);
+
             conn->in_node->out_ports = g_list_append(conn->in_node->out_ports, conn);
             conn->out_node->in_ports = g_list_append(conn->out_node->in_ports, conn);
 

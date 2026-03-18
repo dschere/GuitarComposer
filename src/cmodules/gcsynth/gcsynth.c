@@ -24,7 +24,6 @@
 
 static PyObject *GcsynthException = NULL;
 static struct gcsynth GcSynth;
-static int DEBUG_MODE;
 
 
 #define PyDict_SetItemString2(dict, key, py_value) \

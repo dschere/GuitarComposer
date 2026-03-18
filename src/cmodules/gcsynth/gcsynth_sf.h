@@ -26,6 +26,7 @@ int gcsynth_sf_pitchrange(int chan, float pitch_range);
 int gcsynth_sf_pitchwheel(int chan, float semitones);
 
 void gcsynth_sf_reset();
+int gcsynth_sf_extern_func(int chan, void (*callback)(void*), void* data);
 
 
 

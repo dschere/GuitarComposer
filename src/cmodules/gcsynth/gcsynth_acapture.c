@@ -67,7 +67,7 @@ static float ave_power(struct audio_capture_frame* frame, int samples) {
 
 
 static void capture_callback(void *userdata, Uint8 *stream, int len) {
-    struct capture_thread* t = (struct capture_thread*) userdata;
+    //struct capture_thread* t = (struct capture_thread*) userdata;
     int samples = (len / (2 * sizeof(float))); //2 output channels
     float *buffer = (float*) stream;
     int i;
@@ -168,7 +168,7 @@ static void capture_thread_stop() {
 // -- audio out thread
 
 static void audio_callback(void *userdata, Uint8 *stream, int len) {
-    struct capture_thread* t = (struct capture_thread*) userdata;
+    //struct capture_thread* t = (struct capture_thread*) userdata;
     int samples = (len / (2 * sizeof(float))); //2 output channels
     float *buffer = (float*) stream;
     int i;
