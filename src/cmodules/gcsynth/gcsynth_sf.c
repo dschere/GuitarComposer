@@ -82,6 +82,7 @@ enum {
     SF_PITCH_WHEEL,
     SF_PITCH_RANGE,
     SF_RESET,
+    SF_EXTERN_FUNC,
     
     SF_NUM_MSG_TYPES
 };
@@ -95,6 +96,9 @@ struct audio_thread_msg {
     int preset;
     int pitchWheel;
     float pitch_range;
+
+    void *user_data;
+    void (*extern_func)(void *);
 };
 
 
@@ -459,6 +463,11 @@ static void proc_at_msgs(struct audio_thread* at) {
                 tsf_reset(at->g_TinySoundFont);
                 break;
 
+            case SF_EXTERN_FUNC:
+                // execute the function in this thread.
+                msg->extern_func(msg->user_data);
+                break;
+
         }
         free(msg);
     }
@@ -481,7 +490,12 @@ static void audio_consumer(void *userdata, Uint8 *stream, int len) {
         // how many frames are ready
         int frames = ring_buffer_count(at->rb);
 
+        // surpess compilier warning we are using a gpointer as a number 
+        // not an address.
+        #pragma GCC diagnostic push
+        #pragma GCC diagnostic ignored "-Wint-conversion"
         g_async_queue_push(at->request_frames, (frames == 0) ? 2: 1 );
+        #pragma GCC diagnostic pop
         
         // process current frame.    
         if (ring_buffer_pop(at->rb, left, right) == 0) {
@@ -781,6 +795,28 @@ int gcsynth_sf_select(int chan, int sfont_id, int bank, int preset)
             msg->bank = bank;
             msg->preset = preset;
 
+            g_async_queue_push(at->queue, msg);
+            ret = 0;
+        }
+    }
+
+    return ret;
+}
+
+
+// Execute an external function within the audio thread 
+int gcsynth_sf_extern_func(int chan, void (*callback)(void*), void* data)
+{
+    int ret = -1;
+    struct audio_thread* at = get_audio_thread(chan);
+
+    if (at) {
+        struct audio_thread_msg* msg = (struct audio_thread_msg*)
+            calloc(sizeof(struct audio_thread_msg),1);
+        if (msg != NULL) {
+            msg->ev_type = SF_EXTERN_FUNC;
+            msg->extern_func = callback;
+            msg->user_data = data;
             g_async_queue_push(at->queue, msg);
             ret = 0;
         }

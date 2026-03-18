@@ -6,7 +6,6 @@
 #include "gcsynth_filter.h"
 #include "gcsynth_sf.h"
 
-#include "fgraph/fgraph.h"
 
 
 struct gcsynth_channel {
@@ -50,6 +49,17 @@ static struct gcsynth_channel* lock_channel(int channel);
 static void unlock_channel(int channel);
 
 static void set_channel_state(int channel, char* plugin_label, int enabled);
+
+
+void gcsynth_channel_assign_filter_graph(int channel, struct fgraph* fg)
+{
+    struct gcsynth_channel* c = lock_channel(channel);
+    if (c != NULL) {
+        c->fg = fg;
+        unlock_channel(channel);
+    }
+}
+
 
 void gcsynth_channel_gain(int channel, float gain)
 {
@@ -298,7 +308,7 @@ static int _gcsynth_channel_remove_filter(int channel, char* plugin_label_or_all
 static int _gcsynth_channel_add_filter(int channel, const char* filepath, char* plugin_label)
 {
     struct gcsynth_channel* c = &ChannelFilters[channel]; // gcsynth.c validated channel
-    char errmsg[256];
+    //char errmsg[256];
     struct gcsynth_filter* f;
 
     // check for duplicate 
@@ -344,7 +354,6 @@ static int _gcsynth_channel_set_control_by_name(int channel,
 {
     struct gcsynth_channel* c = &ChannelFilters[channel]; // gcsynth.c validated channel
     struct gcsynth_filter* f = find_by_name(c,plugin_label);
-    int i;
     int ret = FILTER_CONTROL_NO_FOUND;
 
     if (f) {

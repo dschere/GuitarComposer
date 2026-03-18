@@ -4,6 +4,11 @@
 
 #include <glib.h>
 
+struct fgraph; // forward declare.
+
+#include "fgraph/fgraph.h"
+
+
 
 #define IN_AUDIO_SAMPLE_SIZE 64*64
 #define IN_AUDIO_BUFSIZE IN_AUDIO_SAMPLE_SIZE * (2 * sizeof(float))
@@ -38,6 +43,8 @@ int gcsynth_channel_set_control_by_name(int channel, char* plugin_label,
 
 // end pre filter graph api. 
 /////////////////////////////////////////////////////////////////////////
+
+void gcsynth_channel_assign_filter_graph(int channel, struct fgraph* fg);
 
 
 /**

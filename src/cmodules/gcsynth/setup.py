@@ -48,6 +48,7 @@ CSOURCES = [
     'fgraph/gainbalance.c',
     'fgraph/bandpass.c',
     'fgraph/fgraph.c',
+    'fgraph/fgrun.c',
     'fgraph/py_graph_api.c'
 ]
 

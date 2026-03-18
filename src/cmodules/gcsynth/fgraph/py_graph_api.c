@@ -1,9 +1,14 @@
 #include <Python.h>
 #include "py_graph_api.h"
 #include "fgraph.h"
+#include "gcsynth_sf.h"
+
 
 #include <stdlib.h>
 #include <stdio.h>
+
+
+
 
 /*
     Module interface 
@@ -22,7 +27,6 @@ static int get_command_id(PyObject* args)
 
     return cmd;
 }
-
 
 PyObject* py_fgraph_api(PyObject* self, PyObject* args)
 {
@@ -91,6 +95,7 @@ PyObject* py_fgraph_api(PyObject* self, PyObject* args)
         
         case FG_API_SET_ATTR:
             {
+                char* graph_uuid;
                 char* node_uuid;
                 int type;
                 int att_id;
@@ -101,7 +106,7 @@ PyObject* py_fgraph_api(PyObject* self, PyObject* args)
                 int overflow;
 
                 
-                if (!PyArg_ParseTuple(args,"isiiO", &cmd, &node_uuid, &type, &att_id, &val)) {
+                if (!PyArg_ParseTuple(args,"issiiO", &cmd, &graph_uuid, &node_uuid, &type, &att_id, &val)) {
                     return NULL;
                 }
 
@@ -112,14 +117,31 @@ PyObject* py_fgraph_api(PyObject* self, PyObject* args)
                     fval = (float) PyFloat_AsDouble(val);
                 }
                 if (PyUnicode_Check(val)) {
-                    sval = PyUnicode_AsUTF8(val);  
+                    sval = (char*) PyUnicode_AsUTF8(val);  
                 }
 
-                fg_set_node_attribute(node_uuid, type, 
+                fg_set_node_attribute(graph_uuid, node_uuid, type, 
                     att_id, ival, fval,  sval);
                 
             }
             break;
+        case FG_API_EFFECT_SET_PROPERTY: {
+            char* fg_uuid;
+            char* effect_uuid;
+            char* prop_name;
+            float value;
+            
+            if (!PyArg_ParseTuple(args,"isssf", &cmd, &fg_uuid, &effect_uuid, &prop_name, &value)) {
+                return NULL;
+            }
+
+            if (fg_set_effect_property(fg_uuid, effect_uuid, prop_name, value) == -1) {
+                return NULL;
+            }
+
+        } 
+            break;
+
         case FG_API_EFFECT_SETUP: {
             char* fg_uuid;
             char* effect_uuid;
@@ -165,6 +187,7 @@ PyObject* py_fgraph_api(PyObject* self, PyObject* args)
             }
             break;
         case FG_API_ASSIGN_TO_CHANNEL:
+            break;
         case FG_API_UNASSIGN_TO_CHANNEL:
             break;
         case -1:
