@@ -2,7 +2,7 @@
 Filter graph models.
 """
 import uuid
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Callable
 import pickle
 
 from models.effect import Effect
@@ -168,11 +168,28 @@ class MixerNode(GraphNode):
 
 class EffectNode(GraphNode):
 
+    def __getstate__(self):
+        """Return state values to be pickled, excluding callbacks ."""
+        state = self.__dict__.copy()
+        del state['onPropertyChange']
+        del state['onEnabledChange']
+        # If you have other unpicklable attributes, exclude them similarly
+        # del state['log_file'] 
+        return state
+
+
     def label(self) -> str:
         return self.effect.plugin_label()
   
     def set_enabled(self, enabled):
         self.enabled = enabled
+        if callable(self.onEnabledChange):
+            self.onEnabledChange(self.uuid, self.enabled)
+
+    def set_property(self, key: str, value: float):
+        self.properties[key] = value
+        if callable(self.onPropertyChange):
+            self.onPropertyChange(self.uuid, key, value)        
 
     def get_effect(self) -> Effect:
         return self.effect    
@@ -181,6 +198,10 @@ class EffectNode(GraphNode):
         super().__init__()
         self.properties : Dict[str, float] = {}
         self.enabled = True
+        
+        self.onPropertyChange : Callable | None = None
+        self.onEnabledChange : Callable | None = None
+
         self.set_num_in_ports(1)
         self.set_num_out_ports(1)
         for ep in effect.getParameters():
