@@ -85,6 +85,9 @@ class Instrument:
     synth = synthservice()
     data_lock = threading.Lock()
 
+    def get_channels_used(self):
+        return self.channels_used
+
     def __init__(self, name, tuning=StandardTuning):
         self.string_playing = [None] * len(tuning)
         self.name = name

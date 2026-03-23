@@ -64,6 +64,17 @@ class EffectNodeAgent(NodeAgent):
         cmd = gcsynth.FG_API_EFFECT_SETUP
         gcsynth.fgraph_api(cmd, fg_uuid, effect_uuid, path, label)
 
+    def set_property(self, pname: str, value: float):
+        fg_uuid = self.graph.handle
+        effect_uuid = self.handle          
+        gcsynth.fgraph_api(gcsynth.FG_API_EFFECT_SET_PROPERTY, fg_uuid, effect_uuid, pname, value)
+
+    def set_enabled(self, enabled : bool):
+        fg_uuid = self.graph.handle
+        effect_uuid = self.handle
+        att_id = { True: gcsynth.AID_ENABLE, False: gcsynth.AID_DISABLE }[enabled]
+        gcsynth.fgraph_api(gcsynth.FG_API_SET_ATTR, fg_uuid, effect_uuid, att_id, int(enabled))
+
     def __init__(self, graph: 'FilterGraphAgent', model : GraphNode):
         super().__init__(graph, model, gcsynth.FG_NODE_TYPE_EFFECT)
         if isinstance(model, EffectNode):
@@ -126,6 +137,16 @@ class FilterGraphAgent(QtCore.QObject):
         if report['change_occured']:
             pass
 
+    def onPropertyChange(self, node_uuid, key, value):
+        nagent = self.node_agents.get(node_uuid)
+        if isinstance(nagent, EffectNodeAgent):
+            nagent.set_property(key, value)
+            
+    def onEnabledChange(self, node_uuid, enabled):
+        nagent = self.node_agents.get(node_uuid)
+        if isinstance(nagent, EffectNodeAgent):
+            pass
+
     def setup(self):
         """ 
         Construct a gcsynth filter graph based on the Filter Graph model. 
@@ -141,14 +162,11 @@ class FilterGraphAgent(QtCore.QObject):
             elif isinstance(gn_model, OutputNode):
                 self.output_node = nagent
             else:
-                # if isinstance(gn_model, EffectNode):
-                #     effect = gn_model.get_effect() 
-                #     if isinstance(nagent, EffectNodeAgent):
-                #         path = effect.path 
-                #         label = effect.label 
-                #         nagent.setup(path, label)
-
                 self.node_agents[gn_model.uuid] = nagent
+
+                if isinstance(gn_model, EffectNode):
+                    gn_model.onPropertyChange = self.onPropertyChange
+                    gn_model.onEnabledChange = self.onEnabledChange
 
         # setup connections.
         for gn_model in self.model.nodes.values():
@@ -170,13 +188,31 @@ class FilterGraphAgent(QtCore.QObject):
         # filter setup, now enable it.
         gcsynth.fgraph_api(gcsynth.FG_API_ENABLE, self.handle)
 
+
+    def assign_to_channel(self, channel: int):
+        gcsynth.fgraph_api(
+            gcsynth.FG_API_ASSIGN_TO_CHANNEL,
+            self.handle,
+            channel
+        )
+
+    def unassign_from_channel(self, channel):
+        # I should have called it unassign from channel, nice English dave ;)
+        gcsynth.fgraph_api(
+            gcsynth.FG_API_UNASSIGN_TO_CHANNEL,
+            self.handle,
+            channel
+        )
+
+
     def __init__(self, model : FilterGraph):
         super().__init__()
 
         self.node_agents = {}
         self.model = model
         self.updated.connect(self.on_update)
-        self.handle = model.uuid 
+        self.handle = model.uuid
+
         gcsynth.fgraph_api(gcsynth.FG_API_CREATE, self.handle)
 
         self.setup()
@@ -199,6 +235,9 @@ class FilterGraphAgent(QtCore.QObject):
 
 if __name__ == '__main__':
     from services.synth.synthservice import synthservice
+    from music.instrument import Instrument
+    import time 
+    from models.note import Note
 
     def connect_nodes(gnode1 : GraphNode, out_idx : int, gnode2 : GraphNode, in_idx : int):
         gc = GraphConnection()
@@ -219,8 +258,28 @@ if __name__ == '__main__':
             raise
 
 
+
+
     s = synthservice()
     s.start()
+
+    name = "12-str.GT"
+    intr = Instrument(name) 
+    def note_test():
+        print("note test")
+        n = Note() 
+        n.midi_code = 60 
+        n.string = 1
+        n.fret = 0
+        n.velocity = 100 
+        n.duration = 4.0
+
+        intr.note_event(n)
+        time.sleep(2)
+
+    note_test()    
+
+    
 
     from services.effectRepo import EffectRepository
 
@@ -240,15 +299,17 @@ if __name__ == '__main__':
 
     repo = EffectRepository()
     effects = repo.getEffects()
+
+    
     assert(len(effects) > 2)
     
 
-    effect1 = EffectNode(effects[0])
+    effect1 = EffectNode(repo.get('tap_reverb'))
     effect1.set_num_in_ports(1)
     effect1.set_num_out_ports(1)
     
     
-    effect2 = EffectNode(effects[1])
+    effect2 = EffectNode(repo.get('multivoiceChorus'))
     effect2.set_num_in_ports(1)
     effect2.set_num_out_ports(1)
 
@@ -256,6 +317,13 @@ if __name__ == '__main__':
     mixer_node = MixerNode()
     mixer_node.set_num_in_ports(2)
     mixer_node.set_num_out_ports(1)
+
+    model.add_node(input_node)
+    model.add_node(output_node)
+    model.add_node(splitter_node)
+    model.add_node(effect1)
+    model.add_node(effect2)
+    model.add_node(mixer_node)
 
     # wire the nodes 
     connect_nodes(input_node, 0, splitter_node, 0)
@@ -266,15 +334,20 @@ if __name__ == '__main__':
     connect_nodes(mixer_node, 0, output_node, 0)
 
 
-    model.add_node(input_node)
-    model.add_node(output_node)
-    model.add_node(splitter_node)
-    model.add_node(effect1)
-    model.add_node(effect2)
-    model.add_node(mixer_node)
 
 
     fga = FilterGraphAgent(model)
+
+    for chan in intr.get_channels_used():
+        fga.assign_to_channel(chan)
+
+    note_test()
+
+    gcsynth.noteon(0, 40, 80, 1)
+
+    time.sleep(2.0)
+
+
     del fga
 
     s.stop()

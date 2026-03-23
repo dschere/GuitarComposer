@@ -1,5 +1,7 @@
+#include <stdio.h>
 #include <string.h>
 #include <math.h>
+#include <assert.h>
 
 #include "gcsynth.h"
 #include "gcsynth_channel.h"
@@ -158,7 +160,18 @@ int gcsynth_channel_set_control_by_name(int channel, char* plugin_label,
     return ret;
 }    
 
+void synth_apply_filter_graph(int channel, float* left, float* right, int samples)
+{
+    struct gcsynth_channel *c = lock_channel(channel);
 
+    if (c != NULL) {
+        if ((c->fg != NULL) && (c->fg->enabled)) {
+            assert(samples == AUDIO_SAMPLES);
+            fg_run(c->fg, channel, left, right);
+        }
+        unlock_channel(channel);
+    }
+}
 
 void synth_filter_router(int chan, float* left, float* right, int samples)
 {
@@ -256,7 +269,21 @@ static struct gcsynth_channel* lock_channel(int chan)
             g_mutex_init(&c->mutex);
             c->initialized = 1;
         }
-        g_mutex_lock(&c->mutex);    
+        int try_count = 0;
+        while (g_mutex_trylock(&c->mutex) == FALSE) {
+            // mutex already locked.
+            try_count++;
+            usleep(100);
+            if (try_count > 10) {
+                char errmsg[256];
+                sprintf(errmsg,"lock_channel(%d) failed\n", chan);
+                gcsynth_raise_exception(errmsg);
+                c = NULL;
+            }
+        }
+        // if g_mutex_trylock returns true the mutex is locked.
+
+        //g_mutex_lock(&c->mutex);    
     }
 
     return c;

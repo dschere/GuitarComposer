@@ -1,6 +1,6 @@
 
 #include "fgraph.h"
-
+#include "gcsynth_sf.h"
 
 #include <glib.h>
 #include <stdio.h>
@@ -461,6 +461,8 @@ int fg_connect_nodes(char* fg_uuid, char* conn_uuid,
         conn->in_node = (struct fgraph_node*) fg_lookup_node(fg, input_uuid);
         conn->out_node = (struct fgraph_node*) fg_lookup_node(fg, output_uuid);
 
+
+
         if (conn->in_node == NULL) {
             ret = -1;
             fprintf(stderr,"fg_connect_nodes: no match for input uuid (%s)\n", input_uuid );
@@ -472,13 +474,32 @@ int fg_connect_nodes(char* fg_uuid, char* conn_uuid,
             gcsynth_raise_exception("fg_connect_nodes no match for output uuid\n");
         }
         else {
-            // the index of the output port of the INPUT node of the connection.
-            conn->port_out = g_list_length(conn->in_node->out_ports);
-            // the index of the input port of the OUTPUT node of the connection.
-            conn->port_in = g_list_length(conn->out_node->in_ports);
+            /*
+            
+                left node                                 right node 
+                       out port list <- connection -> in port list
+             
+             */
+            struct fgraph_node *left = conn->in_node;
+            struct fgraph_node *right = conn->out_node;
 
-            conn->in_node->out_ports = g_list_append(conn->in_node->out_ports, conn);
-            conn->out_node->in_ports = g_list_append(conn->out_node->in_ports, conn);
+            int left_out_port_idx = g_list_length(left->out_ports);
+            int right_in_port_idx = g_list_length(right->in_ports);
+
+            conn->port_out = left_out_port_idx;
+            conn->port_in = right_in_port_idx;
+            
+            left->out_ports = g_list_append(left->out_ports, conn);
+            right->in_ports = g_list_append(right->in_ports, conn);
+
+            
+            // // the index of the output port of the INPUT node of the connection.
+            // conn->port_out = g_list_length(conn->in_node->out_ports);
+            // // the index of the input port of the OUTPUT node of the connection.
+            // conn->port_in = g_list_length(conn->out_node->in_ports);
+
+            // conn->in_node->out_ports = g_list_append(conn->in_node->out_ports, conn);
+            // conn->out_node->in_ports = g_list_append(conn->out_node->in_ports, conn);
 
             g_hash_table_insert(fg->connections, conn->base.uuid, conn);
         }
@@ -522,169 +543,54 @@ int fg_delete_connection(char* fg_uuid, char* conn_uuid)
     return ret;
 }
 
+struct fg_channel_data
+{
+    struct fgraph* fg;
+    int channel;
+};
+
+static void do_assign_fg_to_channel(void *user_data)
+{
+    struct fg_channel_data* arg = (struct fg_channel_data*) user_data;
+
+    gcsynth_channel_assign_filter_graph(arg->channel, arg->fg);
+    free(user_data);
+}
+
+int assign_fg_to_channel(char* fg_uuid, int channel)
+{
+    struct fgraph* fg = (struct fgraph*) lookup_fgraph_object(fg_uuid, FG_GRAPH);
+    struct fg_channel_data* user_data;
+    char errmsg[256];
+    int ret = 0;
+
+    errmsg[0] = '\0';
+
+    if (fg == NULL) {
+        sprintf(errmsg,"assign_fg_to_channel no match for graph %s", fg_uuid);
+    } else {
+        user_data = 
+            (struct fg_channel_data* ) malloc(sizeof(struct fg_channel_data));
+        user_data->channel = channel;
+        user_data->fg = fg;
+        ret = gcsynth_sf_extern_func(channel, do_assign_fg_to_channel, user_data);
+    }
+
+    if (errmsg[0] != '\0') {
+        gcsynth_raise_exception(errmsg);
+        ret = -1;
+    }
+
+    return ret;
+}
 
 
-// void fg_init(struct gcsynth_filter_graph* fg)
-// {
-//     memset(fg, 0, sizeof(struct gcsynth_filter_graph));
-// }
+int unassign_fg_to_channel(int channel)
+{
+    struct fg_channel_data* user_data = 
+        (struct fg_channel_data* ) malloc(sizeof(struct fg_channel_data));
+    user_data->channel = channel;
+    user_data->fg = NULL;
+    return gcsynth_sf_extern_func(channel, do_assign_fg_to_channel, user_data);
+}
 
-
-// void fg_enable(struct gcsynth_filter_graph* fg, int enabled)
-// {
-//     fg->enabled = enabled;
-// }
-
-
-
-// void fg_proc_balance_gain(float balance, float gain, float* left, float* right)
-// {
-//     int i;
-//     float right_mul, left_mul;
-
-//     if ((balance != 0.0) || (gain != 0.0) ) {
-//         if (balance >= -1.0 && balance <= 1.0) {
-//             right_mul = (1-balance);
-//             left_mul = 2.0 - right_mul;
-//         }
-//         for( i = 0; i < AUDIO_SAMPLES; i++) {
-//             left[i] = (left[i] * left_mul) * (1+gain);
-//             right[i] = (right[i] * right_mul) * (1+gain);
-//         }
-//     }
-// }
-
-// /**
-//  * 1. copy left/right to input buffer 
-//  * 2. pre demux processing
-//  * 3. cycle through demux filter chains
-//  * 4. mix the output of all chains
-//  * 5. apply post mux processing
-//  */
-// void fg_run(struct gcsynth_filter_graph* fg, int channel, float* left, float* right)
-// {
-//     if (fg->enabled) {
-//         fg->out_left = left;
-//         fg->out_right = right;
-
-//         if (fg->demuxer.num_chains == 0) {
-//             // in this case there is no filter chain. Only the pre demux filters
-//             // and balance and gain being used. No need to waste time copying
-//             // data to buffers we can do everything in the left/right buffers
-//             // provided.
-//             pre_demux_proc(fg, left, right);
-//         } else {
-//             // 1. copy left/right to input buffer
-//             memcpy(fg->in_left, left, sizeof(fg->in_left));
-//             memcpy(fg->in_right, right, sizeof(fg->in_right));
-
-//             // 2. pre demux effects (such as a noise gate, compressor)
-//             pre_demux_proc(fg, fg->in_left, fg->in_right);
-
-//             // 3. apply audio effects to each filter chain 
-//             demux_proc(fg, channel);
-
-//             // 4. mux the output from all filter chains.
-//             muxer_proc(fg);
-//         }
-
-//         // apply balance and gain.
-//         fg_proc_balance_gain(fg->balance, fg->gain, left, right);
-//     }
-// }
-
-// int fg_create_filter(
-//     struct gcsynth_filter_graph* fg,
-//     int chain_idx, // -1 means this filter is applied pre-demux
-//     const char* pathname, 
-//     char* label 
-// )
-// {
-//     int error = 0;
-//     struct gcsynth_filter* f = gcsynth_filter_new_ladspa(pathname, label);
-
-//     if (f == NULL) {
-//         error = -1;
-//     } else {
-//         if (chain_idx == -1) {
-//             fg->pre_demux_effects = g_list_append(fg->pre_demux_effects, f);
-//             fg->filter_enabled_count++;
-//         } else if ((chain_idx >= 0) && (chain_idx < MAX_FILTER_CHAINS)) {
-//             struct fg_effect_chain* chain = &fg->demuxer.effect_chains[chain_idx];
-//             chain->effects = g_list_append(chain->effects, f);
-//             fg->filter_enabled_count++;
-//         }  else {
-//             error = -1;
-//             gcsynth_filter_destroy(f);
-//             gcsynth_raise_exception("filter chain index out of range!");
-//         }
-//     }
-
-//     return error;
-// }
-
-
-// // primitive that searches for a filter by label in a filter chain
-// // or pre demux filter. 
-// struct fg_find_filter_result fg_find_filter(
-//     struct gcsynth_filter_graph* fg,
-//     int chain_idx, // -1 means this filter is applied pre-demux
-//     char* label
-// ){
-//     struct fg_find_filter_result result; 
-    
-//     memset(&result, 0, sizeof(struct fg_find_filter_result));
-//     if (chain_idx == -1) {
-//         GList* iter;
-//         for(iter = g_list_first(fg->pre_demux_effects);
-//             iter != NULL;
-//             iter = iter->next
-//         ) {
-//             struct gcsynth_filter* f = (struct gcsynth_filter*) iter->data; 
-//             if (strcmp(f->desc->Label, label) == 0) {
-//                 result.list = &fg->pre_demux_effects;
-//                 result.iter = iter;
-//                 result.filter = f;
-//                 result.found = 1;
-//                 break;
-//             }
-//         }
-//     } else if ((chain_idx >= 0) && (chain_idx < MAX_FILTER_CHAINS)){
-//         // this is the deletion of a specific audio filter within a chain.
-//         struct fg_effect_chain* chain = &fg->demuxer.effect_chains[chain_idx];
-//         GList* iter;
-//         for(iter = g_list_first(chain->effects);
-//             iter != NULL;
-//             iter = iter->next
-//         ) {
-//             struct gcsynth_filter* f = (struct gcsynth_filter*) iter->data; 
-//             if (strcmp(f->desc->Label, label) == 0) {
-//                 result.list = &chain->effects;
-//                 result.iter = iter;
-//                 result.filter = f;
-//                 result.found = 1;
-//             }
-//         }
-//     } 
-    
-//     return result;
-// }
-
-
-
-// int fg_remove_filter(
-//     struct gcsynth_filter_graph* fg,
-//     int chain_idx, // -1 means this filter is applied pre-demux
-//     char* label
-// ) {
-//     struct fg_find_filter_result result =  
-//         fg_find_filter(fg,chain_idx,label);
-
-//     if (result.found == 1) {
-//         GList* list = *result.list;
-        
-//         list = g_list_delete_link(list, result.iter);
-//         fg->filter_enabled_count--;
-//     }
-//     return result.found;
-// }

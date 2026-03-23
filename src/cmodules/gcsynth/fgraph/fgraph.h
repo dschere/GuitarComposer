@@ -202,6 +202,10 @@ int fg_connect_nodes(char* fg_uuid, char* conn_uuid,
     char* node1_uuid, int port1, char* node2_uuid, int port2);
 int fg_delete_connection(char* fg_uuid, char* conn_uuid);
 
+int assign_fg_to_channel(char* fg_uuid, int channel);
+int unassign_fg_to_channel(int channel);
+
+
 
 // control ladspa ports
 int fg_set_effect_property(char* fg_uuid, char* node_uuid, char* property, float value);
@@ -209,7 +213,7 @@ int fg_setup_effect(char* fg_uuid, char* node_uuid, char* path, char* label);
 
 // set not attributes (enabled etc.)
 
-int fg_set_node_attribute(char* graph_uuid, char* node_uuid, int type, 
+int fg_set_node_attribute(char* graph_uuid, char* node_uuid, int type,
     int att_id, int ival, float fval,  char* sval);
 
 
@@ -217,5 +221,6 @@ int fg_set_node_attribute(char* graph_uuid, char* node_uuid, int type,
 // both left and right buffers are AUDIO_SAMPLES (64) in length.    
 void fg_run(struct fgraph* fg, int channel, float* left, float* right);
 
+void fg_dump(struct fgraph* fg);
 
 #endif //__FGRAPH_H__
