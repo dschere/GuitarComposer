@@ -1,7 +1,6 @@
 #include <Python.h>
 #include "py_graph_api.h"
 #include "fgraph.h"
-#include "gcsynth_sf.h"
 
 
 #include <stdlib.h>
@@ -106,18 +105,21 @@ PyObject* py_fgraph_api(PyObject* self, PyObject* args)
                 int overflow;
 
                 
-                if (!PyArg_ParseTuple(args,"issiiO", &cmd, &graph_uuid, &node_uuid, &type, &att_id, &val)) {
+                if (!PyArg_ParseTuple(args,"issiiO", &cmd, &graph_uuid, &node_uuid, &att_id, &val)) {
                     return NULL;
                 }
 
                 if (PyLong_Check(val)) {
                     ival = (int) PyLong_AsLongAndOverflow(val, &overflow);
+                    type = 'i';
                 }
                 if (PyFloat_Check(val)) {
                     fval = (float) PyFloat_AsDouble(val);
+                    type = 'f';
                 }
                 if (PyUnicode_Check(val)) {
-                    sval = (char*) PyUnicode_AsUTF8(val);  
+                    sval = (char*) PyUnicode_AsUTF8(val);
+                    type = 's';  
                 }
 
                 fg_set_node_attribute(graph_uuid, node_uuid, type, 
@@ -186,9 +188,30 @@ PyObject* py_fgraph_api(PyObject* self, PyObject* args)
 
             }
             break;
-        case FG_API_ASSIGN_TO_CHANNEL:
+        case FG_API_ASSIGN_TO_CHANNEL: {
+                char* fg_uuid;
+                int channel;
+
+                if (!PyArg_ParseTuple(args,"isi",&cmd,&fg_uuid,&channel)) {
+                    return NULL;
+                }
+
+                if (assign_fg_to_channel(fg_uuid, channel) == -1) {
+                    return NULL;
+                }
+            }
             break;
-        case FG_API_UNASSIGN_TO_CHANNEL:
+        case FG_API_UNASSIGN_TO_CHANNEL: {
+                int channel;
+
+                if (!PyArg_ParseTuple(args,"ii",&cmd,&channel)) {
+                    return NULL;
+                }
+
+                if (unassign_fg_to_channel(channel) == -1) {
+                    return NULL;
+                }
+            }
             break;
         case -1:
             fprintf(stderr,"Unable to parse get command id\n");

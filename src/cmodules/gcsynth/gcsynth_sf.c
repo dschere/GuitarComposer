@@ -366,10 +366,14 @@ TSFDEF void my_tsf_render_float(tsf* f, float* out_right, float* out_left, int s
         float* chan_left = channel_buffers[channel][0];
         float* chan_right = channel_buffers[channel][1];
 
+        // this is the legacy way of filtering.
         if (gcsynth_channel_filter_is_enabled(channel)) { 
             synth_filter_router(
                     channel, chan_left, chan_right, samples);
         }
+
+        // this is the new filter graph way.
+        synth_apply_filter_graph(channel, chan_left, chan_right, samples);
 
         // stage 3. 
         //   mix all channel buffers to out_right and out_left which in turn will
@@ -820,6 +824,10 @@ int gcsynth_sf_extern_func(int chan, void (*callback)(void*), void* data)
             g_async_queue_push(at->queue, msg);
             ret = 0;
         }
+    } else {
+        char errmsg[256];
+        sprintf(errmsg,"gcsynth_sf_extern_func Unable to get audio thread for channel %d\n", chan);
+        gcsynth_raise_exception(errmsg);
     }
 
     return ret;
