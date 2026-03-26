@@ -168,20 +168,19 @@ PyObject* py_fgraph_api(PyObject* self, PyObject* args)
                 int input_port;
                 char* output_uuid;
                 int output_port;
-
-
+                
                 if (!PyArg_ParseTuple(args,"isssisi", 
                     &cmd, 
                     &fg_uuid, 
                     &conn_uuid, 
                     &input_uuid,
-                    &input_port,
+                    &output_port,
                     &output_uuid,
-                    &output_port))  {
+                    &input_port))  {
                     return NULL;
                 }
 
-                if (fg_connect_nodes(fg_uuid, conn_uuid, input_uuid, input_port, output_uuid, output_port) == -1) {
+                if (fg_connect_nodes(fg_uuid, conn_uuid, input_uuid, output_port, output_uuid, input_port) == -1) {
                     fprintf(stderr,"%s\n", "fg_connect_nodes failed!");
                     return NULL;
                 }
