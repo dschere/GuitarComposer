@@ -222,5 +222,6 @@ int fg_set_node_attribute(char* graph_uuid, char* node_uuid, int type,
 void fg_run(struct fgraph* fg, int channel, float* left, float* right);
 
 void fg_dump(struct fgraph* fg);
+char* node_type_to_str(struct fgraph_node* n);
 
 #endif //__FGRAPH_H__

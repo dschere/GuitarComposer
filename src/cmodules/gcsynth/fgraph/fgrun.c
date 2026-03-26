@@ -33,10 +33,13 @@ static void single_input_output_node_op(int channel, struct fgraph_node* n,
     struct fgraph_connection* c;
 
     errmsg[0] = '\0';
-    if ((p = g_list_first(n->out_ports)) == NULL) {
+    if (n == NULL) {
+        sprintf(errmsg,"single_input_output_node_op 'n' is null\n");
+    } else if ((p = g_list_first(n->out_ports)) == NULL) {
         sprintf(errmsg,"single_input_output_node_op type=%d null output ports!\n", n->base.type);
-    } else if ((c = (struct fgraph_connection*)p->data) == NULL) {
-        sprintf(errmsg, "single_input_output_node_op type=%d null output connection\n", n->base.type);
+    }
+    else if ((c = (struct fgraph_connection*) p->data) == NULL) {
+        sprintf(errmsg,"single_input_output_node_op type=%d null output port!\n", n->base.type);
     } else {
         // outputs directly to left/right
         struct fgraph_node* next = c->out_node;
@@ -92,7 +95,7 @@ static const char* node_type_to_string(int type) {
     }
 }
 
-static char* node_type_to_str(struct fgraph_node* n) {
+char* node_type_to_str(struct fgraph_node* n) {
     switch(n->base.type) {
         case FG_NODE_TYPE_BANDPASS: return "BANDPASS";
         case FG_NODE_TYPE_EFFECT: return "EFFECT";
@@ -134,12 +137,12 @@ static void print_node(gpointer key, gpointer value, gpointer user_data) {
 
 }
 
-static void print_connection(gpointer key, gpointer value, gpointer user_data) {
-    struct fgraph_connection* conn = (struct fgraph_connection*)value;
-    printf("  Connection UUID: %s\n", conn->base.uuid);
-    printf("    From Node: %s (Port %d) -> To Node: %s (Port %d)\n", 
-           conn->uuid_in, conn->port_in, conn->uuid_out, conn->port_out);
-}
+// static void print_connection(gpointer key, gpointer value, gpointer user_data) {
+//     struct fgraph_connection* conn = (struct fgraph_connection*)value;
+//     printf("  Connection UUID: %s\n", conn->base.uuid);
+//     printf("    From Node: %s (Port %d) -> To Node: %s (Port %d)\n", 
+//            conn->uuid_in, conn->port_in, conn->uuid_out, conn->port_out);
+// }
 
 void fg_dump(struct fgraph* fg) {
     if (!fg) {
@@ -287,7 +290,14 @@ static void mixer_op(int channel, struct fgraph_node* n,
  */
 static void fg_iterate(int channel, struct fgraph_node* n, struct fgraph_connection* input_connection,
     float* left, float* right)
-{
+{    
+// printf("fg_iterate channel=%d %s(uuid=%s,type=%d) input_connection %s(uuid=%s)\n",
+//     channel, node_type_to_str(n), n->base.uuid, n->base.type,
+//         (input_connection) ? node_type_to_str(input_connection->out_node) : "null",
+//         (input_connection) ? input_connection->out_node->base.uuid: "null"
+//     );
+// fflush(stdout);
+
     switch(n->base.type) {
         case FG_NODE_TYPE_MIXER:
             mixer_op(channel, n, input_connection, left, right);

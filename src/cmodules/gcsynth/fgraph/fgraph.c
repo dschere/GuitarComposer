@@ -442,7 +442,7 @@ int fg_set_node_attribute(char* graph_uuid, char* node_uuid, int type,
  * create a new connection between two nodes.
  */
 int fg_connect_nodes(char* fg_uuid, char* conn_uuid, 
-    char* input_uuid, int input_port, char* output_uuid, int output_port)
+    char* input_uuid, int output_port, char* output_uuid, int input_port)
 {
     int ret = 0;
     struct fgraph* fg = (struct fgraph*) lookup_fgraph_object(fg_uuid, FG_GRAPH);
@@ -458,10 +458,8 @@ int fg_connect_nodes(char* fg_uuid, char* conn_uuid,
         strncpy(conn->uuid_out, output_uuid, sizeof(conn->uuid_out)-1); 
         conn->port_out = output_port;
 
-        conn->in_node = (struct fgraph_node*) fg_lookup_node(fg, input_uuid);
-        conn->out_node = (struct fgraph_node*) fg_lookup_node(fg, output_uuid);
-
-
+        conn->out_node = (struct fgraph_node*) fg_lookup_node(fg, input_uuid);
+        conn->in_node = (struct fgraph_node*) fg_lookup_node(fg, output_uuid);
 
         if (conn->in_node == NULL) {
             ret = -1;
@@ -492,14 +490,12 @@ int fg_connect_nodes(char* fg_uuid, char* conn_uuid,
             left->out_ports = g_list_append(left->out_ports, conn);
             right->in_ports = g_list_append(right->in_ports, conn);
 
-            
-            // // the index of the output port of the INPUT node of the connection.
-            // conn->port_out = g_list_length(conn->in_node->out_ports);
-            // // the index of the input port of the OUTPUT node of the connection.
-            // conn->port_in = g_list_length(conn->out_node->in_ports);
-
-            // conn->in_node->out_ports = g_list_append(conn->in_node->out_ports, conn);
-            // conn->out_node->in_ports = g_list_append(conn->out_node->in_ports, conn);
+// fflush(stdout);
+// printf("CONNECTING %s(uuid=%s).out[%d] ---> %s(uuid=%s).in[%d]\n", node_type_to_str(left), 
+//     left->base.uuid, conn->port_out,
+//     node_type_to_str(right), right->base.uuid, 
+//     conn->port_in);
+// fflush(stdout);
 
             g_hash_table_insert(fg->connections, conn->base.uuid, conn);
         }
@@ -593,4 +589,3 @@ int unassign_fg_to_channel(int channel)
     user_data->fg = NULL;
     return gcsynth_sf_extern_func(channel, do_assign_fg_to_channel, user_data);
 }
-

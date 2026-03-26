@@ -200,7 +200,6 @@ class FilterGraphAgent(QtCore.QObject):
         # I should have called it unassign from channel, nice English dave ;)
         gcsynth.fgraph_api(
             gcsynth.FG_API_UNASSIGN_TO_CHANNEL,
-            self.handle,
             channel
         )
 
@@ -334,8 +333,6 @@ if __name__ == '__main__':
     connect_nodes(mixer_node, 0, output_node, 0)
 
 
-
-
     fga = FilterGraphAgent(model)
 
     for chan in intr.get_channels_used():
@@ -343,12 +340,15 @@ if __name__ == '__main__':
 
     note_test()
 
-    gcsynth.noteon(0, 40, 80, 1)
-
     time.sleep(2.0)
+    note_test()
 
+    print("after sleep")
 
-    del fga
+    for chan in intr.get_channels_used():
+        fga.unassign_from_channel(chan)
+    
 
     s.stop()
     s.shutdown()
+    del fga

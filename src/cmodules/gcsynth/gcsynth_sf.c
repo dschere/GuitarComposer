@@ -838,8 +838,9 @@ int gcsynth_sf_noteon(int chan, int midicode, int vel)
 {
     int ret = -1;
     struct audio_thread* at = get_audio_thread(chan);
+    char errmsg[256];
 
-    if (at) {
+    if (at != NULL) {
         struct audio_thread_msg* msg = (struct audio_thread_msg*)
             calloc(sizeof(struct audio_thread_msg),1);
         if (msg != NULL) {
@@ -852,7 +853,8 @@ int gcsynth_sf_noteon(int chan, int midicode, int vel)
             ret = 0;
         }
     } else {
-        fprintf(stderr,"gcsynth_sf_noteon: audio thread has not been started!\n");
+        sprintf(errmsg,"gcsynth_sf_noteon: get_audio_thread(%d) returned null \n", chan);
+        gcsynth_raise_exception(errmsg);
     }
 
     return ret;
