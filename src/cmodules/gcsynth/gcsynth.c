@@ -54,6 +54,7 @@ static void gcsynth_start_args_init(
 void gcsynth_raise_exception(char* errmsg) {
     if (GcsynthException) {
         fprintf(stderr,"gcsynth_raise_exception %s\n", errmsg);
+        fflush(stderr);
         PyErr_SetString(GcsynthException, errmsg);
     }
 }

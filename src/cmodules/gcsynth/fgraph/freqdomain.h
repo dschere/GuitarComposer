@@ -16,8 +16,8 @@
 void fg_freq_domain_event_clear(); 
 void fg_freq_domain_event_add(int channel, float freq, float amp, float* left, float* right);
 
-void midi_filter_created();
-void midi_filter_destroyed();
+void midi_filter_increment();
+void midi_filter_decrement();
 
 float midi2freq(int midi_key);
 

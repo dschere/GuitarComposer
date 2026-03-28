@@ -1,8 +1,9 @@
 #include "../gcsynth.h"
-#include "../gcsynth_filter_graph.h"
-
+#include "freqdomain.h"
+#include <stdio.h>
 #include <string.h>
 #include <math.h>
+#include <pthread.h>
 
 struct freq_sample
 {
@@ -31,18 +32,37 @@ static int freq_sample_memory_idx = 0;
 
 
 static struct freq_domain FreqDomain;
-static int MidiFilterCount = 0; // effects configured that need FreqDomain info.
+static unsigned int MidiFilterCount = 0; // effects configured that need FreqDomain info.
+pthread_mutex_t MidiFilterCount_mutex;
 
+// todo these two below are updated when filters are added and removed from channels
+// that have a bandpass filter associated with them.
 
-void midi_filter_created() {
-    MidiFilterCount++;
+void midi_filter_increment() {
+    pthread_mutex_lock(&MidiFilterCount_mutex);
+    if (MidiFilterCount < 0x7FFFFFFF) {
+        MidiFilterCount++;
+    }
+    pthread_mutex_unlock(&MidiFilterCount_mutex);
 }
 
-void midi_filter_destroyed() {
+void midi_filter_decrement() {
+    pthread_mutex_lock(&MidiFilterCount_mutex);
     if (MidiFilterCount > 0) {
         MidiFilterCount--;
     }
+    pthread_mutex_unlock(&MidiFilterCount_mutex);
 }
+
+unsigned int get_midi_filter_count() {
+    unsigned int count;
+    pthread_mutex_lock(&MidiFilterCount_mutex);
+    count = MidiFilterCount;
+    pthread_mutex_unlock(&MidiFilterCount_mutex);
+    return count;
+}
+
+
 
 void fg_freq_domain_event_clear()
 {
@@ -55,7 +75,8 @@ void fg_freq_domain_event_add(int channel, float freq, float amp, float* left, f
 {
     //todo this gets replaced with asking the filter graph structure 
     //for this channel if a filter graph is in use.
-    if (MidiFilterCount > 0) {
+//printf("fg_freq_domain_event_add freq=%f amp=%f \n", freq, amp );
+    if (get_midi_filter_count() > 0) {
         struct freq_sample* c_item = &freq_sample_memory[freq_sample_memory_idx];
         int i;
 
@@ -120,6 +141,7 @@ static int bandpass_op(int channel, int op, float low, float high, float* left, 
     int count = 0;
 
     for(fs = FreqDomain.channels[channel]; fs != NULL; fs=fs->next) {
+//printf("bandpass_op freq=%f amp=%f\n", fs->freq, fs->amp);
         switch( op )
         {
             case OP_BANDPASS:
