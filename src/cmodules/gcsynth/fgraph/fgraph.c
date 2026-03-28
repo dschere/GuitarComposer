@@ -13,6 +13,7 @@
 #include "mixer.h"
 #include "splitter.h"
 #include "effect.h"
+#include "freqdomain.h"
 
 
 static GHashTable* fgraph_db = NULL;
@@ -204,6 +205,9 @@ int fg_create_node(char* fg_uuid, char* node_uuid, int node_type)
                     node->node.run = lowpass_run;
                     node->node.enabled = 1;
                     g_hash_table_insert(fg->nodes, node->node.base.uuid, node);
+                    // increment count of precalculated buffers associated with frequences.
+                    // to avoid fft processing.  
+                    midi_filter_increment(); 
                     //printf("Created node type %d with uuid = %s\n", node->node.base.type, node_uuid); 
                 }
                 break;
@@ -217,6 +221,7 @@ int fg_create_node(char* fg_uuid, char* node_uuid, int node_type)
                     node->node.run = highpass_run;
                     node->node.enabled = 1;
                     g_hash_table_insert(fg->nodes, node->node.base.uuid, node);
+                    midi_filter_increment(); 
                     //printf("Created node type %d with uuid = %s\n", node->node.base.type, node_uuid); 
                 }
                 break;
@@ -230,6 +235,7 @@ int fg_create_node(char* fg_uuid, char* node_uuid, int node_type)
                     node->node.run = bandpass_run;
                     node->node.enabled = 1;
                     g_hash_table_insert(fg->nodes, node->node.base.uuid, node);
+                    midi_filter_increment(); 
                     //printf("Created node type %d with uuid = %s\n", node->node.base.type, node_uuid); 
                 }
                 break;
@@ -322,6 +328,16 @@ int fg_delete_node(char* fg_uuid, char* node_uuid)
     struct fgraph_node* node = g_hash_table_lookup(fg->nodes, node_uuid);
     if (node == NULL) {
         return -1;
+    }
+
+    switch(node->base.type) {
+        case FG_NODE_TYPE_LOWPASS:
+        case FG_NODE_TYPE_HIGHPASS:
+        case FG_NODE_TYPE_BANDPASS:
+            if (!node->using_fallback_method_for_freqdomain) {
+                midi_filter_decrement(); // reduce counter
+            }
+            break;
     }
 
     //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

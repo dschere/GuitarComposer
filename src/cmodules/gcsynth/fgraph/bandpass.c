@@ -39,6 +39,7 @@ void fg_set_band_attribute(struct fgraph_node *node, int att_id, int ival, float
                     break;
                 case AID_ENABLE_FALLBACK_METHOD:
                     node->using_fallback_method_for_freqdomain = 1;
+                    midi_filter_decrement(); // reduce counter since we are not using precalulated buffers
                     bandpass->fallback_lowpass = gcsynth_filter_new_ladspa(
                         FALLBACK_LOWPASS_FILTER_DEF_PATH, 
                         FALLBACK_LOWPASS_FILTER_DEF_NAME);
@@ -50,6 +51,7 @@ void fg_set_band_attribute(struct fgraph_node *node, int att_id, int ival, float
                     break;
                 case AID_DISABLE_FALLBACK_METHOD:
                     node->using_fallback_method_for_freqdomain = 0;
+                    midi_filter_increment(); // use precalculated buffers
                     gcsynth_filter_disable(bandpass->fallback_lowpass);
                     gcsynth_filter_disable(bandpass->fallback_highpass);
 
@@ -114,7 +116,7 @@ void fg_set_band_attribute(struct fgraph_node *node, int att_id, int ival, float
 int lowpass_run(struct fgraph_node* node, float* left, float* right)
 {
     struct fgraph_lowpass* lp = (struct fgraph_lowpass*) node; 
-    int r;
+    int r = 0;
 
     if (node->using_fallback_method_for_freqdomain == 1) {
 
@@ -133,7 +135,7 @@ int lowpass_run(struct fgraph_node* node, float* left, float* right)
         if ((r = gcsynth_filter_setbyindex(lp->fallback_lowpass, 0, lp->freq)) != 0 ) {return r;}
         if ((r = gcsynth_filter_run_sterio(lp->fallback_lowpass, left, right, AUDIO_SAMPLES)) != 0) {return r;}
     } else {
-        r = fg_lowpass_filter(node->channel, lp->freq, left, right);
+        fg_lowpass_filter(node->channel, lp->freq, left, right);
     }
 
     return r;

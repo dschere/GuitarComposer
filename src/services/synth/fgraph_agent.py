@@ -264,10 +264,10 @@ if __name__ == '__main__':
 
     name = "12-str.GT"
     intr = Instrument(name) 
-    def note_test():
+    def note_test(c=60):
         print("note test")
         n = Note() 
-        n.midi_code = 60 
+        n.midi_code = c 
         n.string = 1
         n.fret = 0
         n.velocity = 100 
@@ -317,16 +317,26 @@ if __name__ == '__main__':
     mixer_node.set_num_in_ports(2)
     mixer_node.set_num_out_ports(1)
 
+    lp_filter = LowPassNode()
+
+
     model.add_node(input_node)
     model.add_node(output_node)
     model.add_node(splitter_node)
     model.add_node(effect1)
     model.add_node(effect2)
     model.add_node(mixer_node)
+    model.add_node(lp_filter)
+
 
     # wire the nodes 
     connect_nodes(input_node, 0, splitter_node, 0)
-    connect_nodes(splitter_node, 0, effect1, 0)
+
+    #"""
+    connect_nodes(splitter_node, 0, lp_filter, 0)
+    connect_nodes(lp_filter, 0, effect1, 0)
+    #"""
+    #connect_nodes(splitter_node, 0, effect1, 0)
     connect_nodes(splitter_node, 1, effect2, 0)
     connect_nodes(effect1, 0, mixer_node, 0)
     connect_nodes(effect2, 0, mixer_node, 1)
@@ -341,7 +351,10 @@ if __name__ == '__main__':
     note_test()
 
     time.sleep(2.0)
-    note_test()
+    
+    for c in range(48,88):
+        note_test(c)
+        time.sleep(0.5)
 
     print("after sleep")
 
