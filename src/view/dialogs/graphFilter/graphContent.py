@@ -27,7 +27,7 @@ class PortItem(QGraphicsRectItem):
         self.setBrush(QBrush(QColor("yellow")))
         self.setPen(QPen(QColor("black")))
         self.setAcceptHoverEvents(True)
-        self.connections = []
+        self.connections = [] 
 
     def hoverEnterEvent(self, event):
         self.setBrush(QBrush(QColor("orange")))
@@ -136,11 +136,13 @@ class SceneNodeItem(QGraphicsItem):
         return super().itemChange(change, value)
 
 class ConnectionItem(QGraphicsPathItem):
+
     def __init__(self, start_port, end_port):
         super().__init__()
         self.uuid = str(uuid.uuid4())
         self.start_port = start_port
         self.end_port = end_port
+
         if self.start_port:
             self.start_port.connections.append(self)
         if self.end_port:
@@ -237,7 +239,14 @@ class GraphScene(QGraphicsScene):
             
             if end_port and end_port != self.start_port:
                 if self.parent():
-                    self.parent().create_connection(self.start_port, end_port) # type: ignore
+                    # determine kind of ports are start and end. The user can draw 
+                    # a connectining line from the output port to input port or 
+                    # visa versa.
+                    if self.start_port.port_type == "in" and end_port.port_type == "out":
+                        self.parent().create_connection(end_port, self.start_port) # type: ignore
+                    elif end_port.port_type == "in" and self.start_port.port_type == "out":
+                        self.parent().create_connection(self.start_port, end_port) # type: ignore
+                    # otherwise ignore this is a connection between two inputs or outputs.
             
             self.removeItem(self.temp_line)
             self.temp_line = None
@@ -271,9 +280,11 @@ class GraphScene(QGraphicsScene):
                     if isinstance(item.node_data, InputNode) or isinstance(item.node_data, OutputNode):
                         return
                     if self.parent():
+                        print(self.parent())
                         self.parent().remove_node(item)
                 elif isinstance(item, ConnectionItem):
                     if self.parent():
+                        print(self.parent())
                         self.parent().remove_connection(item)
             event.accept()
         else:
@@ -292,7 +303,9 @@ class GraphScene(QGraphicsScene):
             self.add_node_item(node_data)
 
 
-    def connect_nodes(self, uuid1, out_idx, uuid2, in_idx):
+
+
+    def connect_nodes(self, uuid1, out_idx, uuid2, in_idx) -> GraphConnection | None:
         node1 = self.node_items[uuid1]
         node2 = self.node_items[uuid2]
 
@@ -310,19 +323,19 @@ class GraphScene(QGraphicsScene):
         self.addItem(conn)
 
         gc = GraphConnection()
-        # from left to right
-        # output port of gnode1 connected to input port of g2 
-        gc.in_uuid = gnode2.uuid
-        gc.in_idx = in_idx
-        gc.out_uuid = gnode1.uuid
+        gc.uuid = conn.uuid
+
+        gc.in_uuid = uuid1
         gc.out_idx = out_idx
+
+        gc.in_idx = in_idx
+        gc.out_uuid = uuid2
         
-        gnode2.in_ports[in_idx] = gc
         gnode1.out_ports[out_idx] = gc
-
-
+        gnode2.in_ports[in_idx] = gc
+        
         #print(f"connect_nodes: connected {gnode1.__class__.__name__}'s output port {gc.in_idx} to {gnode2.__class__.__name__}'s input port {gc.out_idx} ")
-
+        return gc
 
 
 

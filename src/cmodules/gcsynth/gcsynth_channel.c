@@ -165,7 +165,9 @@ void synth_apply_filter_graph(int channel, float* left, float* right, int sample
     struct gcsynth_channel *c = lock_channel(channel);
 
     if (c != NULL) {
+//printf("synth_apply_filter_graph graph exists %s \n", (c->fg != NULL) ? "true" : "false");
         if ((c->fg != NULL) && (c->fg->enabled)) {
+//printf("synth_apply_filter_graph graph enabled\n");
             assert(samples == AUDIO_SAMPLES);
             fg_run(c->fg, channel, left, right);
         }

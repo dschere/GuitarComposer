@@ -5,6 +5,7 @@ Allows user to perform CRUD operations on a filter graph.
 
 """
 
+import copy
 import uuid
 import pickle
 from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QInputDialog, QFileDialog, QLineEdit, QToolBar, QHBoxLayout, QGraphicsView, QGridLayout,
@@ -20,6 +21,7 @@ from models.filterGraph import (FilterGraph, GraphConnection, GraphNode, InputNo
 from view.dialogs.graphFilter.effectsLibraryTree import EffectsLibrary
 from view.dialogs.graphFilter.graphContent import GraphView, GraphScene
 from view.dialogs.graphFilter.nodeProperties import PropertiesPanel
+from view.dialogs.graphFilter.preview import FGPreviewToolbar
 
 from models.effect import EffectParameter
 from services.effectRepo import EffectRepository
@@ -91,7 +93,13 @@ class FilterGraphDialog(QDialog):
         start_node = start_port.parentItem().node_data
         end_node = end_port.parentItem().node_data
 
-        return self.graph_scene.connect_nodes(start_node.uuid, start_port.index, end_node.uuid, end_port.index)
+        conn = self.graph_scene.connect_nodes(start_node.uuid, start_port.index, end_node.uuid, end_port.index)
+        if conn:
+            self.model.add_connection(conn)
+        self.on_model_change()
+
+        return conn
+
 
     def remove_connection(self, connection):
         start_node = connection.start_port.parentItem().node_data
@@ -107,15 +115,22 @@ class FilterGraphDialog(QDialog):
         if connection.end_port and connection in connection.end_port.connections:
             connection.end_port.connections.remove(connection)
 
-        self.graph_scene.removeItem(connection)
+        self.graph_scene.removeItem(connection)        
+        self.model.remove_connection(connection.uuid)
+        self.on_model_change()
 
     def remove_node(self, node_item):
         for port in node_item.inputs + node_item.outputs:
             for conn in list(port.connections):
                 self.remove_connection(conn)
+
         self.graph_scene.removeItem(node_item)
         if node_item.node_data.uuid in self.graph_scene.node_items:
             del self.graph_scene.node_items[node_item.node_data.uuid]
+            if node_item.node_data.uuid in self.model.nodes:
+                self.model.nodes.pop(node_item.node_data.uuid)
+
+        self.on_model_change()
     
     def getModel(self) -> FilterGraph:
         return self.model
@@ -138,10 +153,9 @@ class FilterGraphDialog(QDialog):
                 # scene_node2 = gnode_uuid_2_scene_node[cm.out_uuid]
 
                 # self.graph_scene.connect_nodes(scene_node1.uuid, cm.out_idx, scene_node2.out_uuid, cm.in_idx)
-                self.graph_scene.connect_nodes(cm.out_uuid, cm.out_idx, cm.in_uuid, cm.in_idx)
+                self.graph_scene.connect_nodes(cm.in_uuid, cm.in_idx, cm.out_uuid, cm.out_idx)
 
-    
-
+        self.on_model_change()
 
     def on_save(self):
         preset_name, ok = QInputDialog.getText(self, 'Preset Name', 'Enter preset name:')
@@ -160,6 +174,7 @@ class FilterGraphDialog(QDialog):
 
         self.model.preset = preset_name
         self.store.add_model(self.model)
+        self.on_model_change()
         self.add_preset_submenu(preset_name)
         
 
@@ -182,14 +197,17 @@ class FilterGraphDialog(QDialog):
         self.graph_scene.add_node_item(self.input_node)
         self.graph_scene.add_node_item(self.output_node)
 
-        self.graph_scene.connect_nodes(self.input_node.uuid, 0, self.output_node.uuid, 0)
-        gc = GraphConnection()
-        gc.out_uuid = self.output_node.uuid
-        gc.out_idx = 0
-        gc.in_uuid = self.input_node.uuid
-        gc.in_idx = 0
+        gc = self.graph_scene.connect_nodes(self.input_node.uuid, 0, self.output_node.uuid, 0)
+        if not gc:
+            raise RuntimeError("Unable to create default filter graph")
+    
         self.model.add_connection(gc)
+        self.on_model_change()
 
+        print(f"after create_new_graph {self.model.connections}")
+        for conn_model in self.model.connections.values():
+            print(type(conn_model))
+            conn_model.pretty_print(self.model)
 
     def dragEnterEvent(self, event):
         if event.mimeData().hasFormat("application/x-qabstractitemmodeldatalist"):
@@ -207,13 +225,16 @@ class FilterGraphDialog(QDialog):
         gnode.y = pos.y()
         
         self.model.add_node(gnode)
+        self.on_model_change()
         self.graph_scene.add_node_item(gnode)
         self.properties_panel.setup(gnode)
         event.accept()
+        
 
     def dragMoveEvent(self, event):
         event.accept()
-        
+
+ 
     def __init__(self):
         super().__init__()
         self.model = FilterGraph()
@@ -229,6 +250,9 @@ class FilterGraphDialog(QDialog):
         
         menu_bar = self.create_menu_bar()
         main_layout.addWidget(menu_bar)
+
+        self.preview_tb = FGPreviewToolbar(self.model)
+        main_layout.addWidget(self.preview_tb)
 
         splitter = QSplitter(Qt.Orientation.Horizontal)
 
@@ -257,8 +281,55 @@ class FilterGraphDialog(QDialog):
 
         self.setLayout(main_layout)
 
+    # def regenerate_model(self):
+    #     """
+    #     Clear self.model then rebuild based on the objects in the graph scene. 
+    #     """
+    #     new_model = FilterGraph()
+
+    #     # 1. Collect all GraphNode objects from the SceneNodeItem's node_data
+    #     #    and add them to the new model. We deepcopy each GraphNode to ensure
+    #     #    new, independent instances are created, including their internal
+    #     #    port lists and any embedded GraphConnection objects.
+    #     #    This also captures the current visual position (x, y) from the scene item.
+    #     original_uuid_to_new_node = {}
+    #     for scene_node_item in self.graph_scene.node_items.values():
+    #         original_gnode = scene_node_item.node_data
+    #         new_gnode = copy.deepcopy(original_gnode)
+    #         new_model.add_node(new_gnode)
+    #         original_uuid_to_new_node[original_gnode.uuid] = new_gnode
+
+    #     # 2. Iterate through the newly added GraphNodes in new_model to populate
+    #     #    new_model.connections with their associated GraphConnection objects.
+    #     #    The deepcopy operation already copied the GraphConnection objects into
+    #     #    the new_gnode's in_ports and out_ports. We just need to ensure
+    #     #    these copied connections are also registered in the FilterGraph's
+    #     #    central connections dictionary.
+    #     for new_gnode in new_model.nodes.values():
+    #         for conn_model in new_gnode.out_ports:
+    #             if conn_model.inuse():
+    #                 # FilterGraph.add_connection will add the GraphConnection to new_model.connections
+    #                 # and also re-establish the in_ports/out_ports references within new_model's nodes.
+    #                 new_model.add_connection(conn_model)
+
+    #     self.model.nodes = new_model.nodes
+    #     self.model.connections = new_model.connections
 
 
+    def on_model_change(self):
+        (valid, errmsg, eo) = self.model.validate(None, set())
+        if not valid:
+            self.preview_tb.disable_preview()
+            self.preview_tb.set_errmsg(errmsg)
+        else:
+            self.preview_tb.set_model(self.model)
+            self.preview_tb.enable_preview()
+            self.preview_tb.set_errmsg("")
+        #print("model changed >>>>>>>")
+        #self.model.pretty_print()    
+            
+
+            
 
 def unittest():
     import sys

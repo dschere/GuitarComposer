@@ -84,8 +84,6 @@ class PropertiesPanel(QWidget):
         self.enabled_layout.setContentsMargins(0, 0, 0, 0)
         self.enabled_layout.setSpacing(0)
 
-
-
         mainLayout.addLayout(self.enabled_layout)
         
 
@@ -174,10 +172,56 @@ class PropertiesPanel(QWidget):
         def on_change(threshold, midi_code_threshold):
             gnode.threshold = threshold
             gnode.midi_code_threshold = midi_code_threshold
+            Signals.graph_node_changed.emit(gnode)
 
         self._create_freq_control(0, "Cutoff Frequency", gnode.threshold, on_change)
 
     setup_dispatch[LowPassNode.__name__] = setup_lowpass
+
+
+    def setup_gainbalance(self, gnode: GainBalanceNode):
+        gain_label = QLabel("gain", self)
+        self.content_layout.addWidget(gain_label, 0, 0)
+
+        gain_slider = QSlider(Qt.Orientation.Horizontal)
+        # multiplier value for samples from the range of 0-2.0 with a default value of 1.0        
+        gain_slider.setValue(int(gnode.gain * 100))
+        gain_slider.setMinimum(0)
+        gain_slider.setMaximum(200)
+        self.content_layout.addWidget(gain_slider, 0, 1)
+
+        gain_value = QLabel()
+        gain_value.setText("%" +  "%3d" % int(gnode.gain * 100))
+        self.content_layout.addWidget(gain_value, 0, 2)              
+
+        def on_gain_change(value):
+            gnode.gain = value * 0.01
+            gain_value.setText("%" +  "%3d" % value)
+            Signals.graph_node_changed.emit(gnode)
+        gain_slider.valueChanged.connect(on_gain_change)
+
+
+
+        # balance is -1.0 to 1.0 representing all left to all right on the speaker
+
+        balance_label = QLabel("balance", self)
+        self.content_layout.addWidget(balance_label, 1, 0)
+
+        balance_slider = QSlider(Qt.Orientation.Horizontal)
+        balance_slider.setValue(int(gnode.balance * 100))
+        balance_slider.setMinimum(-100)
+        balance_slider.setMaximum(100)
+        self.content_layout.addWidget(balance_slider, 1, 1)
+
+
+        def on_balance_change(value):
+            gnode.balance = int(value / 100.0)
+            Signals.graph_node_changed.emit(gnode)
+        balance_slider.valueChanged.connect(on_balance_change)
+
+
+
+    setup_dispatch[GainBalanceNode.__name__] = setup_gainbalance
 
 
     def setup_highpass(self, gnode: HighPassNode):

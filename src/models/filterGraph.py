@@ -2,7 +2,7 @@
 Filter graph models.
 """
 import uuid
-from typing import List, Dict, Optional, Callable
+from typing import List, Dict, Optional, Callable, Tuple
 import pickle
 
 from models.effect import Effect
@@ -31,14 +31,22 @@ class GraphConnection:
         
     def clear(self):
         self.in_uuid = ""
-        self.in_idx = 0
+        self.in_idx = -1
         self.out_uuid = ""
-        self.out_idx = 0    
+        self.out_idx = -1    
 
     def inuse(self):
         "Is this connection in use?"
         return self.in_uuid != "" and self.out_uuid != ""
 
+    def pretty_print(self, graph: 'FilterGraph', indent = ""):
+        in_node = graph.nodes.get(self.in_uuid)
+        out_node = graph.nodes.get(self.out_uuid)
+        if in_node is None or out_node is None or self.out_idx < 0 or self.in_idx < 0:
+            print(f"{indent} Invalid connection")
+        else:
+            print(f"{indent} {in_node.__class__.__name__}.out[{self.out_idx}] --> {out_node.__class__.__name__}.in[{self.in_idx}]")
+        
 
 
 
@@ -55,6 +63,16 @@ class GraphNode:
         self.y = 0.0
         self.in_ports : List[GraphConnection] = []
         self.out_ports : List[GraphConnection] = []
+
+    def pretty_print(self, fg: 'FilterGraph', indent = ""):
+        print(f"{indent} {self.__class__.__name__} uuid = {self.uuid}")
+        print(f"{indent}   In ports:")
+        for port in self.in_ports:
+            port.pretty_print(fg, indent=indent+"    ")
+        print(f"{indent}   Out ports:")
+        for port in self.out_ports:
+            port.pretty_print(fg, indent=indent+"    ")
+        
         
     def changed(self, other):
 
@@ -275,11 +293,106 @@ class FilterGraph:
         self.filename = ""
         self.preset = ""
 
+    def pretty_print(self):
+        print(f"=== FilterGraph uuid = {self.uuid} ===")
+        print("Nodes:")
+        for (uuid, node) in self.nodes.items():
+            node.pretty_print(self, indent="    ")  
+        print("Connections:")
+        for (uuid, conn) in self.connections.items():
+            conn.pretty_print(self, indent="    ")
+
     def add_node(self, node : GraphNode):
         self.nodes[node.uuid] = node
 
+    def remove_connection(self, conn_uuid: str):
+        c = self.connections.get(conn_uuid)
+        if c is not None:
+            if c.in_idx != -1 and c.out_idx != -1:
+                in_uuid = self.nodes[c.in_uuid]
+                out_uuid = self.nodes[c.out_uuid]
+                in_uuid.out_ports[c.in_idx].clear()
+                out_uuid.in_ports[c.out_idx].clear()
+
+            del self.connections[conn_uuid]
+            
+
     def add_connection(self, conn : GraphConnection):
         self.connections[conn.uuid] = conn
+
+        try:        
+            in_node = self.nodes.get(conn.in_uuid)
+            if in_node is not None and conn.in_idx < len(in_node.out_ports) and conn.in_idx >= 0:
+                in_node.out_ports[conn.in_idx] = conn
+
+            out_node = self.nodes.get(conn.out_uuid)
+            if out_node is not None and conn.out_idx < len(out_node.in_ports) and conn.out_idx >= 0:
+                out_node.in_ports[conn.out_idx] = conn
+
+        except:
+            print(f"connection {vars(conn)}")
+            print(f"in_node {vars(self.nodes.get(conn.in_uuid))}")
+            print(f"out_node {vars(self.nodes.get(conn.out_uuid))}")
+            raise
+    
+
+    def validate(self, current_node : GraphNode | None = None, visited = set()) -> Tuple[bool, str, object]:
+        """ 
+        Return true or false if the filter graph is valid.        
+        """
+        if current_node is None:
+            # search for input.
+            input_node = None
+            for n_uuid in self.nodes.keys():
+                node = self.nodes[n_uuid]
+                if isinstance(node, InputNode):
+                    input_node = node
+                    break 
+            if input_node is None:
+                return (False, "No input node",None)
+            return self.validate(input_node, visited)
+        #elif current_node is not None and current_node.uuid in visited:
+        #    return (False, "Cycle detected, node connection loop",current_node)
+        elif isinstance(current_node, InputNode):
+            assert(len(current_node.out_ports) == 1)
+            assert(len(current_node.in_ports) == 0)
+            c = current_node.out_ports[0]
+            if c.out_uuid == "":
+                return (False, "Input node has no output connection",current_node)
+            
+            next_node = self.nodes[c.out_uuid]
+            visited.add(current_node.uuid)
+
+            if next_node is current_node:
+                raise RuntimeError("validation logic error")
+            return self.validate(next_node, visited)
+
+        elif isinstance(current_node, SplitterNode):
+            for c in current_node.out_ports:
+                next_node = self.nodes.get(c.out_uuid)
+                if next_node is None:
+                    return (False, "No output node for splitter connection",c)
+                visited.add(current_node.uuid)
+                (valid, error, eo) = self.validate(next_node, visited)
+                if not valid:
+                    return (False, error, eo)
+            #self.pretty_print()
+            return (True, "", None)    
+
+        elif isinstance(current_node, OutputNode):
+            assert(len(current_node.in_ports) == 1)
+            assert(len(current_node.out_ports) == 0)
+
+            return (True, "", None) # This path lead to the output.
+
+        else:
+            try:
+                c = current_node.out_ports[0]
+                next_node = self.nodes[c.out_uuid]
+                visited.add(current_node.uuid)
+            except:
+                return (False,f"{current_node.__class__.__name__} has no output connection",current_node)
+            return self.validate(next_node, visited)
 
     def diff(self, past_node : 'FilterGraph'):
         """

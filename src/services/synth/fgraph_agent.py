@@ -168,22 +168,48 @@ class FilterGraphAgent(QtCore.QObject):
                     gn_model.onPropertyChange = self.onPropertyChange
                     gn_model.onEnabledChange = self.onEnabledChange
 
-        # setup connections.
-        for gn_model in self.model.nodes.values():
-            for conn_model in gn_model.out_ports:
-                in_idx = conn_model.in_idx
-                out_idx = conn_model.out_idx
-                in_uuid = conn_model.in_uuid
-                out_uuid = conn_model.out_uuid
+        for conn_model in self.model.connections.values():
+            in_idx = conn_model.in_idx
+            out_idx = conn_model.out_idx
+            in_uuid = conn_model.in_uuid
+            out_uuid = conn_model.out_uuid
 
-                gcsynth.fgraph_api(
-                   gcsynth.FG_API_ADD_CONNECTION, 
-                   self.handle, 
-                   conn_model.uuid, 
-                   in_uuid, 
-                   in_idx, 
-                   out_uuid, 
-                   out_idx)
+            # print(f"self.model.connections {self.model.connections}")
+            # conn_model.pretty_print(self.model)
+
+            gcsynth.fgraph_api(
+                gcsynth.FG_API_ADD_CONNECTION, 
+                self.handle, 
+                conn_model.uuid, 
+                in_uuid, 
+                in_idx, 
+                out_uuid, 
+                out_idx)
+            
+
+        # # setup connections.
+        # for gn_model in self.model.nodes.values():
+        #     for conn_model in gn_model.in_ports:
+        #         #KLUGE: why are these swapped?
+        #         # temp = conn_model.in_uuid 
+        #         # conn_model.in_uuid = conn_model.out_uuid
+        #         # conn_model.out_uuid = temp
+
+        #         in_idx = conn_model.in_idx
+        #         out_idx = conn_model.out_idx
+        #         in_uuid = conn_model.in_uuid
+        #         out_uuid = conn_model.out_uuid
+
+        #         conn_model.pretty_print(self.model)
+
+        #         gcsynth.fgraph_api(
+        #            gcsynth.FG_API_ADD_CONNECTION, 
+        #            self.handle, 
+        #            conn_model.uuid, 
+        #            in_uuid, 
+        #            in_idx, 
+        #            out_uuid, 
+        #            out_idx)
         
         # filter setup, now enable it.
         gcsynth.fgraph_api(gcsynth.FG_API_ENABLE, self.handle)
@@ -230,10 +256,20 @@ class FilterGraphAgent(QtCore.QObject):
             gcsynth.fgraph_api(gcsynth.FG_API_DESTROY, self.handle)
 
 
+def connect_nodes(gnode1 : GraphNode, out_idx : int, gnode2 : GraphNode, in_idx : int):
+    gc = GraphConnection()
+    # from left to right
+    # output port of gnode1 connected to input port of g2 
+    gc.in_uuid = gnode1.uuid
+    gc.in_idx = in_idx
+    gc.out_uuid = gnode2.uuid
+    gc.out_idx = out_idx
+    
+    gnode2.in_ports[in_idx] = gc
+    gnode1.out_ports[out_idx] = gc
+    
 
-
-if __name__ == '__main__':
-    from services.synth.synthservice import synthservice
+def unittest():
     from music.instrument import Instrument
     import time 
     from models.note import Note
@@ -256,11 +292,6 @@ if __name__ == '__main__':
             print(f"{gnode1.out_ports}")
             raise
 
-
-
-
-    s = synthservice()
-    s.start()
 
     name = "12-str.GT"
     intr = Instrument(name) 
@@ -332,11 +363,8 @@ if __name__ == '__main__':
     # wire the nodes 
     connect_nodes(input_node, 0, splitter_node, 0)
 
-    #"""
     connect_nodes(splitter_node, 0, lp_filter, 0)
     connect_nodes(lp_filter, 0, effect1, 0)
-    #"""
-    #connect_nodes(splitter_node, 0, effect1, 0)
     connect_nodes(splitter_node, 1, effect2, 0)
     connect_nodes(effect1, 0, mixer_node, 0)
     connect_nodes(effect2, 0, mixer_node, 1)
@@ -352,16 +380,24 @@ if __name__ == '__main__':
 
     time.sleep(2.0)
     
-    for c in range(48,88):
+    for c in range(48,51):
         note_test(c)
-        time.sleep(0.5)
-
+        
     print("after sleep")
 
     for chan in intr.get_channels_used():
         fga.unassign_from_channel(chan)
     
 
+    del fga
+
+
+if __name__ == '__main__':
+    from services.synth.synthservice import synthservice
+    s = synthservice()
+    s.start()
+
+    unittest()
+
     s.stop()
     s.shutdown()
-    del fga
