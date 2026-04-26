@@ -177,7 +177,8 @@ int fg_setup_effect(char* fg_uuid, char* node_uuid, char* path, char* label)
             //Note: this function calls gcsynth_raise_exception if null is returned,
             e->filter = gcsynth_filter_new_ladspa(path, label);
             if (e->filter != NULL) {
-                printf("initialized %s from %s\n", label, path);
+                printf("initialized %s from %s enabled=%d\n", label, 
+                    path, e->node.enabled);
                 ret = 0;
             } 
         }  
@@ -293,7 +294,7 @@ int fg_create_node(char* fg_uuid, char* node_uuid, int node_type)
                     memset(node, 0, sizeof(struct fgraph_node));
                     strncpy(node->base.uuid, node_uuid, sizeof(node->base.uuid)-1);
                     node->base.type = node_type;
-                    node->enabled = 0; // not ready until effect initialization is called.
+                    node->enabled = 1; // not ready until effect initialization is called.
                     node->run = fg_effect_run;
                     e->filter = NULL;
                     g_hash_table_insert(fg->nodes, node->base.uuid, e);
@@ -463,6 +464,9 @@ int fg_connect_nodes(char* fg_uuid, char* conn_uuid,
     int ret = 0;
     struct fgraph* fg = (struct fgraph*) lookup_fgraph_object(fg_uuid, FG_GRAPH);
 
+printf("fg_connect_nodes %s, conn_uuid %s, input_uuid=%s output_port=%d output_uuid=%s input_port=%d\n",
+    fg_uuid, conn_uuid, input_uuid, output_port, output_uuid, input_port);
+
     if (fg != NULL) {
         struct fgraph_connection* conn = malloc(sizeof(struct fgraph_connection));
         memset(conn, 0, sizeof(struct fgraph_connection));
@@ -474,8 +478,8 @@ int fg_connect_nodes(char* fg_uuid, char* conn_uuid,
         strncpy(conn->uuid_out, output_uuid, sizeof(conn->uuid_out)-1); 
         conn->port_out = output_port;
 
-        conn->out_node = (struct fgraph_node*) fg_lookup_node(fg, input_uuid);
-        conn->in_node = (struct fgraph_node*) fg_lookup_node(fg, output_uuid);
+        conn->in_node = (struct fgraph_node*) fg_lookup_node(fg, input_uuid);
+        conn->out_node = (struct fgraph_node*) fg_lookup_node(fg, output_uuid);
 
         if (conn->in_node == NULL) {
             ret = -1;
@@ -507,10 +511,9 @@ int fg_connect_nodes(char* fg_uuid, char* conn_uuid,
             right->in_ports = g_list_append(right->in_ports, conn);
 
 // fflush(stdout);
-// printf("CONNECTING %s(uuid=%s).out[%d] ---> %s(uuid=%s).in[%d]\n", node_type_to_str(left), 
-//     left->base.uuid, conn->port_out,
-//     node_type_to_str(right), right->base.uuid, 
-//     conn->port_in);
+// printf("CONNECTING %s(uuid=%s).out[%d] ---> %s(uuid=%s).in[%d]\n",
+//     node_type_to_str(left), left->base.uuid, conn->port_out,
+//     node_type_to_str(right), right->base.uuid, conn->port_in);
 // fflush(stdout);
 
             g_hash_table_insert(fg->connections, conn->base.uuid, conn);
