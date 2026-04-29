@@ -35,6 +35,13 @@ class NodeAgent:
     def __del__(self):
         gcsynth.fgraph_api(gcsynth.FG_API_REMOVE_NODE, self.graph.handle, self.handle)
 
+    def set_attribute(self, pid: int, value: float):
+        # if (!PyArg_ParseTuple(args,"issiiO", &cmd, &graph_uuid, &node_uuid, &att_id, &val)) {
+        gcsynth.fgraph_api(gcsynth.FG_API_SET_ATTR, self.graph.handle, self.handle, pid, value)
+
+
+        
+
 
 class InputNodeAgent(NodeAgent):
     def __init__(self, graph: 'FilterGraphAgent', model : InputNode):
@@ -75,6 +82,13 @@ class EffectNodeAgent(NodeAgent):
         att_id = { True: gcsynth.AID_ENABLE, False: gcsynth.AID_DISABLE }[enabled]
         gcsynth.fgraph_api(gcsynth.FG_API_SET_ATTR, fg_uuid, effect_uuid, att_id, int(enabled))
 
+    def update_properties(self):
+        e : EffectNode = self.model # type: ignore
+        elist : list[EffectParameter] = e.get_effect().getParameters()
+        for ep in elist:
+            self.set_property(ep.name, ep.current_value)
+            
+
     def __init__(self, graph: 'FilterGraphAgent', model : GraphNode):
         super().__init__(graph, model, gcsynth.FG_NODE_TYPE_EFFECT)
         if isinstance(model, EffectNode):
@@ -103,6 +117,17 @@ class BandPassNodeAgent(NodeAgent):
         super().__init__(graph, model, gcsynth.FG_NODE_TYPE_BANDPASS)
 
 
+class GainBalanceNodeAgent(NodeAgent):
+    def __init__(self, graph: 'FilterGraphAgent', model : GainBalanceNode):
+        super().__init__(graph, model, gcsynth.FG_NODE_TYPE_GAIN_BALANCE)
+
+    def update_attributes(self):
+        m : GainBalanceNode = self.model # type: ignore
+        self.set_attribute(gcsynth.AID_GAIN, m.gain)
+        self.set_attribute(gcsynth.AID_BALANCE, m.balance)
+ 
+
+
 def agent_from_model(graph: 'FilterGraphAgent', model : GraphNode):
     if isinstance(model, SplitterNode):
         return SplitterNodeAgent(graph, model)
@@ -120,6 +145,8 @@ def agent_from_model(graph: 'FilterGraphAgent', model : GraphNode):
         return InputNodeAgent(graph, model)
     elif isinstance(model, OutputNode):
         return OutputNodeAgent(graph, model)
+    elif isinstance(model, GainBalanceNode):
+        return GainBalanceNodeAgent(graph, model)
     raise TypeError
 
 
@@ -163,10 +190,19 @@ class FilterGraphAgent(QtCore.QObject):
                 self.output_node = nagent
             else:
                 self.node_agents[gn_model.uuid] = nagent
+                if isinstance(nagent, EffectNodeAgent):
+                    nagent.update_properties() 
+                elif isinstance(nagent, GainBalanceNodeAgent):
+                    nagent.update_attributes()
+               
 
+                # Setup a way to do real time updates?  
                 if isinstance(gn_model, EffectNode):
                     gn_model.onPropertyChange = self.onPropertyChange
                     gn_model.onEnabledChange = self.onEnabledChange
+
+
+
 
         for conn_model in self.model.connections.values():
             in_idx = conn_model.in_idx

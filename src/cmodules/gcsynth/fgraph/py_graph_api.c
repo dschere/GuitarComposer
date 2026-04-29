@@ -105,7 +105,10 @@ PyObject* py_fgraph_api(PyObject* self, PyObject* args)
                 int overflow;
 
                 
-                if (!PyArg_ParseTuple(args,"issiiO", &cmd, &graph_uuid, &node_uuid, &att_id, &val)) {
+                if (!PyArg_ParseTuple(args,"issiO", 
+                    &cmd, 
+                    &graph_uuid, 
+                    &node_uuid, &att_id, &val)) {
                     return NULL;
                 }
 
@@ -239,6 +242,7 @@ int init_filter_graph_subsys(PyObject *module)
     PyModule_AddIntConstant(module, "FG_API_ADD_CONNECTION", FG_API_ADD_CONNECTION);
     PyModule_AddIntConstant(module, "FG_API_REMOVE_CONNECTION", FG_API_REMOVE_CONNECTION);
     PyModule_AddIntConstant(module, "FG_API_EFFECT_SETUP", FG_API_EFFECT_SETUP);
+    PyModule_AddIntConstant(module, "FG_API_EFFECT_SET_PROPERTY", FG_API_EFFECT_SET_PROPERTY);
 
     PyModule_AddIntConstant(module, "FG_NODE_TYPE_LOWPASS", FG_NODE_TYPE_LOWPASS);
     PyModule_AddIntConstant(module, "FG_NODE_TYPE_HIGHPASS", FG_NODE_TYPE_HIGHPASS);

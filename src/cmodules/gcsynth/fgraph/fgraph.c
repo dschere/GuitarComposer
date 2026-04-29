@@ -413,27 +413,31 @@ int fg_set_node_attribute(char* graph_uuid, char* node_uuid, int type,
                 // common attribuates for all nodes.
                 case AID_ENABLE:
                     node->enabled = 1;
-                    if (type == FG_NODE_TYPE_EFFECT) {
+                    if (node->base.type == FG_NODE_TYPE_EFFECT) {
                         struct fgraph_effect* e = (struct fgraph_effect*) node;
                         gcsynth_filter_enable(e->filter);
                     }
                     break;
                 case AID_DISABLE:
                     node->enabled = 0;
-                    if (type == FG_NODE_TYPE_EFFECT) {
+                    if (node->base.type == FG_NODE_TYPE_EFFECT) {
                         struct fgraph_effect* e = (struct fgraph_effect*) node;
                         gcsynth_filter_disable(e->filter);
                     }
                     break;
                 default:
                     // specific attributes for different node types.  
-                    switch(type) {
+                    switch(node->base.type) {
                         // specific attributes for band/low/high pass filters
                         case FG_NODE_TYPE_LOWPASS:
                         case FG_NODE_TYPE_HIGHPASS:
                         case FG_NODE_TYPE_BANDPASS:
                             fg_set_band_attribute(node, att_id, ival, fval, sval);
                             break;
+                        case FG_NODE_TYPE_GAIN_BALANCE:
+                            fg_set_gb_attribute(node, att_id, ival, fval, sval);
+                            break;
+    
                         default:
                             sprintf(errmsg,
                                 "fg_set_node_attribute unsupported attribute %d in node type %d\n",
