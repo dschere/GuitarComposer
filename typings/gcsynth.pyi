@@ -50,8 +50,6 @@ FG_API_SET_ATTR: int
 FG_API_EFFECT_SETUP: int
 FG_API_EFFECT_SET_PROPERTY: int
 
-
-
 class GcsynthException(Exception): ...
 
 def channel_gain(chan, v) -> Any: ...

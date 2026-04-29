@@ -35,6 +35,10 @@ class EffectParameter:
     def __str__(self):
         msg = f"{self.name} {self.current_value}"
         return msg
+    
+    def get_current_value(self):
+        return self.current_value
+
 
     def __init__(self, spec: dict):
         self.c_index = 0

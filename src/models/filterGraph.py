@@ -210,8 +210,8 @@ class EffectNode(GraphNode):
             self.onPropertyChange(self.uuid, key, value)        
 
     def get_effect(self) -> Effect:
-        return self.effect    
-
+        return self.effect
+    
     def __init__(self, effect : Effect):
         super().__init__()
         self.properties : Dict[str, float] = {}
@@ -226,6 +226,7 @@ class EffectNode(GraphNode):
             self.properties[ep.name] = ep.default_value
         self.effect_label = effect.plugin_label()
         self.effect = effect
+        
 
 class LowPassNode(GraphNode):
 
@@ -281,6 +282,8 @@ class GainBalanceNode(GraphNode):
         self.balance = 0.0
         self.set_num_in_ports(1)
         self.set_num_out_ports(1)
+        self.onPropertyChange : Callable | None = None
+        self.onEnabledChange : Callable | None = None
 
 
 
