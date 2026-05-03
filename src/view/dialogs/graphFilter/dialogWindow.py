@@ -143,19 +143,25 @@ class FilterGraphDialog(QDialog):
         gnode_uuid_2_scene_node = {}
         for gnode in model.nodes.values():
             item = self.graph_scene.add_node_item(gnode)
-            gnode_uuid_2_scene_node[gnode.uuid] = item
+            gnode_uuid_2_scene_node[gnode] = item
 
+        for gnode in gnode_uuid_2_scene_node:
+            self.graph_scene.rewire_outputs(gnode)
+            
 
-        for gnode in model.nodes.values():
-            for (in_idx,conn_model) in enumerate(gnode.out_ports):
-                cm : GraphConnection = conn_model 
-                # scene_node1 = gnode_uuid_2_scene_node[cm.in_uuid]
-                # scene_node2 = gnode_uuid_2_scene_node[cm.out_uuid]
+            
+        # for gnode in model.nodes.values():
+        #     for (in_idx,conn_model) in enumerate(gnode.out_ports):
+        #         cm : GraphConnection = conn_model 
+        #         # scene_node1 = gnode_uuid_2_scene_node[cm.in_uuid]
+        #         # scene_node2 = gnode_uuid_2_scene_node[cm.out_uuid]
 
-                # self.graph_scene.connect_nodes(scene_node1.uuid, cm.out_idx, scene_node2.out_uuid, cm.in_idx)
-                self.graph_scene.connect_nodes(cm.in_uuid, cm.in_idx, cm.out_uuid, cm.out_idx)
+        #         # self.graph_scene.connect_nodes(scene_node1.uuid, cm.out_idx, scene_node2.out_uuid, cm.in_idx)
+        #         self.graph_scene.connect_nodes(cm.in_uuid, cm.in_idx, cm.out_uuid, cm.out_idx)
 
         self.on_model_change()
+
+        self.graph_scene.update()
 
     def on_save(self):
         preset_name, ok = QInputDialog.getText(self, 'Preset Name', 'Enter preset name:')

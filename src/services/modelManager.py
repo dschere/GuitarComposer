@@ -143,11 +143,11 @@ class ModelManager:
             raise TypeError("Expected Song or FilterGraph model")
         
         with open(model.filename, 'wb') as f:
-            pickle.dump(model, f)
+            pickle.dump(model, f, protocol=0)
 
         self.manifest.add_model(model)
         with open(self.manifest_file, 'wb') as f:
-            pickle.dump(self.manifest, f)
+            pickle.dump(self.manifest, f, protocol=0)
 
     def remove_model(self, tag_name):
         filename = self.manifest.lookup_filename(tag_name)
@@ -156,7 +156,7 @@ class ModelManager:
         os.remove(filename)
         self.manifest.remove_model(tag_name)
         with open(self.manifest_file, 'wb') as f:
-            pickle.dump(self.manifest, f)
+            pickle.dump(self.manifest, f, protocol=0)
         
 
 
