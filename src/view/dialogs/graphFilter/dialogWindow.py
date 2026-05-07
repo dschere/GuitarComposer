@@ -140,24 +140,14 @@ class FilterGraphDialog(QDialog):
         self.graph_scene.clear()
         self.properties_panel.clear()
 
-        gnode_uuid_2_scene_node = {}
         for gnode in model.nodes.values():
-            item = self.graph_scene.add_node_item(gnode)
-            gnode_uuid_2_scene_node[gnode] = item
+            self.graph_scene.add_node_item(gnode)
 
-        for gnode in gnode_uuid_2_scene_node:
-            self.graph_scene.rewire_outputs(gnode)
-            
-
-            
-        # for gnode in model.nodes.values():
-        #     for (in_idx,conn_model) in enumerate(gnode.out_ports):
-        #         cm : GraphConnection = conn_model 
-        #         # scene_node1 = gnode_uuid_2_scene_node[cm.in_uuid]
-        #         # scene_node2 = gnode_uuid_2_scene_node[cm.out_uuid]
-
-        #         # self.graph_scene.connect_nodes(scene_node1.uuid, cm.out_idx, scene_node2.out_uuid, cm.in_idx)
-        #         self.graph_scene.connect_nodes(cm.in_uuid, cm.in_idx, cm.out_uuid, cm.out_idx)
+        for conn_model in model.connections.values():
+            self.graph_scene.redraw_connection(
+                conn_model.in_uuid, conn_model.out_idx,
+                conn_model.out_uuid, conn_model.in_idx
+            )
 
         self.on_model_change()
 
