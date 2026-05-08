@@ -320,6 +320,8 @@ class GraphScene(QGraphicsScene):
     def rewire_outputs(self, node: GraphNode):
         for _p in node.out_ports:
             p : GraphConnection = _p
+            if not p or not p.inuse():
+                continue
             
             node1 = self.node_items[p.in_uuid]
             port1 = node1.outputs[p.out_idx]
