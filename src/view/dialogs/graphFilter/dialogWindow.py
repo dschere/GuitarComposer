@@ -140,6 +140,8 @@ class FilterGraphDialog(QDialog):
         self.graph_scene.clear()
         self.properties_panel.clear()
 
+        # the model contains both connections and nodes
+        # we need only redraw the nodes and connections.
         for gnode in model.nodes.values():
             self.graph_scene.add_node_item(gnode)
 
@@ -149,8 +151,9 @@ class FilterGraphDialog(QDialog):
                 conn_model.out_uuid, conn_model.in_idx
             )
 
+        # react to model change
         self.on_model_change()
-
+        # do the re-rendering 
         self.graph_scene.update()
 
     def on_save(self):
