@@ -4,6 +4,8 @@ from typing import List, Tuple
 from music.durationtypes import (WHOLE, 
         HALF, QUARTER, SIXTEENTH, THIRTYSECOND, SIXTYFORTH)
 from models.effect import Effects 
+from models.filterGraph import FilterGraph
+
 import logging
 import math
 import uuid
@@ -119,6 +121,9 @@ class TabEvent:
             self.actual_duration = -1           
         if not hasattr(self,"tuplet_code"):
             self.tuplet_code = TUPLET_DISABLED
+        if not hasattr(self,"fg"):
+            self.fg = None
+
 
     # used to prevent selecting a tuplet while within a tuplet 
     def tuplet_option_enabled(self) -> bool:
@@ -206,6 +211,8 @@ class TabEvent:
         self.stroke_duration = SIXTEENTH
         self.stroke_duration_index : int | None = None
         self.effects : Effects | None = None
+        self.fg : FilterGraph | None = None
+
         self.num_gstrings = num_gstrings
 
         # tuplets such as triplets and quintuplets are all tagged as part of a group

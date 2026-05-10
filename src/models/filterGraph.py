@@ -58,6 +58,7 @@ class GraphNode:
     properties are dependent upon derived classes. 
     """
     def __init__(self):
+        """Initializes a GraphNode with a unique ID and positioning data."""
         self.uuid = str(uuid.uuid4())
         self.x = 0.0
         self.y = 0.0
@@ -65,6 +66,7 @@ class GraphNode:
         self.out_ports : List[GraphConnection] = []
 
     def pretty_print(self, fg: 'FilterGraph', indent = ""):
+        """Prints details about the node and its associated port connections."""
         print(f"{indent} {self.__class__.__name__} uuid = {self.uuid}")
         print(f"{indent}   In ports:")
         for port in self.in_ports:
@@ -75,6 +77,7 @@ class GraphNode:
         
         
     def changed(self, other):
+        """Compares this node with another to detect functional (non-visual) changes."""
 
         def non_presentation_data(obj : GraphNode):
             p = {
@@ -108,12 +111,15 @@ class GraphNode:
 
 
     def num_in_ports(self) -> int:
+        """Returns the number of input ports currently allocated."""
         return len(self.in_ports)
 
     def num_out_ports(self) -> int:
+        """Returns the number of output ports currently allocated."""
         return len(self.out_ports)
 
     def _set_num_ports(self, conn_list, num):
+        """Helper to resize port lists while maintaining existing connections."""
         new_conn_list = []
         for i in range(num):
             if i < len(conn_list):
@@ -123,68 +129,85 @@ class GraphNode:
         return new_conn_list
 
     def set_num_in_ports(self, num):
+        """Sets the total number of input ports for this node."""
         self.in_ports = self._set_num_ports(self.in_ports, num)
 
     def set_num_out_ports(self, num):
+        """Sets the total number of output ports for this node."""
         self.out_ports = self._set_num_ports(self.out_ports, num)
       
 
     # reuse legacy code for effects which can generate a 
     # UI based on a list of EffectParameter model objects.
     def paramData(self) -> List[EffectParameter]:
+        """Returns metadata for the node's parameters (default: empty)."""
         return []
 
 
     def label(self) -> str:
+        """Returns the display label for the node."""
         raise RuntimeError("abstract method must be overriden")
     
 
     
 
 class InputNode(GraphNode):
+    """The entry point of the filter graph."""
 
     def label(self) -> str:
+        """Returns 'Input' label."""
         return "Input"
 
     def __init__(self):
+        """Initializes input node with one output port."""
         super().__init__()
         self.set_num_out_ports(1)
 
 class OutputNode(GraphNode):
+    """The exit point of the filter graph."""
 
     def label(self) -> str:
+        """Returns 'Output' label."""
         return "Output"
 
     def __init__(self):
+        """Initializes output node with one input port."""
         super().__init__()
         self.set_num_in_ports(1)
        
 class SplitterNode(GraphNode):
+    """A node that splits one input signal into multiple outputs."""
     MIN_NUM_OUT_PORTS = 2
     MAX_NUM_OUT_PORTS = 8
 
     def label(self) -> str:
+        """Returns 'Splitter' label."""
         return "Splitter"
 
     def __init__(self):
+        """Initializes splitter with one input and two default outputs."""
         super().__init__()
         self.set_num_out_ports(2)
         self.set_num_in_ports(1)
 
 class MixerNode(GraphNode):
+    """A node that mixes multiple input signals into a single output."""
     MIN_NUM_IN_PORTS = 2
     MAX_NUM_IN_PORTS = 8
 
     def label(self) -> str:
+        """Returns 'Mixer' label."""
         return "Mixer"
 
     def __init__(self):
+        """Initializes mixer with two default inputs and one output."""
         super().__init__()
         self.set_num_in_ports(2)
         self.set_num_out_ports(1)
 
 
 class EffectNode(GraphNode):
+    """A node wrapping a LADSPA effect/plugin."""
 
     def __getstate__(self):
         """Return state values to be pickled, excluding callbacks ."""
@@ -197,22 +220,27 @@ class EffectNode(GraphNode):
 
 
     def label(self) -> str:
+        """Returns the plugin's label."""
         return self.effect.plugin_label()
   
     def set_enabled(self, enabled):
+        """Sets the enabled state and triggers the associated callback."""
         self.enabled = enabled
         if callable(self.onEnabledChange):
             self.onEnabledChange(self.uuid, self.enabled)
 
     def set_property(self, key: str, value: float):
+        """Sets a plugin property and triggers the associated callback."""
         self.properties[key] = value
         if callable(self.onPropertyChange):
             self.onPropertyChange(self.uuid, key, value)        
 
     def get_effect(self) -> Effect:
+        """Returns the underlying Effect model."""
         return self.effect
     
     def __init__(self, effect : Effect):
+        """Initializes effect node with one in/out port and default properties."""
         super().__init__()
         self.properties : Dict[str, float] = {}
         self.enabled = True
@@ -229,11 +257,14 @@ class EffectNode(GraphNode):
         
 
 class LowPassNode(GraphNode):
+    """A node representing a low-pass frequency filter."""
 
     def label(self) -> str:
+        """Returns 'LowPass' label."""
         return "LowPass"
 
     def __init__(self):
+        """Initializes low-pass filter with default cutoff frequency."""
         super().__init__()
         self.threshold = 261.63 # middle c in standard tuning
         # if specified then the midi_code is used for the frequency
@@ -244,11 +275,14 @@ class LowPassNode(GraphNode):
 
 
 class HighPassNode(GraphNode):
+    """A node representing a high-pass frequency filter."""
 
     def label(self) -> str:
+        """Returns 'HighPass' label."""
         return "HighPass"
 
     def __init__(self):
+        """Initializes high-pass filter with default cutoff frequency."""
         super().__init__()
         self.threshold = 261.63 # middle c in standard tuning
         # if specified then the midi_code is used for the frequency
@@ -257,11 +291,14 @@ class HighPassNode(GraphNode):
         self.set_num_out_ports(1)
 
 class BandPassNode(GraphNode):
+    """A node representing a band-pass frequency filter."""
 
     def label(self) -> str:
+        """Returns 'BandPass' label."""
         return "BandPass"
 
     def __init__(self):
+        """Initializes band-pass filter with default frequency range."""
         super().__init__()
         self.low_threshold = 200.0
         self.high_threshold = 500.0
@@ -272,11 +309,14 @@ class BandPassNode(GraphNode):
 
 
 class GainBalanceNode(GraphNode):
+    """A node for managing signal gain and stereo balance."""
 
     def label(self) -> str:
+        """Returns 'GainBalance' label."""
         return "GainBalance"
 
     def __init__(self):
+        """Initializes node with default gain (1.0) and balance (0.0)."""
         super().__init__()
         self.gain = 1.0
         self.balance = 0.0
@@ -289,7 +329,9 @@ class GainBalanceNode(GraphNode):
 
 
 class FilterGraph:
+    """The root model for an audio processing graph."""
     def __init__(self):
+        """Initializes a new FilterGraph with empty node and connection registries."""
         self.uuid = str(uuid.uuid4())
         self.nodes : Dict[str, GraphNode] = {}
         self.connections : Dict[str, GraphConnection] = {}
@@ -297,6 +339,7 @@ class FilterGraph:
         self.preset = ""
 
     def pretty_print(self):
+        """Prints a comprehensive view of the entire graph structure."""
         print(f"=== FilterGraph uuid = {self.uuid} ===")
         print("Nodes:")
         for (uuid, node) in self.nodes.items():
@@ -306,9 +349,11 @@ class FilterGraph:
             conn.pretty_print(self, indent="    ")
 
     def add_node(self, node : GraphNode):
+        """Registers a node into the graph."""
         self.nodes[node.uuid] = node
 
     def remove_connection(self, conn_uuid: str):
+        """Removes a connection and updates the associated node ports."""
         c = self.connections.get(conn_uuid)
         if c is not None:
             if c.in_idx != -1 and c.out_idx != -1:
@@ -321,6 +366,7 @@ class FilterGraph:
             
 
     def add_connection(self, conn : GraphConnection):
+        """Registers a connection and links it to the relevant node ports."""
         self.connections[conn.uuid] = conn
 
         try:        
@@ -340,6 +386,7 @@ class FilterGraph:
     
 
     def validate(self, current_node : GraphNode | None = None, visited = set()) -> Tuple[bool, str, object]:
+        """Validates the graph topology starting from Input to Output (detects cycles and gaps)."""
         """ 
         Return true or false if the filter graph is valid.        
         """
@@ -398,6 +445,7 @@ class FilterGraph:
             return self.validate(next_node, visited)
 
     def diff(self, past_node : 'FilterGraph'):
+        """Compares this graph with a previous version to identify added, removed, or changed nodes."""
         """
         past_node is a pickled version of this node prior to
         a potential edit. 
