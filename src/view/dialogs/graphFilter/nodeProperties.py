@@ -265,8 +265,9 @@ class PropertiesPanel(QWidget):
                 self.pname = pname
 
             def __call__(self, value):
-                #print(f"setting {self.pname} to {value}")
                 gnode.properties[self.pname] = value
+                Signals.graph_node_changed.emit(gnode)
+
 
 
         for (row, ep) in enumerate(self.parameters):

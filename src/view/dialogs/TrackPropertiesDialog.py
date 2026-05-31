@@ -164,17 +164,6 @@ class TrackPropertiesDialog(QDialog):
         return group_box
     
 
-    def launch_effects(self):
-        er = EffectRepository()
-        effects = er.create_effects()
-        dialog = EffectsDialog(self, effects)
-
-        def on_preview(evt : EffectPreview):
-            Signals.preview_effect.emit(evt)
-
-        dialog.effect_preview.connect(on_preview)
-        dialog.show()
-
     def accept(self, *args):
         super().accept()    
 
@@ -231,17 +220,12 @@ class TrackPropertiesDialog(QDialog):
         # line 4 time signature
         timesig = self.timesig_section()
 
-        effects_btn = QPushButton() 
-        effects_btn.setText("Audio Effects")
-        effects_btn.clicked.connect(self.launch_effects)
-
         # add to main layout
         main_layout.addWidget(instr_group_box)
         main_layout.addWidget(tuning_box)
         main_layout.addWidget(key_box)
         main_layout.addWidget(timesig)
         main_layout.addWidget(self.bpm_section())
-        main_layout.addWidget(effects_btn)
         main_layout.addWidget(button_box)  
 
         self.setLayout(main_layout)

@@ -103,6 +103,16 @@ class EffectNodeAgent(NodeAgent):
         # deallocate ladspa filter
         super().__del__()
 
+"""
+TODO
+
+AID_LOW_PASS_FREQ: int
+AID_HIGH_PASS_FREQ: int
+AID_BAND_PASS_LOW_FREQ: int
+AID_BAND_PASS_HIGH_FREQ: int
+
+these need to be configurable!
+"""
 
 class LowPassNodeAgent(NodeAgent):
     def __init__(self, graph: 'FilterGraphAgent', model : GraphNode):
@@ -280,8 +290,8 @@ class FilterGraphAgent(QtCore.QObject):
 
     def __del__(self):
         if self.handle is not None:
-            # first disable this filter.
-            #TODO.
+            # first disable this filter. Internally no audio should
+            # be processed through it.
             gcsynth.fgraph_api(gcsynth.FG_API_DISABLE, self.handle)
 
             # remove the nodes 
@@ -289,6 +299,7 @@ class FilterGraphAgent(QtCore.QObject):
                 # cleanup resources.
                 del self.node_agents[uuid]
            
+            # deallocate
             gcsynth.fgraph_api(gcsynth.FG_API_DESTROY, self.handle)
 
 

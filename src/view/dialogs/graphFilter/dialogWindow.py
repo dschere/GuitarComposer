@@ -18,6 +18,8 @@ from models.filterGraph import (FilterGraph, GraphConnection, GraphNode, InputNo
                                 OutputNode, SplitterNode, MixerNode, EffectNode, LowPassNode, 
                                 HighPassNode, BandPassNode, GainBalanceNode)
 
+from models.measure import TabEvent
+from models.track import Track
 from view.dialogs.graphFilter.effectsLibraryTree import EffectsLibrary
 from view.dialogs.graphFilter.graphContent import GraphView, GraphScene
 from view.dialogs.graphFilter.nodeProperties import PropertiesPanel
@@ -28,8 +30,7 @@ from services.effectRepo import EffectRepository
 from util.popup import show_alert, ask_question
 from services.modelManager import ModelManager
 
-
-
+from view.events import Signals
 
 
 class FilterGraphDialog(QDialog):
@@ -135,7 +136,13 @@ class FilterGraphDialog(QDialog):
     def getModel(self) -> FilterGraph:
         return self.model
     
-    def setModel(self, model: FilterGraph):
+    def setModel(self, model: FilterGraph | None):
+
+        # if none, generate a new model.
+        if not model:
+            self.create_new_graph()
+            return
+
         self.model = model
         self.graph_scene.clear()
         self.properties_panel.clear()
@@ -203,7 +210,6 @@ class FilterGraphDialog(QDialog):
         self.model.add_connection(gc)
         self.on_model_change()
 
-        print(f"after create_new_graph {self.model.connections}")
         for conn_model in self.model.connections.values():
             print(type(conn_model))
             conn_model.pretty_print(self.model)
@@ -233,16 +239,97 @@ class FilterGraphDialog(QDialog):
     def dragMoveEvent(self, event):
         event.accept()
 
+
+    def _node_change_router(self, gnode: GraphNode):
+        if isinstance(self.te, TabEvent):
+            if self.te.fg_node_changes is None:
+                self.te.fg_node_changes = {} 
+            self.fg_parameter_changes[gnode.uuid] = gnode
+
+    def closeEvent(self, event):
+        # we have no tab event to update
+        if self.te is None:
+            return
+        
+        # ensure that the model is valid 
+        (valid, errmsg, eo) = self.model.validate(None, set())
+        if not valid:
+            return
+
+        # Did we change the structure of the graph?  
+        fg_struct_changed = False
+        if len(self.model.nodes) > 2:
+            if self.prev_fg is None:
+                fg_struct_changed = True
+            elif self.model.structurally_different(self.prev_fg):
+                fg_struct_changed = True
+        
+        # ask to commit if we changed the graph structure or any parameter update
+        if fg_struct_changed or len(self.fg_parameter_changes) > 0:
+            reply = QMessageBox.question(
+                None, 
+                'Confirmation', 
+                'Do you wish to apply effect changes?',
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+            if reply == QMessageBox.StandardButton.Yes:
+                self.te.fg = None 
+                self.te.fg_node_changes = None 
+
+                if fg_struct_changed:
+                    self.te.fg = self.model
+                    print("either new filter graph or change to existing one.")
+                else:
+                    if len(self.fg_parameter_changes) > 0:
+                        self.te.fg_node_changes = self.fg_parameter_changes
+                        print("parameter changes to filter graph.")
+
+            return 
+
+
+    def sync_to_tabevent(self, te: TabEvent, track: Track):
+        """ 
+        When changes occure update the tabevent 
+
+        If starting with 'te' going backwords through the 
+        the track till we reach the start there is no filter 
+        graph than any change beyond a passthrough filter input-->output
+        results in te.fg being assigned self.model 
+
+        otherwise if changes occure that simply changes to parameter values 
+        of filter nodes then the fg_node_changes is updated. 
+        """
+        self.prev_fg = copy.deepcopy(track.get_filter_graph(te))
+        self.no_existing_fg = self.prev_fg is None and te.fg is None
+        self.do_disconnect_on_delete = True
+
+        if self.no_existing_fg:
+            self.create_new_graph()
+        else:
+            self.setModel(track.get_filter_graph(te))
+        
+        self.te = te
+        Signals.graph_node_changed.connect(self._node_change_router)
+
+    def __del__(self):
+        if self.do_disconnect_on_delete:
+            Signals.graph_node_changed.disconnect(self._node_change_router)
+
  
     def __init__(self):
         super().__init__()
+        self.do_disconnect_on_delete = False
+        self.no_existing_fg = False
+        self.te = None
+        self.prev_fg = None 
+        self.fg_parameter_changes = {}
+
+
         self.model = FilterGraph()
         self.store = ModelManager()
 
         self.setWindowTitle("Filter Graph Editor")
-        self.setMinimumWidth(1400)
-        
-        
+        self.setMinimumWidth(1400)        
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
@@ -280,40 +367,6 @@ class FilterGraphDialog(QDialog):
 
         self.setLayout(main_layout)
 
-    # def regenerate_model(self):
-    #     """
-    #     Clear self.model then rebuild based on the objects in the graph scene. 
-    #     """
-    #     new_model = FilterGraph()
-
-    #     # 1. Collect all GraphNode objects from the SceneNodeItem's node_data
-    #     #    and add them to the new model. We deepcopy each GraphNode to ensure
-    #     #    new, independent instances are created, including their internal
-    #     #    port lists and any embedded GraphConnection objects.
-    #     #    This also captures the current visual position (x, y) from the scene item.
-    #     original_uuid_to_new_node = {}
-    #     for scene_node_item in self.graph_scene.node_items.values():
-    #         original_gnode = scene_node_item.node_data
-    #         new_gnode = copy.deepcopy(original_gnode)
-    #         new_model.add_node(new_gnode)
-    #         original_uuid_to_new_node[original_gnode.uuid] = new_gnode
-
-    #     # 2. Iterate through the newly added GraphNodes in new_model to populate
-    #     #    new_model.connections with their associated GraphConnection objects.
-    #     #    The deepcopy operation already copied the GraphConnection objects into
-    #     #    the new_gnode's in_ports and out_ports. We just need to ensure
-    #     #    these copied connections are also registered in the FilterGraph's
-    #     #    central connections dictionary.
-    #     for new_gnode in new_model.nodes.values():
-    #         for conn_model in new_gnode.out_ports:
-    #             if conn_model.inuse():
-    #                 # FilterGraph.add_connection will add the GraphConnection to new_model.connections
-    #                 # and also re-establish the in_ports/out_ports references within new_model's nodes.
-    #                 new_model.add_connection(conn_model)
-
-    #     self.model.nodes = new_model.nodes
-    #     self.model.connections = new_model.connections
-
 
     def on_model_change(self):
         (valid, errmsg, eo) = self.model.validate(None, set())
@@ -324,9 +377,10 @@ class FilterGraphDialog(QDialog):
             self.preview_tb.set_model(self.model)
             self.preview_tb.enable_preview()
             self.preview_tb.set_errmsg("")
-        #print("model changed >>>>>>>")
-        #self.model.pretty_print()    
+
+            # If the filter graph is not a passthrough (just an input connected to output)
             
+
 
             
 

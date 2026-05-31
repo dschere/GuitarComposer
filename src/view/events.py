@@ -245,6 +245,5 @@ class _Signals(QObject):
 
 
 
-
 Signals = _Signals()
 

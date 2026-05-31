@@ -14,6 +14,7 @@ from PyQt6.QtCore import Qt
 from view.dialogs.effectsControlDialog.dialog import ( 
     EffectsDialog, EffectPreview)
 
+from view.dialogs.graphFilter.dialogWindow import FilterGraphDialog
 
 #EffectChanges = Dict[Effect, List[Tuple[str, EffectParameter]]]
     
@@ -60,14 +61,24 @@ class EffectsGlyph(QLabel):
         track_model = TrackEditorData().get_active_track_model()
         assert(track_model != None) 
 
-        # get the effects settings for this tab event within the 
-        # track. 
-        e = track_model.get_effects(self.te)
+        #fg = track_model.get_filter_graph(self.te)
+        fg_dialog = FilterGraphDialog()
+        fg_dialog.sync_to_tabevent(self.te, track_model)
+        #fg_dialog.setModel(fg)
 
-        self.dialog = EffectsDialog(self, e)
-        self.dialog.effect_preview.connect(self.on_eff_preview)
-        self.dialog.effect_updated.connect(self.on_eff_update)
-        self.dialog.exec()
+
+        fg_dialog.exec()
+
+
+        # # get the effects settings for this tab event within the 
+        # # track. 
+        # e = track_model.get_effects(self.te)
+
+
+        # self.dialog = EffectsDialog(self, e)
+        # self.dialog.effect_preview.connect(self.on_eff_preview)
+        # self.dialog.effect_updated.connect(self.on_eff_update)
+        # self.dialog.exec()
         
     def mousePressEvent(self, ev: QMouseEvent | None) -> None:
         self.show_dialog()

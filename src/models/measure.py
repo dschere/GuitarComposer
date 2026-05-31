@@ -1,10 +1,10 @@
 
 from music.constants import Dynamic
-from typing import List, Tuple
+from typing import Dict, List, Tuple
 from music.durationtypes import (WHOLE, 
         HALF, QUARTER, SIXTEENTH, THIRTYSECOND, SIXTYFORTH)
 from models.effect import Effects 
-from models.filterGraph import FilterGraph
+from models.filterGraph import FilterGraph, GraphNode
 
 import logging
 import math
@@ -123,6 +123,8 @@ class TabEvent:
             self.tuplet_code = TUPLET_DISABLED
         if not hasattr(self,"fg"):
             self.fg = None
+        if not hasattr(self,"fg_node_changes"):
+            self.fg_node_changes = None
 
 
     # used to prevent selecting a tuplet while within a tuplet 
@@ -212,6 +214,9 @@ class TabEvent:
         self.stroke_duration_index : int | None = None
         self.effects : Effects | None = None
         self.fg : FilterGraph | None = None
+        # this tab contains changes to another filter graph defined in a different tab 
+        # event.
+        self.fg_node_changes : Dict[str, GraphNode] | None = None
 
         self.num_gstrings = num_gstrings
 
