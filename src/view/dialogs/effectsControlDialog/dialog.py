@@ -14,8 +14,6 @@ from typing import Dict, List, Tuple
 from PyQt6.QtGui import QStandardItemModel, QStandardItem, QFont
 
 from view.events import EffectPreview, EffectChanges
-
-
 class EffectsDialog(QDialog):
     effect_repo = EffectRepository()
 

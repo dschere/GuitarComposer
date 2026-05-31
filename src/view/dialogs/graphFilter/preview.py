@@ -11,8 +11,8 @@ from PyQt6.QtCore import Qt, QSize
 
 from models.filterGraph import FilterGraph
 from services.synth.fgraph_agent import FilterGraphAgent
-from view.widgets.instrumentPicker import instrumentPicker
-from music.instrument import Instrument
+#from view.widgets.instrumentPicker import instrumentPicker
+#from music.instrument import Instrument
 from models.note import Note
 
 from util.gctimer import GcTimer
@@ -23,6 +23,8 @@ from util.gctimer import GcTimer
 
 class FGPreviewToolbar(QToolBar):
     def __init__(self, model: FilterGraph):
+        from view.widgets.instrumentPicker import instrumentPicker
+
         super().__init__()
         self.instrument_name = "Steel Guitar"
         self.setMovable(False)
@@ -62,6 +64,7 @@ class FGPreviewToolbar(QToolBar):
         self.error_label.setText(text)
 
     def on_preview(self):
+        from music.instrument import Instrument
         intr = Instrument(self.instrument_name) 
             
         

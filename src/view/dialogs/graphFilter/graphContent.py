@@ -280,11 +280,9 @@ class GraphScene(QGraphicsScene):
                     if isinstance(item.node_data, InputNode) or isinstance(item.node_data, OutputNode):
                         return
                     if self.parent():
-                        print(self.parent())
                         self.parent().remove_node(item)
                 elif isinstance(item, ConnectionItem):
                     if self.parent():
-                        print(self.parent())
                         self.parent().remove_connection(item)
             event.accept()
         else:
@@ -293,7 +291,7 @@ class GraphScene(QGraphicsScene):
     def add_node_item(self, node_data : GraphNode) -> SceneNodeItem:
         item = SceneNodeItem(node_data)
         self.addItem(item)
-        self.node_items[node_data.uuid] = item    
+        self.node_items[node_data.uuid] = item
         return item
 
     def update_node_item(self, node_data : GraphNode):
@@ -301,7 +299,7 @@ class GraphScene(QGraphicsScene):
             item = self.node_items[node_data.uuid]  
             self.removeItem(item)
             self.add_node_item(node_data)
-
+            
 
     def redraw_connection(self, uuid1, out_idx, uuid2, in_idx):
         node1 = self.node_items[uuid1]

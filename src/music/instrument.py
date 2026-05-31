@@ -20,6 +20,8 @@ from models.measure import TabEvent
 
 from util.gctimer import GcTimer
 
+from services.synth.fgraph_agent import FilterGraphAgent, agent_from_model, EffectNodeAgent, GainBalanceNodeAgent, LowPassNodeAgent, HighPassNodeAgent, BandPassNodeAgent
+    
 
 
 @singleton
@@ -94,6 +96,7 @@ class Instrument:
         self.tuning = [midi_codes.midi_code(note_name) for note_name in tuning]
         self.effect_enabled_state = set()
         self.last_effects = Effects()
+        self.current_fg : FilterGraphAgent | None = None
 
         self.timer = GcTimer() 
 
@@ -208,6 +211,31 @@ class Instrument:
         self.effects_change(deltas)
         self.last_effects = ef
 
+    def _proc_fg_data(self, te: TabEvent):
+        if te.fg is not None:
+            if self.current_fg is not None:
+                # deallocate existing audio filter.
+                del self.current_fg
+            # replace with new audio filter.
+            self.current_fg = FilterGraphAgent(te.fg)
+
+            for chan_mix in self.string_map:
+                channels = [chan for (chan,_) in chan_mix]
+                for chan in channels:
+                    self.current_fg.assign_to_channel(chan)
+            
+        elif self.current_fg is not None and \
+            (te.fg_node_changes is not None and len(te.fg_node_changes) > 0):
+            for node in te.fg_node_changes.values():
+                a = agent_from_model(self.current_fg, node)
+                if isinstance(a, EffectNodeAgent):
+                    a.update_properties()
+                elif isinstance(a, GainBalanceNodeAgent):
+                    a.update_attributes()
+                # TODO, add support for band/low/high pass filter changes.
+                # once they support freq configuration.     
+                
+
 
     def tab_event(self, te: TabEvent, bpm: int, beat_duration: float, override_velocity = -1, drum_track=False):
         """
@@ -221,8 +249,10 @@ class Instrument:
         # in the case of a chord, all string played ar once.
         no_stroke = not te.upstroke and not te.downstroke
 
-        if te.effects is not None:
-            self.setup_effects(te.effects)
+        #if te.effects is not None:
+        #    self.setup_effects(te.effects)
+
+        self._proc_fg_data(te)
 
         if te_type == te.REST:
             n = Note() 

@@ -254,7 +254,14 @@ class EffectNode(GraphNode):
             self.properties[ep.name] = ep.default_value
         self.effect_label = effect.plugin_label()
         self.effect = effect
-        
+
+    def pretty_print(self, fg: 'FilterGraph', indent = ""):
+        super().pretty_print(fg, indent)
+        print(f"{indent}   Properties:")
+        for (key, value) in self.properties.items():
+            print(f"{indent}     {key} = {value}")
+
+
 
 class LowPassNode(GraphNode):
     """A node representing a low-pass frequency filter."""
@@ -337,6 +344,20 @@ class FilterGraph:
         self.connections : Dict[str, GraphConnection] = {}
         self.filename = ""
         self.preset = ""
+
+    def structurally_different(self, other: 'FilterGraph'):
+        """
+        Determine if two graphs have different connections and nodes. Excluding property
+        differences.
+        """   
+        for (uuid, node) in self.nodes.items():
+            if uuid not in other.nodes:
+                return True
+        for item in self.connections:
+            if item not in other.connections:
+                return True
+        return False
+       
 
     def pretty_print(self):
         """Prints a comprehensive view of the entire graph structure."""

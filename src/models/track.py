@@ -8,6 +8,9 @@ from music.constants import Dynamic
 from music.durationtypes import QUARTER
 from services.effectRepo import EffectRepository
 
+from models.filterGraph import FilterGraph
+
+
 class MomentCursor:
     def __init__(self, t : 'Track'):
         self.t = t
@@ -367,6 +370,15 @@ class Track:
                 elif t.effects:
                     e = t.effects
         return e
+    
+    def get_filter_graph(self, te: TabEvent) -> FilterGraph | None:
+        fg = None
+        for m in self.measures:
+            for t in m.tab_events:
+                if t.fg is not None:
+                    fg = t.fg
+                if t is te:
+                    return fg      
     
     def skip_measure(self):
         "skip the current measure to next one"
