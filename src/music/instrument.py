@@ -230,11 +230,12 @@ class Instrument:
                 a = agent_from_model(self.current_fg, node)
                 if isinstance(a, EffectNodeAgent):
                     a.update_properties()
-                elif isinstance(a, GainBalanceNodeAgent):
+                elif isinstance(a, (GainBalanceNodeAgent, 
+                                    LowPassNodeAgent, 
+                                    HighPassNodeAgent, 
+                                    BandPassNodeAgent,)):
                     a.update_attributes()
-                # TODO, add support for band/low/high pass filter changes.
-                # once they support freq configuration.     
-                
+    
 
 
     def tab_event(self, te: TabEvent, bpm: int, beat_duration: float, override_velocity = -1, drum_track=False):

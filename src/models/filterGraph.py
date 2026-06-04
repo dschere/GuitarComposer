@@ -212,10 +212,11 @@ class EffectNode(GraphNode):
     def __getstate__(self):
         """Return state values to be pickled, excluding callbacks ."""
         state = self.__dict__.copy()
-        del state['onPropertyChange']
-        del state['onEnabledChange']
-        # If you have other unpicklable attributes, exclude them similarly
-        # del state['log_file'] 
+        if 'onPropertyChange' in state:
+            del state['onPropertyChange']
+        if 'onEnabledChange' in state:
+            del state['onEnabledChange']
+        
         return state
 
 
@@ -345,6 +346,9 @@ class FilterGraph:
         self.filename = ""
         self.preset = ""
 
+    def regenerate_uuid(self):
+        self.uuid = str(uuid.uuid4())    
+
     def structurally_different(self, other: 'FilterGraph'):
         """
         Determine if two graphs have different connections and nodes. Excluding property
@@ -383,8 +387,7 @@ class FilterGraph:
                 in_uuid.out_ports[c.in_idx].clear()
                 out_uuid.in_ports[c.out_idx].clear()
 
-            del self.connections[conn_uuid]
-            
+            del self.connections[conn_uuid]            
 
     def add_connection(self, conn : GraphConnection):
         """Registers a connection and links it to the relevant node ports."""

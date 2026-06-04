@@ -103,28 +103,32 @@ class EffectNodeAgent(NodeAgent):
         # deallocate ladspa filter
         super().__del__()
 
-"""
-TODO
 
-AID_LOW_PASS_FREQ: int
-AID_HIGH_PASS_FREQ: int
-AID_BAND_PASS_LOW_FREQ: int
-AID_BAND_PASS_HIGH_FREQ: int
-
-these need to be configurable!
-"""
 
 class LowPassNodeAgent(NodeAgent):
     def __init__(self, graph: 'FilterGraphAgent', model : GraphNode):
         super().__init__(graph, model, gcsynth.FG_NODE_TYPE_LOWPASS)
+    def update_attributes(self):
+        m : LowPassNode = self.model # type: ignore
+        self.set_attribute(gcsynth.AID_LOW_PASS_FREQ, m.threshold)
+
 
 class HighPassNodeAgent(NodeAgent):
     def __init__(self, graph: 'FilterGraphAgent', model : GraphNode):
         super().__init__(graph, model, gcsynth.FG_NODE_TYPE_HIGHPASS)
+    def update_attributes(self):
+        m : HighPassNode = self.model # type: ignore
+        self.set_attribute(gcsynth.AID_HIGH_PASS_FREQ, m.threshold)
+
 
 class BandPassNodeAgent(NodeAgent):
     def __init__(self, graph: 'FilterGraphAgent', model : GraphNode):
         super().__init__(graph, model, gcsynth.FG_NODE_TYPE_BANDPASS)
+    def update_attributes(self):
+        m : BandPassNode = self.model # type: ignore
+        self.set_attribute(gcsynth.AID_BAND_PASS_LOW_FREQ, m.low_threshold)
+        self.set_attribute(gcsynth.AID_BAND_PASS_HIGH_FREQ, m.high_threshold)
+
 
 
 class GainBalanceNodeAgent(NodeAgent):
@@ -223,14 +227,22 @@ class FilterGraphAgent(QtCore.QObject):
             # print(f"self.model.connections {self.model.connections}")
             # conn_model.pretty_print(self.model)
 
-            gcsynth.fgraph_api(
-                gcsynth.FG_API_ADD_CONNECTION, 
-                self.handle, 
-                conn_model.uuid, 
-                in_uuid, 
-                in_idx, 
-                out_uuid, 
-                out_idx)
+            try:
+                gcsynth.fgraph_api(
+                    gcsynth.FG_API_ADD_CONNECTION, 
+                    self.handle, 
+                    conn_model.uuid, 
+                    in_uuid, 
+                    in_idx, 
+                    out_uuid, 
+                    out_idx)
+            except:
+                print("gcsynth.fgraph_api failed, dumping graph information")
+                print("----------------------------------------------------")
+                print(f"self.model.connections {self.model.connections}")
+                conn_model.pretty_print(self.model)
+                print("----------------------------------------------------")
+                raise
             
 
         # # setup connections.
