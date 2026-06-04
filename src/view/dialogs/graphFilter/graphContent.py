@@ -302,18 +302,17 @@ class GraphScene(QGraphicsScene):
             
 
     def redraw_connection(self, uuid1, out_idx, uuid2, in_idx):
-        node1 = self.node_items[uuid1]
-        node2 = self.node_items[uuid2]
-
-        port1 = node1.outputs[out_idx]
         try:
-            port2 = node2.inputs[in_idx]
-        except:
-            print(node2.inputs)
-            raise
+            node1 = self.node_items[uuid1]
+            node2 = self.node_items[uuid2]
 
-        conn = ConnectionItem(port1, port2)
-        self.addItem(conn)
+            port1 = node1.outputs[out_idx]
+            port2 = node2.inputs[in_idx]
+            
+            conn = ConnectionItem(port1, port2)
+            self.addItem(conn)
+        except Exception as e:
+            print(e)
 
     def rewire_outputs(self, node: GraphNode):
         for _p in node.out_ports:

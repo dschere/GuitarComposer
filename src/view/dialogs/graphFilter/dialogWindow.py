@@ -108,6 +108,12 @@ class FilterGraphDialog(QDialog):
         end_node = connection.end_port.parentItem().node_data
         end_port = connection.end_port.index
 
+        start_gc : GraphConnection = start_node.out_ports[start_port]
+        end_gc : GraphConnection = end_node.in_ports[end_port]
+
+        self.model.remove_connection(start_gc.uuid)
+        self.model.remove_connection(end_gc.uuid)
+
         start_node.out_ports[start_port].clear()
         end_node.in_ports[end_port].clear()
 
@@ -117,7 +123,7 @@ class FilterGraphDialog(QDialog):
             connection.end_port.connections.remove(connection)
 
         self.graph_scene.removeItem(connection)        
-        self.model.remove_connection(connection.uuid)
+        #self.model.remove_connection(connection.uuid)
         self.on_model_change()
 
     def remove_node(self, node_item):
@@ -153,6 +159,7 @@ class FilterGraphDialog(QDialog):
             self.graph_scene.add_node_item(gnode)
 
         for conn_model in model.connections.values():
+            conn_model.pretty_print(self.model)
             self.graph_scene.redraw_connection(
                 conn_model.in_uuid, conn_model.out_idx,
                 conn_model.out_uuid, conn_model.in_idx
@@ -277,6 +284,9 @@ class FilterGraphDialog(QDialog):
                 self.te.fg_node_changes = None 
 
                 if fg_struct_changed:
+                    # new uuid 
+                    self.model.regenerate_uuid()
+
                     self.te.fg = self.model
                     print("either new filter graph or change to existing one.")
                 else:
@@ -291,7 +301,7 @@ class FilterGraphDialog(QDialog):
         """ 
         When changes occure update the tabevent 
 
-        If starting with 'te' going backwords through the 
+        If starting with 'te' going through the 
         the track till we reach the start there is no filter 
         graph than any change beyond a passthrough filter input-->output
         results in te.fg being assigned self.model 
