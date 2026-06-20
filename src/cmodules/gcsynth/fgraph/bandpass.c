@@ -145,7 +145,7 @@ int lowpass_run(struct fgraph_node* node, float* left, float* right)
 int highpass_run(struct fgraph_node* node, float* left, float* right)
 {
     struct fgraph_highpass* hp = (struct fgraph_highpass*) node; 
-    int r;
+    int r = 0;
 
     if (node->using_fallback_method_for_freqdomain == 1) {
 
@@ -164,7 +164,7 @@ int highpass_run(struct fgraph_node* node, float* left, float* right)
         if ((r = gcsynth_filter_setbyindex(hp->fallback_highpass, 0, hp->freq)) != 0 ) {return r;}
         if ((r = gcsynth_filter_run_sterio(hp->fallback_highpass, left, right, AUDIO_SAMPLES)) != 0) {return r;}
     } else {
-        r = fg_highpass_filter(node->channel, hp->freq, left, right);
+        fg_highpass_filter(node->channel, hp->freq, left, right);
     }
 
     return r;
@@ -175,7 +175,7 @@ int highpass_run(struct fgraph_node* node, float* left, float* right)
 int bandpass_run(struct fgraph_node* node, float* left, float* right)
 {
     struct fgraph_bandpass* bp = (struct fgraph_bandpass*) node; 
-    int r;
+    int r = 0;
 
     if (node->using_fallback_method_for_freqdomain == 1) {
         // according to plugin documentation the max freq value is
@@ -203,7 +203,7 @@ int bandpass_run(struct fgraph_node* node, float* left, float* right)
         if ((r = gcsynth_filter_setbyindex(bp->fallback_highpass, 0, bp->freq_high)) != 0 ) {return r;}
         if ((r = gcsynth_filter_run_sterio(bp->fallback_highpass, left, right, AUDIO_SAMPLES)) != 0) {return r;}
     } else {
-        r = fg_bandpass_filter(node->channel, bp->freq_low, bp->freq_high, left, right);
+        fg_bandpass_filter(node->channel, bp->freq_low, bp->freq_high, left, right);
     }
 
     return r;
