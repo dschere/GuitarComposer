@@ -51,8 +51,9 @@ static void single_input_output_node_op(int channel, struct fgraph_node* n,
         ///////////////////////////////
 
         if (run_result != 0) {
-            sprintf(errmsg,"single_input_output_node_op type=%d run failed!\n",
-                n->base.type);
+            sprintf(errmsg,"single_input_output_node_op type=%d run failed! returned %d\n",
+                n->base.type, run_result);
+            
         } else {
             // if the next node is the output node then copy to 
             // connection buffer of the input port just like the mixer.
@@ -290,13 +291,20 @@ static void mixer_op(int channel, struct fgraph_node* n,
  */
 static void fg_iterate(int channel, struct fgraph_node* n, struct fgraph_connection* input_connection,
     float* left, float* right)
-{    
-// printf("fg_iterate channel=%d %s(uuid=%s,type=%d) input_connection %s(uuid=%s)\n",
-//     channel, node_type_to_str(n), n->base.uuid, n->base.type,
-//         (input_connection) ? node_type_to_str(input_connection->out_node) : "null",
-//         (input_connection) ? input_connection->out_node->base.uuid: "null"
-//     );
-// fflush(stdout);
+{  
+#define fg_iterate_DEBUG 0
+#if fg_iterate_DEBUG
+    if (n != NULL) {     
+        printf("fg_iterate channel=%d %s(uuid=%s,type=%d) input_connection %s(uuid=%s)\n",
+            channel, node_type_to_str(n), n->base.uuid, n->base.type,
+                (input_connection) ? node_type_to_str(input_connection->out_node) : "null",
+                (input_connection) ? input_connection->out_node->base.uuid: "null"
+            );
+    } else {
+        printf("fg_iterate channel=%d null graph node!\n", channel);
+    }
+    fflush(stdout);
+#endif
 
     switch(n->base.type) {
         case FG_NODE_TYPE_MIXER:

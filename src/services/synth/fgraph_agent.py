@@ -209,14 +209,10 @@ class FilterGraphAgent(QtCore.QObject):
                 elif isinstance(nagent, GainBalanceNodeAgent):
                     nagent.update_attributes()
                
-
                 # Setup a way to do real time updates?  
                 if isinstance(gn_model, EffectNode):
                     gn_model.onPropertyChange = self.onPropertyChange
                     gn_model.onEnabledChange = self.onEnabledChange
-
-
-
 
         for conn_model in self.model.connections.values():
             in_idx = conn_model.in_idx
@@ -243,32 +239,7 @@ class FilterGraphAgent(QtCore.QObject):
                 conn_model.pretty_print(self.model)
                 print("----------------------------------------------------")
                 raise
-            
-
-        # # setup connections.
-        # for gn_model in self.model.nodes.values():
-        #     for conn_model in gn_model.in_ports:
-        #         #KLUGE: why are these swapped?
-        #         # temp = conn_model.in_uuid 
-        #         # conn_model.in_uuid = conn_model.out_uuid
-        #         # conn_model.out_uuid = temp
-
-        #         in_idx = conn_model.in_idx
-        #         out_idx = conn_model.out_idx
-        #         in_uuid = conn_model.in_uuid
-        #         out_uuid = conn_model.out_uuid
-
-        #         conn_model.pretty_print(self.model)
-
-        #         gcsynth.fgraph_api(
-        #            gcsynth.FG_API_ADD_CONNECTION, 
-        #            self.handle, 
-        #            conn_model.uuid, 
-        #            in_uuid, 
-        #            in_idx, 
-        #            out_uuid, 
-        #            out_idx)
-        
+                    
         # filter setup, now enable it.
         gcsynth.fgraph_api(gcsynth.FG_API_ENABLE, self.handle)
 

@@ -384,7 +384,10 @@ class FilterGraph:
             if c.in_idx != -1 and c.out_idx != -1:
                 in_uuid = self.nodes[c.in_uuid]
                 out_uuid = self.nodes[c.out_uuid]
-                in_uuid.out_ports[c.in_idx].clear()
+                if c.in_idx < len(in_uuid.out_ports):
+                    in_uuid.out_ports[c.in_idx].clear()
+                elif len(in_uuid.out_ports) == 1:
+                    in_uuid.out_ports[0].clear()
                 out_uuid.in_ports[c.out_idx].clear()
 
             del self.connections[conn_uuid]            
