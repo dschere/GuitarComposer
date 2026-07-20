@@ -14,3 +14,4 @@ class Song:
         self.author = ""
         self.poly_rythm_tracks = False
         self.filename = ""
+        self.key = ""

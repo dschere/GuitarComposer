@@ -169,6 +169,13 @@ class DeleteTrack:
     def __init__(self, song, track):
         self.song = song
         self.track = track 
+
+class ProgressEvents(QObject):
+    progress_msgs = pyqtSignal(str)
+
+    def log(self, msg):
+        self.progress_msgs.emit(msg)
+
                         
 @singleton
 class _Signals(QObject):

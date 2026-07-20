@@ -92,7 +92,8 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "cwd": "${workspaceFolder}"
+            "cwd": "${workspaceFolder}",
+            "justMyCode": false
         },
         {
             "name": "Generate Documentation",

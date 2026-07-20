@@ -18,6 +18,16 @@ class instrument_spec:
 class instrument_info:
     prefered_font = "27mg_Symphony_Hall_Bank.SF2"
 
+    def find_name_by_preset(self, preset: int):
+        for spec in self.prefered:
+            if spec.preset_num == preset:
+                return spec.name
+        for spec in self.default_data:
+            if spec.preset_num == preset:
+                return spec.name
+        # give up! just use the acoustic guitar
+        return "Acoustic Guitar"        
+
     def find(self, name):
         return self.prefered.get(name, self.default_data.get(name))
     

@@ -74,6 +74,9 @@ class synthservice:
         # stop audio threads on exit
         atexit.register(self.shutdown)
 
+    def instrument_name_by_preset(self, preset: int):
+        return self.db.find_name_by_preset(preset)    
+
     def reset_channel_manager(self):
         self.cm.reset()
 
