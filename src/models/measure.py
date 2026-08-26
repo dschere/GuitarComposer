@@ -225,6 +225,10 @@ class TabEvent:
         # part of a tuplet. So you can have only two notes as part of triplet, or 4 in a quintuplet. 
         self.tuplet_group_id : str | None = None
 
+        # normally computed by fret/string this is used as a placeholder while
+        # loading midi from a file then arranging the string and fret number later.
+        self.midi_codes = []
+
 
     def getDynamic(self):
         if self.dynamic:
@@ -242,9 +246,9 @@ class TabEvent:
             setattr(self,k,v) 
 
     def beats(self, beat_note_dur: float):
-        # If 6/8 time, then beat_note_dur is 0.5 so 
-        # a quater note (duration=1.0) is actually 2 beats.
-        beats = self.duration / beat_note_dur
+        # example if 6/8 time, then beat_note_dur is 0.5 so 
+        # a quater note (duration=1.0) is 2 beats.
+        beats = self.duration / (4.0 / beat_note_dur)
         if self.duration != WHOLE:
             if self.dotted:
                 beats *= 1.5

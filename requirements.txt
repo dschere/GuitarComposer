@@ -14,6 +14,7 @@ mccabe>=0.7.0
 mypy>=1.14.1
 mypy-extensions>=1.0.0
 packaging>=24.2
+partitura
 platformdirs>=4.3.6
 pluggy>=1.5.0
 pycodestyle>=2.12.1
@@ -37,3 +38,4 @@ subpub>=1.0.0
 tomlkit>=0.13.2
 typing_extensions>=4.12.2
 pyudev>=0.24.3
+requests
