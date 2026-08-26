@@ -170,11 +170,30 @@ class DeleteTrack:
         self.song = song
         self.track = track 
 
-class ProgressEvents(QObject):
-    progress_msgs = pyqtSignal(str)
+# class ProgressEvents(QObject):
+#     progress_msgs = pyqtSignal(str)
 
-    def log(self, msg):
-        self.progress_msgs.emit(msg)
+#     def log(self, msg):
+#         self.progress_msgs.emit(msg)
+
+
+class ProgressEvent:
+    """
+    For long running tasks this event can be used to provide feedback
+    to the user as opposed to a spinner. 
+
+    @param sender_id -> the sender of the event such as "midi_loader" etc.
+    @param severity is  logging.<log level> such as logging.INFO,logging.ERROR 
+    @param msg is a text message.  
+    
+    """
+    def __init__(self, sender_id, severity, msg, value=0.0):
+        self.sender_id = sender_id
+        self.severity = severity
+        self.msg = msg
+        self.value = value
+
+
 
                         
 @singleton
@@ -249,6 +268,9 @@ class _Signals(QObject):
     tab_select = pyqtSignal(MouseSelTab)
     graph_node_changed = pyqtSignal(GraphNode)
     graph_node_selected = pyqtSignal(GraphNode)
+
+    # provide feedback for slow running processes.
+    progress_event = pyqtSignal(ProgressEvent)
 
 
 

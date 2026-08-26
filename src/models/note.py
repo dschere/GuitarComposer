@@ -6,12 +6,15 @@ from models.measure import TabEvent
 class Note:
     DEFAULT_PITCH_RANGE = 2.0
 
-    def __init__(self):
-        self.midi_code : int | None = None
-        self.velocity : int | None = None
-        self.rest = False
+    def __str__(self):
+        return f"note midi_code={self.midi_codes} velocity={self.velocity} duration={self.duration}"
 
-        self.duration : float | None = None
+    def __init__(self, **kwargs):
+        self.midi_codes : int | None = kwargs.get('midi_code')
+        self.velocity : int | None = kwargs.get('velocity')
+        self.rest = kwargs.get('rest', False)
+
+        self.duration : float | None = kwargs.get('duration')
 
         self.fret : int | None = None
         self.string : int | None = None
