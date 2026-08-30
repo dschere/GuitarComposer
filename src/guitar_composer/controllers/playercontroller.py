@@ -1,0 +1,88 @@
+import time, copy
+import threading
+
+from guitar_composer.models.song import Song
+from guitar_composer.models.track import Track
+
+from guitar_composer.music.instrument import Instrument
+from guitar_composer.view.editor.trackEditorView import TrackEditorView
+from guitar_composer.view.events import Signals, EditorEvent, PlayerEvent
+from guitar_composer.services.player import PlayMoment, Player
+
+from guitar_composer.util.synchronized_method import synchronized_method
+
+class PlayerController:
+    """ 
+    Listens to events from Signals and controls a service.player object.
+    """
+
+    @synchronized_method
+    def _handle_editor_event(self, evt : EditorEvent):
+        if evt.ev_type == EditorEvent.ADD_MODEL:
+            assert(evt.model)
+            self.current_track = evt.model
+            iname = self.current_track.instrument_name
+            self.current_instr = Instrument(iname, self.current_track.tuning)
+
+        elif evt.ev_type == EditorEvent.ADD_TRACK_EDITOR:
+            self.track_editor = evt.track_editor     
+
+    @synchronized_method
+    def _handle_song_selected(self, song: Song):
+        self.current_song = song
+
+    def _handler_player_event(self, evt: PlayerEvent):
+        if evt.ev_type == PlayerEvent.PLAY_CURRENT_MOMENT:
+            self.play_current_moment()
+        elif evt.ev_type == PlayerEvent.PLAY:
+            self.play() 
+        elif evt.ev_type == PlayerEvent.PAUSE:
+            self.pause()
+        elif evt.ev_type == PlayerEvent.STOP:
+            self.stop()     
+            
+    def __init__(self):
+        self.current_song = None  
+        self.current_track : Track | None = None
+        self.current_instr : Instrument | None = None
+        self.track_editor : TrackEditorView | None = None
+        self.p : Player | None = None
+        self._lock = threading.RLock()
+        
+        Signals.editor_event.connect(self._handle_editor_event)
+        Signals.song_selected.connect(self._handle_song_selected)
+        Signals.player_event.connect(self._handler_player_event)
+        
+    def on_song_selected(self, song: Song):
+        self.current_song = song 
+
+    def on_track_selected(self, track: Track):
+        self.current_track = track
+
+    def play_tracks(self, selected_tracks):
+        pass 
+
+    @synchronized_method
+    def pause(self):
+        if self.p is not None:
+            self.p.pause()
+
+    @synchronized_method
+    def play(self):
+        if self.current_song:
+            if self.p is not None:
+                self.p.resume()
+            else:
+                self.p = Player(self.current_song.tracks)
+                self.p.play()
+
+    @synchronized_method
+    def stop(self):
+        if self.p is not None:
+            self.p.stop()
+            self.p = None
+            
+    @synchronized_method
+    def play_current_moment(self):
+        if self.current_track and self.current_instr:
+            PlayMoment(self.current_track, self.current_instr)

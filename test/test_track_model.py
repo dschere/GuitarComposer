@@ -1,8 +1,8 @@
 import unittest
 
-from models.track import Track
-from models.measure import Measure, TimeSig, TabEvent
-from music.durationtypes import *
+from guitar_composer.models.track import Track
+from guitar_composer.models.measure import Measure, TimeSig, TabEvent
+from guitar_composer.music.durationtypes import *
 
 class TestTrackModel(unittest.TestCase):
     def test_1_creation(self):
