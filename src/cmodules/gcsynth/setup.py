@@ -40,8 +40,6 @@ CSOURCES = [
     'ringbuffer.c',
     'repeater_loop.c',
     'fgraph/freqdomain.c',
-#    'fgraph/demuxer.c',
-#    'fgraph/muxer.c',
     'fgraph/mixer.c',
     'fgraph/splitter.c',
     'fgraph/effect.c',

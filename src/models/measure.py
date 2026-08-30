@@ -229,7 +229,6 @@ class TabEvent:
         # loading midi from a file then arranging the string and fret number later.
         self.midi_codes = []
 
-
     def getDynamic(self):
         if self.dynamic:
             return self.dynamic
