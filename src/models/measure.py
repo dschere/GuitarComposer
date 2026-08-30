@@ -247,7 +247,8 @@ class TabEvent:
     def beats(self, beat_note_dur: float):
         # example if 6/8 time, then beat_note_dur is 0.5 so 
         # a quater note (duration=1.0) is 2 beats.
-        beats = self.duration / (4.0 / beat_note_dur)
+        #beats = self.duration / (4.0 / beat_note_dur)
+        beats = self.duration /  beat_note_dur
         if self.duration != WHOLE:
             if self.dotted:
                 beats *= 1.5
