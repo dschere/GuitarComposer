@@ -1,14 +1,5 @@
 """
-Import Data
-
-<format choices> 
-midi
-musicxml (future)
-
-<filename>: _________
-<url>     : _________
-
-   [Load] [Cancel]
+Import midi files 
 """
 import os
 import pathlib
