@@ -88,8 +88,8 @@ class MyWindow(QWidget):
         self.label.setText("Done saving!")
         self.button.setEnabled(True)
 
-
-app = QApplication([])
-window = MyWindow()
-window.show()
-app.exec()
+if __name__ == '__main__':
+    app = QApplication([])
+    window = MyWindow()
+    window.show()
+    app.exec()

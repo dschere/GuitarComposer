@@ -1,7 +1,5 @@
 """
-proof of concept using partitura
-
-
+Load midi file as a Song object.
 """
 import partitura 
 from partitura import score
@@ -20,7 +18,7 @@ from util.midi import midi_codes
 from view.events import Signals, ProgressEvent
 import logging
 
-def _send_event(severity, msg, value=0.0):
+def _send_event(severity, msg, value=-1.0):
     evt = ProgressEvent("load_midi", severity, msg, value)
     Signals.progress_event.emit(evt)
 
@@ -42,15 +40,76 @@ def _arrange(track: Track, m: Measure):
                         if fret < 0:
                             continue
                         te.fret[gstring] = fret
+
+def _approximate_note_rhythm(duration_in_beats) -> dict:
+    """
+    Approximates the note type, dot count, and tuplet ratio 
+    given a duration in quarter-note beats.
+    """
+    # 1. Map base note types to their exact quarter-note beat values
+    base_notes = {
+        "whole": 4.0,
+        "half": 2.0,
+        "quarter": 1.0,
+        "eighth": 0.5,
+        "16th": 0.25,
+        "32nd": 0.125,
+        "64th": 0.0625
+    }
+    
+    # 2. Define dot modifiers (multiplier coefficients)
+    # 0 dots = 1.0, 1 dot = 1.5, 2 dots = 1.75
+    dot_modifiers = [
+        {"dots": 0, "multiplier": 1.0},
+        {"dots": 1, "multiplier": 1.5},
+        {"dots": 2, "multiplier": 1.75}
+    ]
+    
+    # 3. Define common tuplet ratios (actual_notes_played : normal_note_space)
+    # e.g., 3 notes in the space of 2 (triplet) scales duration by 2/3
+    tuplet_ratios = [
+        {"label": None, "multiplier": 1.0},
+        {"label": "3:2", "multiplier": 2 / 3},   # Triplet
+        {"label": "5:4", "multiplier": 4 / 5},   # Quintuplet
+        {"label": "7:4", "multiplier": 4 / 7}    # Septuplet
+    ]
+    
+    best_match = None
+    min_error = float("inf")
+    
+    # 4. Search the combination grid
+    for name, base_val in base_notes.items():
+        for dot in dot_modifiers:
+            for tuplet in tuplet_ratios:
                 
-        
+                # Calculate what this exact rhythmic combination should weigh in beats
+                target_duration = base_val * dot["multiplier"] * tuplet["multiplier"]
+                
+                # Measure absolute distance from the input duration
+                error = abs(duration_in_beats - target_duration)
+                
+                # Keep the candidate with the lowest error
+                if error < min_error:
+                    min_error = error
+                    best_match = {
+                        "type": name,
+                        "dots": dot["dots"],
+                        "tuplet": tuplet["label"],
+                        "expected_beats": round(target_duration, 4),
+                        "error": round(error, 6)
+                    }
+    if best_match is None:
+        return {}
+    return best_match
 
-
-def _compute_duration(element) -> TabEvent:
+def _compute_duration(element, beats) -> TabEvent:
     te = TabEvent(6)
     sd = element.symbolic_duration
+
+    if sd.get('type') is None:
+        sd = _approximate_note_rhythm(beats)
     dots = sd.get('dots',0)
-    
+
     te.duration = {
         'whole': dt.WHOLE,
         'half': dt.HALF,
@@ -60,7 +119,8 @@ def _compute_duration(element) -> TabEvent:
         '32nd': dt.THIRTYSECOND,
         '64th': dt.SIXTYFORTH,
         '128th': dt.SIXTYFORTH / 2,
-        '256th': dt.SIXTYFORTH / 4
+        '256th': dt.SIXTYFORTH / 4,
+        None: None
     }[sd.get('type')]
     if dots == 1:
         te.dotted = True 
@@ -72,7 +132,7 @@ def _compute_duration(element) -> TabEvent:
 def _append_tab_event(m: Measure, ts: TimeSig, element_group, beats):
     n=GC_Note()
     n.duration = beats
-    te = _compute_duration(element_group[0])
+    te = _compute_duration(element_group[0], beats)
 
     if isinstance(element_group[0], Note):                    
         te.midi_codes = [int(e.midi_pitch) for e in element_group] # type: ignore
@@ -90,8 +150,7 @@ def _load_midi(midi_filename) -> Song:
     _send_event(logging.INFO,f"Loading midi file {midi_filename}")
 
     ss = synthservice()
-    ss.start()
-
+    
     performance = partitura.load_performance_midi(midi_filename)
     music_score = partitura.load_score_midi(midi_filename, ensure_list=True) # type: ignore
 
@@ -148,7 +207,7 @@ def _load_midi(midi_filename) -> Song:
             
             beats, beat_type = part.time_signature_map(measure.start.t)[:2]
             ts = TimeSig()
-            ts.beat_duration = int(beats) # type: ignore
+            ts.beats_per_measure = int(beats) # type: ignore
             ts.beat_note_id = int(beat_type) 
 
             bpm = bpm_per_measure[measure]
@@ -175,9 +234,10 @@ def _load_midi(midi_filename) -> Song:
 
 
             m = Measure(timesig=ts, bpm=bpm)
+            m.cleff = current_track.cleff
 
             for element_group in group_elements:
-                _append_tab_event(m, ts, element_group,beats)
+                _append_tab_event(m, ts, element_group, beats)
 
             # provide a best effort arrangement of fingering
             _arrange(t, m)
@@ -205,8 +265,8 @@ if __name__ == '__main__':
         print(f"progress_handler: {evt.sender_id} {evt.severity} {evt.msg}")
     Signals.progress_event.connect(progress_handler)    
 
-    load_midi("/home/david/Downloads/Rush—Xanadu.mid")
-    #load_midi("/home/david/Downloads/mars-bringer-f-war.mid")
+    #load_midi("/home/david/Downloads/Rush—Xanadu.mid")
+    load_midi("/home/david/Downloads/mars-bringer-f-war.mid")
 
 
 

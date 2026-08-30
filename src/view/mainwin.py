@@ -25,6 +25,7 @@ from view.dialogs.liveCapture import LiveCaptureDialog
 from services.usbmonitor import UsbMonitor
 from services.synth.synthservice import synthservice
 
+
 class MainWindow(QMainWindow):    
     def saveSong(self):
         Signals.save_song.emit()
@@ -41,6 +42,9 @@ class MainWindow(QMainWindow):
     def closeSong(self):
         #Signals.close_song.emit()
         pass   
+
+    def import_midi(self):
+        Signals.midi_load_dialog.emit()
 
     live_capture_dialog_showing = False
 
@@ -87,7 +91,10 @@ class MainWindow(QMainWindow):
         save_action.triggered.connect(self.saveSong)   
 
         saveas_action = QAction("SaveAs", self)
-        saveas_action.triggered.connect(self.saveAsSong)   
+        saveas_action.triggered.connect(self.saveAsSong)  
+
+        import_midi_action = QAction("Import Midi", self)
+        import_midi_action.triggered.connect(self.import_midi) 
 
         exit_action = QAction("Exit", self)
         exit_action.triggered.connect(self.close)
@@ -98,6 +105,8 @@ class MainWindow(QMainWindow):
         file_menu.addAction(save_action)
         file_menu.addAction(saveas_action)
         file_menu.addSeparator()  # Adds a separator line
+        file_menu.addAction(import_midi_action)
+        file_menu.addSeparator()
         file_menu.addAction(exit_action)
 
         # Edit menu

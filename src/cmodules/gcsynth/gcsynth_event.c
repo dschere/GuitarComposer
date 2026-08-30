@@ -127,7 +127,9 @@ static void *dispatcher_loop_thread(void *arg)
         } 
 
         // process any libev events without waiting for future ones.
-        ev_loop(Dispatcher.loop, EVLOOP_NONBLOCK);
+        if (pthread_equal(pthread_self(), Dispatcher.thread)) {
+            ev_loop(Dispatcher.loop, EVLOOP_NONBLOCK);
+        }
     }
 
     ev_loop_destroy(Dispatcher.loop);

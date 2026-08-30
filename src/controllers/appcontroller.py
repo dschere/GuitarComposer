@@ -28,6 +28,8 @@ from view.events import Signals, TrackItem, PropertiesItem, SongItem, Instrument
 
 from view.dialogs.msgboxes import alert
 
+from view.dialogs.importDialog import ImportDialog
+
 
 
 FRETBOARD_CHANNEL = 0
@@ -231,7 +233,11 @@ class AppController:
         """ handle open song signal from mainwin """
         s = ProjectManager().open_song_using_dialog()
         if s is not None:
-            self.upsert_song_to_navigator(s)    
+            self.upsert_song_to_navigator(s)  
+
+    def on_midi_load_dialog(self):
+        import_dialog = ImportDialog()
+        import_dialog.exec()
 
     def update_navigator(self, **kw_args):
         "construct a QModel for the treeView"
@@ -404,6 +410,8 @@ class AppController:
         Signals.open_song.connect(self.on_open_song)
         Signals.close_song.connect(self.on_close_song)
         Signals.new_song.connect(self.on_new_song)
+        Signals.midi_load_dialog.connect(self.on_midi_load_dialog)
+        Signals.imported_song.connect(self.upsert_song_to_navigator)
 
         Signals.add_track.connect(self.add_track)
         Signals.delete_track.connect(self.delete_track)
@@ -412,7 +420,6 @@ class AppController:
         n = Note()
         n.string = 4
         n.fret = 0
-        n.midi_code = 42
         n.velocity = 100
         n.duration = 4000
         self.effects_preview_note = n

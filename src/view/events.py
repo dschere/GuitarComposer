@@ -247,6 +247,8 @@ class _Signals(QObject):
     new_song = pyqtSignal()
     save_song = pyqtSignal()
     save_as_song = pyqtSignal()
+    imported_song = pyqtSignal(Song)
+    midi_load_dialog = pyqtSignal()
     add_track = pyqtSignal(object)
     delete_track = pyqtSignal(DeleteTrack)
     
