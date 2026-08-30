@@ -2,8 +2,8 @@
 
 import unittest
 
-from models.track import * 
-from music.durationtypes import *
+from guitar_composer.models.track import * 
+from guitar_composer.music.durationtypes import *
 
 class TestTrackMoments(unittest.TestCase):
     def test_2_compute_measure_beats(self):

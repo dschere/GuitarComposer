@@ -8,9 +8,9 @@ import atexit
 import logging
 import gcsynth
 
-from music.instrument import *
-from models.note import Note
-from services.synth.synthservice import synthservice 
+from guitar_composer.music.instrument import *
+from guitar_composer.models.note import Note
+from guitar_composer.services.synth.synthservice import synthservice 
 
 
 def setup_logger():

@@ -1,0 +1,162 @@
+"""
+This service is responsible for managing the persistence of projects.
+
+Considerations going forward are that in the future songs might include
+live audio clips and other resources not just the pickling of data.
+
+QSettings is used to persist data.
+"""
+import pickle
+import marshal
+import os
+from typing import Dict, List, Tuple
+
+from singleton_decorator import singleton
+from PyQt6.QtCore import QObject, QSettings
+from PyQt6.QtWidgets import QFileDialog, QWidget, QMessageBox
+
+from guitar_composer.view.events import Signals
+from guitar_composer.models.song import Song
+
+
+@singleton
+class ProjectManager(QObject):
+    
+    project_dir_key = "ProjectManager.project_dir"
+    opened_projects_key = "ProjectManager.opened_projects_key"
+
+    def on_load_settings(self, settings: QSettings):
+        if settings.contains(self.project_dir_key):
+            self.project_dir = settings.value(self.project_dir_key)
+
+        if settings.contains(self.opened_projects_key):
+            s = settings.value(self.opened_projects_key)
+            self.opened_projects = {}
+            data = marshal.loads(s)
+            for (title, filename) in data.items():
+                if os.access(filename, os.F_OK):
+                    print(f"loading '{title}' {filename}")
+                    self.opened_projects[title] = filename
+
+            
+
+    def on_save_settings(self, settings: QSettings):
+        settings.setValue(self.project_dir_key, self.project_dir)
+        s = marshal.dumps(self.opened_projects)
+        settings.setValue(self.opened_projects_key, s)
+
+
+    def save_using_dialog(self, song: Song) -> bool:
+        """ 
+        Save the song object, return true is the user actually saved.
+        """
+        title_as_filename = song.title.replace(" ",'-')+".gc"
+        file_name, _ = QFileDialog.getSaveFileName(
+            caption=f"Save {song.title}",
+            directory=self.project_dir+os.sep+title_as_filename, 
+            filter="*.gc"
+        )
+        if len(file_name) > 0:
+            try:
+                with open(file_name, 'wb') as file:  
+                    pickle.dump(song, file)
+            except pickle.PickleError as e:
+                errmsg = f"Error loading {file_name} " + str(e)
+                QMessageBox.critical(
+                    None,
+                    "Error",
+                    errmsg,
+                    QMessageBox.StandardButton.Ok
+                )
+            finally:
+                song.filename = file_name
+                self.project_dir = os.path.dirname(file_name)
+                self.opened_projects[song.title] = song.filename
+                return True
+        return False 
+
+    def save_song(self, song: Song, allow_dialog=True):
+        if len(song.filename) > 0:
+            with open(song.filename, 'wb') as file:  
+                pickle.dump(song, file)
+        elif allow_dialog:
+            self.save_using_dialog(song)
+
+    def delete_song(self, song: Song):
+        if os.access(song.filename, os.F_OK):
+            if song.filename in self.opened_projects:
+                del self.opened_projects[song.filename]
+            os.remove(song.filename)
+
+    def titles(self) -> List[str]:
+        r = list(self.opened_projects.keys())    
+        r.sort()
+        return r
+
+    def open_song_using_title(self, title) -> Song | None:
+        file_name = self.opened_projects.get(title)   
+        song = None 
+        if file_name:
+            song = self.open_song_using_filename(file_name)
+        return song
+    
+    def close_song(self, s: Song):
+        if s.title in self.opened_projects:
+            del self.opened_projects[s.title]
+
+    def open_song_using_filename(self, file_name) -> Song | None:
+        errmsg = None
+        song = None
+
+        if not os.access(file_name, os.F_OK):
+            errmsg = f"File {file_name} is inaccessible, please check permissions"
+        else:
+            try:
+                # load saved work
+                with open(file_name, 'rb') as file:  # 'rb' for reading in binary mode
+                    song = pickle.load(file)
+            except FileNotFoundError:
+                errmsg = f"File {file_name} not found"
+            except pickle.PickleError as e:
+                errmsg = f"Error loading {file_name} " + str(e)
+            
+            if errmsg:
+                QMessageBox.critical(
+                    None,
+                    "Error",
+                    errmsg,
+                    QMessageBox.StandardButton.Ok
+                )
+            else:
+                assert(song)
+                self.project_dir = os.path.dirname(file_name)
+                self.opened_projects[song.title] = song.filename            
+
+        return song
+
+    def open_song_using_dialog(self, parent : QWidget | None = None) -> Song | None:
+        "Use the QFileDialog to open and and load a saved song"
+        song = None
+        file_name, _ = QFileDialog.getOpenFileName(
+            parent,
+            "Select a Song Song",
+            self.project_dir,  # Initial directory (empty = current directory)
+            "All Files (*);;"  # File filters
+        )
+        if len(file_name) > 0:
+            song = self.open_song_using_filename(file_name)
+
+        return song
+    
+    
+    def __init__(self):
+        super().__init__()
+
+        self.project_dir = os.environ['HOME'] + os.sep + 'Documents'
+        # title -> filename
+        self.opened_projects : Dict[str,str] = {}
+
+        Signals.load_settings.connect(self.on_load_settings)
+        Signals.save_settings.connect(self.on_save_settings)
+
+
