@@ -7,11 +7,24 @@ Public dataset — no authentication required.
 import os
 import sys
 from pathlib import Path
+import glob
 
 from huggingface_hub import snapshot_download
 
 HF_REPO_ID = "CoderGuitarist/guitar-composer-data"
-LOCAL_DATA_DIR = Path(os.environ['HOME']+os.sep+".guitar-composer"+os.sep+"data")
+DEFAULT_GC_DATA_DIR = os.environ['HOME']+os.sep+".guitar-composer"+os.sep+"data"
+
+
+def data_directory_valid() -> bool:
+    valid = False 
+    data_dir = os.environ.get('GC_DATA_DIR', DEFAULT_GC_DATA_DIR)
+    if os.access(data_dir, os.F_OK):
+        # lets see if this data directory is 'sane'
+        has_sound_fonts = len(glob.glob(data_dir+os.sep+"sf"+os.sep+"*")) > 0
+        valid = has_sound_fonts
+    return valid
+
+
 
 def download_data(force: bool = False) -> str:
     """
@@ -23,6 +36,7 @@ def download_data(force: bool = False) -> str:
     Returns:
         Path to the downloaded data directory.
     """
+    LOCAL_DATA_DIR = Path(os.environ.get('GC_DATA_DIR', DEFAULT_GC_DATA_DIR))
     LOCAL_DATA_DIR.mkdir(parents=True, exist_ok=True)
 
     

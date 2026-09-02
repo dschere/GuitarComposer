@@ -68,11 +68,23 @@ setup_logger()
 # !!!!! Create services before loading any Qt libraries
 # sequence is important
 
-# launches a child process that is dedicated to managing
-# the audio synthesizer.
+def bootstrap():
+    from guitar_composer.bootstrap.download_dataset import data_directory_valid, download_data, DEFAULT_GC_DATA_DIR
+    from guitar_composer.util.setenv import setenv 
+
+    if not data_directory_valid():
+        download_data(True)
+
+    # ensure environment variable is setup for gcsynth    
+    if os.environ.get('GC_DATA_DIR') is None:
+        setenv('GC_DATA_DIR', DEFAULT_GC_DATA_DIR)
+        
+# detect if environment needs to be bootstrapped, if it does then setup data directory
+# and environment.
+bootstrap()
+
 SynthService = synthservice()
 # ^^^^ -> make this globally accessible throughout application
-
 
 ##################################################################
 
