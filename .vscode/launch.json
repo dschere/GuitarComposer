@@ -10,7 +10,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "/home/david/proj/GuitarComposer/venv/bin/python",
-            "args": ["${workspaceFolder}/src/app.py"],
+            "args": ["${workspaceFolder}/src/guitar_composer/app.py"],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}",
             "environment": [],
@@ -82,7 +82,7 @@
             "name": "Python Debugger: Application",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/src/app.py",
+            "program": "${workspaceFolder}/src/guitar_composer/app.py",
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}"
         },

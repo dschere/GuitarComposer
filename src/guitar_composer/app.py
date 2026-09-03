@@ -65,7 +65,7 @@ def setup_logger():
 setup_logger()
 
 
-# !!!!! Create services before loading any Qt libraries
+# !!!!! Create synth service threads before loading any Qt libraries
 # sequence is important
 
 def bootstrap():
