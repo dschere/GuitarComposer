@@ -1,6 +1,6 @@
 import glob
 from typing import List
-import gcsynth
+import guitar_composer.gcsynth as gcsynth
 import os
 from guitar_composer.models.effect import Effect, Effects
 import json

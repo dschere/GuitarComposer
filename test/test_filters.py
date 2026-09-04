@@ -1,4 +1,4 @@
-import gcsynth, time
+import guitar_composer.gcsynth as gcsynth, time
 
 data = {"sfpaths": ["/home/david/proj/GuitarComposer/data/sf/27mg_Symphony_Hall_Bank.SF2"]}
 gcsynth.start(data)

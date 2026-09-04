@@ -1,5 +1,5 @@
 import os
-import gcsynth
+import guitar_composer.gcsynth as gcsynth
 import sys
 import traceback
 

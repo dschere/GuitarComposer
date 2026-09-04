@@ -4,7 +4,7 @@ to a single linears sequence of events. Some events
 such as bends/slides translate to multiple events
 over time.
 """
-import gcsynth
+import guitar_composer.gcsynth as gcsynth
 
 
 class timer_event:

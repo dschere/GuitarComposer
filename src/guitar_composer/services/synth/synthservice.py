@@ -1,4 +1,4 @@
-import gcsynth 
+import guitar_composer.gcsynth as gcsynth 
 
 from singleton_decorator import singleton
 from guitar_composer.services.synth.instrument_info import instrument_info

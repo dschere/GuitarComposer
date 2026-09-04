@@ -194,7 +194,7 @@ class Effects:
     
 
 def unittest():
-    import gcsynth
+    import guitar_composer.gcsynth as gcsynth
     import copy 
 
     data = {"sfpaths": [
