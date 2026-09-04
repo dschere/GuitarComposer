@@ -21,6 +21,8 @@ static int update_ctrl_val(struct gcsynth_filter_control* control, float value);
 
 
 
+
+
 static int update_ctrl_val(struct gcsynth_filter_control* control, float value)
 {
     int ret = NOWARNING;
@@ -35,14 +37,21 @@ static int update_ctrl_val(struct gcsynth_filter_control* control, float value)
             ret = FILTER_CONTROL_VALUE_BELOW_BOUNDS; // failed lower bounds check
         } else {
             // value is is in range
-            if (control->is_integer) {
+            if (control->is_logarithmic) {
+                float lower = (control->lower > 0.0) ? control->lower: 0.003;
+                float upper = (control->upper > lower) ? control->upper: 0.004;  
+                double log_lower = log(lower);
+                double log_upper = log(upper);
+
+                control->value = (float) exp(log_lower + control->value * (log_upper - log_lower));
+            }
+            else if (control->is_integer) {
                 control->value = ceil(value);
             } else {
                 control->value = value;
             }
         }
     }
-
     return ret;
 }
 
@@ -180,11 +189,11 @@ int gcsynth_filter_run_sterio(
                     // the plugin was configured to use the same buffer 
                     // for input and output.
                     for(i = 0; i < samples; i++) {
-                        gc_filter->out_data_buffer[0][i] = (left[i] + right[i]) * 0.5f;
+                        gc_filter->out_data_buffer[0][i] = (left[i] + right[i]) * 0.5;
                      } 
                 } else {
                     for(i = 0; i < samples; i++) {
-                       gc_filter->in_data_buffer[0][i] = (left[i] + right[i]) * 0.5f;
+                       gc_filter->in_data_buffer[0][i] = (left[i] + right[i]) * 0.5;
                     }
                 }
                 break;
@@ -279,7 +288,18 @@ static void setup_ctl_value(struct gcsynth_filter* gc_filter,
     control->is_logarithmic = LADSPA_IS_HINT_LOGARITHMIC(h->HintDescriptor);
     control->is_integer = LADSPA_IS_HINT_INTEGER(h->HintDescriptor);
 
-    control->default_value = 
+    printf("%s lower=%f upper=%f is_bounded_above=%d is_bounded_below=%d is_toggled=%d is_logarithmic=%d is_integer=%d\n",
+        control->name,
+        control->lower,
+        control->upper,
+        control->is_bounded_above,
+        control->is_bounded_below,
+        control->is_toggled,
+        control->is_logarithmic,
+        control->is_integer
+    );
+
+    control->default_value = (control->is_logarithmic) ? 0.5 :
        get_default_value(gc_filter, (unsigned long int) ctl,
             &control->has_default);
 
@@ -289,13 +309,14 @@ static void setup_ctl_value(struct gcsynth_filter* gc_filter,
         control->has_default = 0;
     }
 
-    if (control->has_default) {
+    if (control->has_default || control->is_logarithmic) {
         control->value = control->default_value;
+        printf("Updated %s, set control %s to default value %f\n",
+            gc_filter->desc->Label, control->name, control->value);
+    } else {
+        printf("Updated %s, set control %s to %f\n",
+            gc_filter->desc->Label, control->name, control->value);
     }
-
-    printf("Updated %s, set control %s to %f\n",
-        gc_filter->desc->Label, control->name, control->value);
-
 }
 
 
@@ -381,10 +402,9 @@ static int ladspa_setup(struct gcsynth_filter* gc_filter, const char* path, char
         // setup output port(s)
         else 
         if (LADSPA_IS_PORT_AUDIO(pd) && 
-            LADSPA_IS_PORT_OUTPUT(pd) &&
-            gc_filter->out_buf_count < NUM_IO_PORTMAPS) {
+            LADSPA_IS_PORT_OUTPUT(pd)) {
 
-            gc_filter->port_map[i] = gc_filter->out_data_buffer[gc_filter->out_buf_count];
+            gc_filter->port_map[i] = gc_filter->out_data_buffer[gc_filter->out_buf_count %  NUM_IO_PORTMAPS];
             // printf("gcsynth: output port %lu (%s) to output host buffer %d\n",
             //      i, gc_filter->desc->PortNames[i], 
             //      gc_filter->out_buf_count

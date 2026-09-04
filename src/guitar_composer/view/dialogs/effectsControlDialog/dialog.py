@@ -272,7 +272,7 @@ def unittest():
     SynthService.start()
 
     from guitar_composer.models.effect import Effects
-    #import gcsynth
+    #import guitar_composer.gcsynth as gcsynth
     #import copy 
 
     # data = {"sfpaths": [

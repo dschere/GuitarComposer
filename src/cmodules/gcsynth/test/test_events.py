@@ -13,7 +13,7 @@ import json
 import sys
 import copy
 
-import gcsynth
+import guitar_composer.gcsynth as gcsynth
 
 from unit_test_util import *
 

@@ -6,7 +6,7 @@ import sys
 import copy
 import atexit
 import logging
-import gcsynth
+import guitar_composer.gcsynth as gcsynth
 
 from guitar_composer.music.instrument import *
 from guitar_composer.models.note import Note

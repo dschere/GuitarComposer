@@ -6,7 +6,7 @@ import time
 import json
 import sys
 
-import gcsynth
+import guitar_composer.gcsynth as gcsynth
 
 
 base_dir = os.sep.join(os.path.abspath(__file__).split(os.sep)[:-5])

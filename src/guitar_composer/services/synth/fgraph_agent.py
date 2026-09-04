@@ -10,7 +10,7 @@ is created and when it is destroyed the filter graph is destroyed.
 from PyQt6 import QtCore
 from guitar_composer.models.filterGraph import *
 
-import gcsynth 
+import guitar_composer.gcsynth as gcsynth 
 
 
 ## Agents
