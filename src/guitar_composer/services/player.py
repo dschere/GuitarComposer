@@ -88,8 +88,12 @@ def compile_track(track: Track, m_idx=0) -> List[Tuple[TabEvent,Measure]]:
             if r.end_measure == -1:
                 r.end_measure = m.measure_number
                 r.repeat_counter = m.repeat_count
-            
-            tab_events = r.tab_events * (r.repeat_counter + 1) 
+
+            if r.repeat_counter > -1:    
+                tab_events = r.tab_events * (r.repeat_counter + 1)
+            else:
+                print(f"Warning r.repeat_counter ({r.repeat_counter}) should not be less than 0, compenasting for error.")
+                tab_events = r.tab_events 
             del repeat_stack[0]
             if len(repeat_stack) > 0:
                 repeat_stack[0].tab_events += tab_events
@@ -111,6 +115,7 @@ def compile_track(track: Track, m_idx=0) -> List[Tuple[TabEvent,Measure]]:
     staccato = False
 
     for te,m in result:
+        print(f"te.dynamic = {te.dynamic}, measure {m.measure_number}")
         if te.dynamic is None:
             te.dynamic = dynamic
         else:
@@ -256,19 +261,19 @@ class track_player_api(QObject):
 
     #expected_tm = None
 
-    def timer_loop(self):      
-        # if we are still playing
-        if self.is_playing.is_set():
-            # if self.expected_tm:
-            #     drift = self.expected_tm - time.perf_counter()
-            #     print(f"drift = {drift}")        
+    # def timer_loop(self):      
+    #     # if we are still playing
+    #     if self.is_playing.is_set():
+    #         # if self.expected_tm:
+    #         #     drift = self.expected_tm - time.perf_counter()
+    #         #     print(f"drift = {drift}")        
 
-            # play all note(s) in this moment in the measure, return
-            # the number of milliseconds till for the next moment.
-            duration_secs, more_moments = self._play_current_moment()
-            if more_moments:
-                #self.expected_tm = time.perf_counter() + duration_secs
-                self.timer = GcTimer().start(duration_secs, self.timer_loop, ())
+    #         # play all note(s) in this moment in the measure, return
+    #         # the number of milliseconds till for the next moment.
+    #         duration_secs, more_moments = self._play_current_moment()
+    #         if more_moments:
+    #             #self.expected_tm = time.perf_counter() + duration_secs
+    #             self.timer_id = GcTimer().start(duration_secs, self.timer_loop, ())
 
         
     def stop(self, reset_start_measure=True):
