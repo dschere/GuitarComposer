@@ -115,7 +115,6 @@ def compile_track(track: Track, m_idx=0) -> List[Tuple[TabEvent,Measure]]:
     staccato = False
 
     for te,m in result:
-        print(f"te.dynamic = {te.dynamic}, measure {m.measure_number}")
         if te.dynamic is None:
             te.dynamic = dynamic
         else:
