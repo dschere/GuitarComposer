@@ -46,7 +46,7 @@ class GcTimer(QObject):
         super().__init__()
         atexit.register(self._on_shutdown)
 
-    def start(self, when : float, callback, args = ()):
+    def start(self, when : float, callback, args = ()) -> int:
         timer_id = self.id_counter 
         self.id_counter += 1
 
