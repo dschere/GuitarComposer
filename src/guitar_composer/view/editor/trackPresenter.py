@@ -121,7 +121,7 @@ class TrackPresenter(QWidget):
     def delete_current_measure(self):
         "Delete current measure unless its the first measure, then ignore"
         # remove view
-        if self.current_measure.measure_number != 1:
+        if len(self.track_model.measures) > 1:
             self.measure_layout.removeWidget(self.current_mp)
             del self.mp_map[self.current_measure]  
             self.track_model.remove_measure()

@@ -60,6 +60,12 @@ class TimeSig:
         # is queater note, 8 is an eight note 
         self.beat_note_id = 4
 
+    def __eq__(self, other):
+        if isinstance(other, TimeSig):
+            return other.beats_per_measure == self.beats_per_measure and other.beat_note_id == self.beat_note_id
+        return False
+
+
     def beat_duration(self):
         return 4.0 / self.beat_note_id    
 
