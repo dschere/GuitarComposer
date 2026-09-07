@@ -255,6 +255,17 @@ class Track:
         bpm = self.measures[0].bpm
         key = self.measures[0].key
         cleff = self.cleff 
+        from guitar_composer.view.editor.glyphs.common import TREBLE_CLEFF
+
+        if ts is None:
+            ts = TimeSig() 
+        if bpm is None:
+            bpm = 120 
+        if key is None:
+            key = "C"
+        if cleff is None:
+            cleff = TREBLE_CLEFF
+
         for measure in self.measures[1:]:
             if measure is m:
                 break
@@ -333,12 +344,21 @@ class Track:
         raise RuntimeError("At least the first measure should have a timesig")
 
     def remove_measure(self):
-        if len(self.measures) > 0:
+        if len(self.measures) > 1:
+            # preserve the staff header information of the first measure 
+            first_measure = copy.deepcopy(self.measures[0])
+            
             del self.measures[self.current_measure]
             if self.current_measure >= len(self.measures):
                 self.current_measure = len(self.measures) - 1
             for (mn, m) in enumerate(self.measures):
-                m.measure_number = mn + 1        
+                m.measure_number = mn + 1 
+
+            self.measures[0].bpm = first_measure.bpm
+            self.measures[0].cleff = first_measure.cleff
+            self.measures[0].timesig = first_measure.timesig
+            self.measures[0].staff_changes = True 
+
 
     def current_moment(self) -> Tuple[TabEvent, Measure]:
         m = self.measures[self.current_measure] 
