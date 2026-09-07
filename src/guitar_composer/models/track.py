@@ -355,6 +355,7 @@ class Track:
                 m.measure_number = mn + 1 
 
             self.measures[0].bpm = first_measure.bpm
+            self.measures[0].key = first_measure.key
             self.measures[0].cleff = first_measure.cleff
             self.measures[0].timesig = first_measure.timesig
             self.measures[0].staff_changes = True 
