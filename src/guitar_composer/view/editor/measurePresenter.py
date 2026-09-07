@@ -186,7 +186,6 @@ class MeasurePresenter(QWidget):
             cleff = self.measure.cleff 
             if self.track_model.drum_track:
                 cleff = DRUM_CLEFF
-            print(f"create_staff_if_needed {vars(self.measure)}")
             self.staff_header = StaffHeader(self.track_model,
                 cleff,
                 self.measure.key,
