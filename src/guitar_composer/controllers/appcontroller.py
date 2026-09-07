@@ -422,6 +422,8 @@ class AppController:
         n.fret = 0
         n.velocity = 100
         n.duration = 4000
+        n.midi_code = 57
+
         self.effects_preview_note = n
 
     def handle_pitch_change_preview_event(self, evt: StringBendEvent):
