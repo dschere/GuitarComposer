@@ -1,6 +1,6 @@
 {
     // Path to the Python interpreter inside the virtual environment
-    "python.pythonPath": "${workspaceFolder}/venv/bin/python",
+    "python.defaultInterpreterPath": "${workspaceFolder}/venv/bin/python",
     // Additional paths for the Python analyzer (e.g., src or lib directories in your project)
     "python.analysis.extraPaths": [
         "${workspaceFolder}/src",
@@ -11,7 +11,7 @@
     // Type checking mode: basic or strict for better error detection
     "python.analysis.typeCheckingMode": "basic",
     // Enable Pylance as the language server for IntelliSense and improved symbol detection
-    "python.languageServer": "Pylance",
+    "python.languageServer": "Default",
     // Automatically activate the virtual environment in the integrated terminal
     "python.terminal.activateEnvironment": true,
     // Specify Flake8 as the linter
