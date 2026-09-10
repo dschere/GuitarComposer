@@ -11,6 +11,20 @@ from typing import List
 
 
 def create_choices(low, high, defval, is_integer) -> List[float]:
+    """Generate a discrete list of numeric options between lower and upper bounds, ensuring the default value is included.
+
+    Args:
+        low: Lower bound value.
+        high: Upper bound value.
+        defval: Default parameter value.
+        is_integer: True if values should be integer steps, False for fractional steps.
+
+    Returns:
+        List of allowable numeric choices.
+
+    Raises:
+        ValueError: If default value cannot be placed within the range.
+    """
     r = []
     if is_integer:
         r = range(int(low),int(high)+1)
@@ -26,6 +40,7 @@ def create_choices(low, high, defval, is_integer) -> List[float]:
     return r    
 
 class EffectParameter:
+    """Represents a controllable parameter on an audio effect or LADSPA plugin."""
     BOUNDED_REAL = 0
     BOUNDED_INTEGER = 1
     UNBOUNDED_REAL = 2
@@ -33,14 +48,21 @@ class EffectParameter:
     BOOLEAN = 4
 
     def __str__(self):
+        """Return the parameter name and its current value as a string."""
         msg = f"{self.name} {self.current_value}"
         return msg
     
     def get_current_value(self):
+        """Return the current value of the parameter."""
         return self.current_value
 
 
     def __init__(self, spec: dict):
+        """Initialize an EffectParameter instance from a plugin descriptor specification dictionary.
+
+        Args:
+            spec: Dictionary specifying bounds, default values, parameter type, and name.
+        """
         self.c_index = 0
         self.has_default = False
         self.default_value = 0.0

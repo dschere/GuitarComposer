@@ -16,6 +16,7 @@ DEFAULT_GC_DATA_DIR = os.environ['HOME']+os.sep+".guitar-composer"+os.sep+"data"
 
 
 def data_directory_valid() -> bool:
+    """Check if the configured data directory exists and contains soundfont files."""
     valid = False 
     data_dir = os.environ.get('GC_DATA_DIR', DEFAULT_GC_DATA_DIR)
     if os.access(data_dir, os.F_OK):
@@ -61,6 +62,7 @@ def download_data(force: bool = False) -> str:
 
 
 def main():
+    """Command-line entry point to download or update local dataset files."""
     force = "--force" in sys.argv
     download_data(force=force)
 

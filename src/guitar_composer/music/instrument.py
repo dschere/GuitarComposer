@@ -26,12 +26,23 @@ from guitar_composer.services.synth.fgraph_agent import FilterGraphAgent, agent_
 
 @singleton
 class CustomInstruments:
+    """Registry and provider for user-defined multi-timbral custom instrument configurations."""
+
     def __init__(self):
+        """Initialize the custom instruments database from disk configuration."""
         filename = os.environ['GC_DATA_DIR'] + \
             "/instruments/customInstruments.json"
         self.db = json.loads(open(filename).read())
 
     def getSpec(self, name):
+        """Retrieve the string-to-channel mapping specification for a given instrument name.
+
+        Args:
+            name: Instrument identifier string.
+
+        Returns:
+            Dictionary defining the per-string instrument assignment and gain weights.
+        """
         return self.db.get(name, {
             "string_map": [
                 {name: 1.0},
@@ -88,9 +99,16 @@ class Instrument:
     data_lock = threading.Lock()
 
     def get_channels_used(self):
+        """Return the list of synthesizer channel indices currently allocated to this instrument."""
         return self.channels_used
 
     def __init__(self, name, tuning=StandardTuning):
+        """Initialize an Instrument instance, allocate synthesizer channels, and configure string mappings.
+
+        Args:
+            name: Instrument name or custom instrument preset identifier.
+            tuning: List of note names representing open string pitches.
+        """
         self.string_playing = [None] * len(tuning)
         self.name = name
         self.tuning = [midi_codes.midi_code(note_name) for note_name in tuning]
@@ -150,6 +168,13 @@ class Instrument:
                 break
         
     def update_effect_changes(self, synth, chan, ec: EffectChanges ):
+        """Apply audio effect plugin and parameter updates to a specific synth channel.
+
+        Args:
+            synth: SynthService instance.
+            chan: Channel index.
+            ec: Dictionary mapping Effect instances to changed parameters.
+        """
         # see EffectsDialog.delta for details on EffectChanges
         for e in ec:
             path = e.plugin_path() 
@@ -175,14 +200,29 @@ class Instrument:
 
     
     def free_resources(self):
+        """Deallocate and release all synth channels allocated to this instrument."""
         for chan in self.channels_used:
             self.synth.dealloc(chan)
 
     def effects_change(self, ec: EffectChanges):
+        """Broadcast effect and parameter changes across all channels allocated to this instrument.
+
+        Args:
+            ec: EffectChanges map.
+        """
         for chan in self.channels_used:
             self.update_effect_changes(self.synth, chan, ec)
 
     def pitchwheel_event(self, n: Note, bpm = 120):
+        """Schedule pitch bend / pitchwheel change events on the sequencer for a note.
+
+        Args:
+            n: Note containing pitch bend points and duration.
+            bpm: Tempo in beats per minute.
+
+        Raises:
+            ValueError: If the note duration is undefined.
+        """
         s = self.synth.getSequencer()
 
         # express duration (beats) in milliseconds.
@@ -207,11 +247,21 @@ class Instrument:
         s.play() 
 
     def setup_effects(self, ef: Effects):
+        """Compute deltas against prior effect states and apply modifications to all channels.
+
+        Args:
+            ef: Current Effects configuration.
+        """
         deltas = ef.get_changes(self.last_effects)
         self.effects_change(deltas)
         self.last_effects = ef
 
     def _proc_fg_data(self, te: TabEvent):
+        """Process FilterGraph changes associated with a TabEvent and bind them to synth channels.
+
+        Args:
+            te: TabEvent potentially containing a FilterGraph instance.
+        """
         if te.fg is not None:
             if self.current_fg is not None:
                 # deallocate existing audio filter.
@@ -324,6 +374,7 @@ class Instrument:
         return ev_dur
     
     def stop(self):
+        """Halt all active sound generation and cancel in-flight note-off timers across all strings."""
         s = self.synth.getSequencer()
         
         for (gstring,chan_mix) in enumerate(self.string_map):
@@ -437,6 +488,7 @@ class Instrument:
 
     
 def getInstrumentList():
+    """Return a sorted list of all available custom and soundfont instrument names."""
     # Note: these are both singletons
     custom_instruments = CustomInstruments()
     synth = synthservice()
@@ -449,6 +501,11 @@ def getInstrumentList():
     return names
 
 def getInstrumentGroups() -> Tuple[Dict[str, List[str]], List[str]]:
+    """Return grouped mappings of soundfont instruments along with custom instrument names.
+
+    Returns:
+        Tuple containing a dictionary of instrument groups and a list of custom instrument names.
+    """
     custom_instruments = CustomInstruments()
     synth = synthservice()
 
@@ -466,6 +523,7 @@ if __name__ == '__main__':
     intr = Instrument(name) 
 
     def note_test():
+        """Run standalone test playing an individual note with pitch bend."""
         print("note test")
         n = Note() 
         n.midi_code = 60 
@@ -481,6 +539,7 @@ if __name__ == '__main__':
         time.sleep(5)
 
     def tabevent_test():
+        """Run standalone test playing a chord TabEvent."""
         print("tabevent test")
         te = TabEvent(6) 
         bpm = 120 
