@@ -6,9 +6,11 @@ from singleton_decorator import singleton
 
 @singleton
 class UsbMonitor(QObject):
+    """Monitors Linux udev kernel events for USB audio device insertion and removal."""
     device_changed = pyqtSignal(object)
 
     def __init__(self):
+        """Initialize udev context and start background monitoring observer for USB devices."""
         super().__init__()
         self.context = pyudev.Context()
         self.monitor = pyudev.Monitor.from_netlink(self.context)
@@ -19,11 +21,18 @@ class UsbMonitor(QObject):
         self.timer_inflight = threading.Event()
 
     def _delayed_notification(self):
+        """Debounce rapid udev device events and emit device_changed signal after settling."""
         time.sleep(0.25)
         self.device_changed.emit(self.current_state)
         self.timer_inflight.clear() 
 
     def _handle_udev_event(self, action, device):
+        """Process incoming udev device action event and trigger debounced notification thread.
+
+        Args:
+            action: Action string (e.g. 'add', 'remove', 'change').
+            device: pyudev Device object.
+        """
         self.current_state = action
         # tests have shown a flurry of events happening with 100ms
         # in addition calling SDL to check for devices returns a false

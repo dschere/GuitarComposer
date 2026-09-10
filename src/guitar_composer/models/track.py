@@ -12,18 +12,27 @@ from guitar_composer.models.filterGraph import FilterGraph
 
 
 class MomentCursor:
+    """Cursor for sequentially traversing TabEvents across track measures."""
+
     def __init__(self, t : 'Track'):
+        """Initialize a MomentCursor bound to the given Track instance.
+
+        Args:
+            t: Track instance to traverse.
+        """
         self.t = t
         self.current_measure = -1
         self.current_tab_event = -1
 
     def first(self) -> TabEvent:
+        """Move cursor to the current track cursor position and return the active TabEvent."""
         self.current_measure = self.t.current_measure
         m = self.t.measures[self.current_measure]
         self.current_tab_event = m.current_tab_event
         return m.tab_events[self.current_tab_event]
     
     def start_of_previous_measure(self):
+        """Move cursor to the beginning of the previous measure and return its first TabEvent."""
         if self.current_measure > 0:
             self.current_measure -= 1
         self.current_tab_event = 0
@@ -33,6 +42,7 @@ class MomentCursor:
 
     
     def next(self) -> TabEvent | None:
+        """Advance cursor to the next TabEvent across measure boundaries or return None if at end."""
         self.current_tab_event += 1
         m = self.t.measures[self.current_measure]
         if self.current_tab_event < len(m.tab_events):
@@ -104,6 +114,11 @@ class Track:
                     self.measures[m_num].tab_events = [te.clone()]
 
     def remove_tab_events(self, remList: List[TabEvent]):
+        """Remove specified TabEvents from track measures and reassemble the measure layout.
+
+        Args:
+            remList: List of TabEvent objects to remove.
+        """
         if len(remList) == 0: return 
 
         uids = set([te.uuid for te in remList])
@@ -143,6 +158,15 @@ class Track:
 
 
     def tuplet_alteration(self, code, beats) -> bool:
+        """Convert or insert tuplet groups (e.g. triplets, quintuplets) starting at the current cursor position.
+
+        Args:
+            code: Tuplet code key from TupletTypes.
+            beats: Number of beats spanned by the tuplet.
+
+        Returns:
+            True if alteration was applied, False otherwise.
+        """
         
         # if current -> number of beats tab events are rests then
         # delete them from the track we can simply replace with 
@@ -235,6 +259,11 @@ class Track:
         return changed
 
     def insert_tab_events(self, insList: List[TabEvent]):
+        """Insert a list of TabEvents at the current cursor position and reassemble subsequent measures.
+
+        Args:
+            insList: List of TabEvent objects to insert.
+        """
         if len(insList) == 0: return
 
         c_te, c_m = self.current_moment()
@@ -251,6 +280,14 @@ class Track:
         self._reassemble(teList, ts, m_num)
 
     def getMeasureParams(self, m : Measure) -> Tuple[TimeSig, int, str, str]:
+        """Retrieve the effective TimeSig, BPM, key, and clef settings governing a given measure.
+
+        Args:
+            m: Target Measure to evaluate.
+
+        Returns:
+            Tuple of (TimeSig, bpm, key, cleff).
+        """
         ts = self.measures[0].timesig
         bpm = self.measures[0].bpm
         key = self.measures[0].key
@@ -281,6 +318,7 @@ class Track:
         return (ts, bpm, key, cleff)
 
     def __setstate__(self, state):
+        """Restore unpickled Track state and apply schema compatibility defaults."""
         # support migration
         self.__dict__.update(state)
         
@@ -288,6 +326,11 @@ class Track:
             self.drum_track = False
 
     def __init__(self, cleff = None):
+        """Initialize a Track instance with default tuning, starter measure, and clef.
+
+        Args:
+            cleff: Optional clef glyph identifier (defaults to TREBLE_CLEFF).
+        """
         self.track_edit_id = ""
         self.instrument_name = "Acoustic Guitar"
         # instrument currently allocated for this track.
@@ -322,6 +365,14 @@ class Track:
         self.effects : Effects | None = None
 
     def append_measure(self, **kwargs):
+        """Create and append a new blank measure to the end of the track.
+
+        Args:
+            **kwargs: Optional measure configuration parameters.
+
+        Returns:
+            The newly created Measure.
+        """
         m = self.blank_measure(**kwargs)
         self.measures.append(m)   
         m.cleff = self.cleff
@@ -344,6 +395,7 @@ class Track:
         raise RuntimeError("At least the first measure should have a timesig")
 
     def remove_measure(self):
+        """Remove the current measure from the track and renumber remaining measures."""
         if len(self.measures) > 1:
             # preserve the staff header information of the first measure 
             first_measure = copy.deepcopy(self.measures[0])
@@ -353,7 +405,6 @@ class Track:
                 self.current_measure = len(self.measures) - 1
             for (mn, m) in enumerate(self.measures):
                 m.measure_number = mn + 1 
-
             self.measures[0].bpm = first_measure.bpm
             self.measures[0].key = first_measure.key
             self.measures[0].cleff = first_measure.cleff
@@ -362,15 +413,26 @@ class Track:
 
 
     def current_moment(self) -> Tuple[TabEvent, Measure]:
+        """Return the active (TabEvent, Measure) tuple at the current track cursor position."""
         m = self.measures[self.current_measure] 
         return (m.tab_events[m.current_tab_event], m)
 
     def get_measure(self, from_current=0):
+        """Return the Measure offset relative to the current measure, or None if out of range.
+
+        Args:
+            from_current: Relative integer offset from the current measure index.
+        """
         i = self.current_measure + from_current 
         if i >= 0 and i < len(self.measures):
             return self.measures[i]    
 
     def find_tab_measure(self, tab_event: TabEvent) -> Measure | None:
+        """Find the Measure containing the specified TabEvent by matching UUID.
+
+        Args:
+            tab_event: TabEvent to locate.
+        """
         for m in self.measures:
             if tab_event.uuid in [te.uuid for te in m.tab_events]:
                 return m
@@ -393,6 +455,11 @@ class Track:
         return e
     
     def get_filter_graph(self, te: TabEvent) -> FilterGraph | None:
+        """Retrieve the effective FilterGraph active up to the specified TabEvent.
+
+        Args:
+            te: TabEvent to evaluate.
+        """
         fg = None
         for m in self.measures:
             for t in m.tab_events:
@@ -409,6 +476,7 @@ class Track:
             m.current_tab_event = 0
 
     def previous_measure(self):
+        """Move the track cursor to the start of the previous measure if not at the beginning."""
         if self.current_measure > 0:
             self.current_measure -= 1
             m = self.measures[self.current_measure]
@@ -439,6 +507,7 @@ class Track:
         return (tab_event,m)
 
     def prev_moment(self) -> Tuple[Optional[TabEvent], Measure]:
+        """Move cursor to the previous TabEvent across measure boundaries and return (TabEvent, Measure)."""
         m = self.measures[self.current_measure]
         tab_event = None
 
@@ -460,6 +529,12 @@ class Track:
         return (tab_event,m)
 
     def set_moment(self, measure: int, tab: int):
+        """Set the active cursor position to a specific measure and tab event index.
+
+        Args:
+            measure: Target measure index.
+            tab: Target tab event index within the measure.
+        """
         if measure < len(self.measures):
             self.current_measure = measure
             m = self.measures[self.current_measure]
@@ -467,6 +542,7 @@ class Track:
                 m.current_tab_event = tab
         
     def is_last_moment(self):
+        """Return True if the track cursor is positioned on the final TabEvent of the final measure."""
         if self.current_measure == (len(self.measures)-1):
             m = self.measures[self.current_measure] 
             if m.current_tab_event == (len(m.tab_events)-1):
@@ -474,6 +550,14 @@ class Track:
         return False
 
     def createTabEvent(self, inherit=None) -> TabEvent:
+        """Create a new TabEvent matched to this track's tuning, optionally inheriting properties.
+
+        Args:
+            inherit: Optional TabEvent from which duration, dynamics, and articulation are copied.
+
+        Returns:
+            The created TabEvent.
+        """
         te = TabEvent(len(self.tuning))
         if inherit:
             te.duration = inherit.duration
@@ -483,9 +567,15 @@ class Track:
         return te
 
     def computeMidiCodes(self, te: TabEvent):
+        """Compute absolute MIDI note numbers for fret positions based on track tuning."""
         raise FutureWarning("TODO: compute midi code based on tuning")
 
     def setTuning(self, tuning):
+        """Update track tuning definition with a new list of open-string pitch names.
+
+        Args:
+            tuning: List of string pitch names (e.g. ['E4', 'B3', 'G3', 'D3', 'A2', 'E2']).
+        """
         self.tuning = tuning
 
 if __name__ == '__main__':

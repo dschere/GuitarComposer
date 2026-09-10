@@ -11,13 +11,21 @@ from guitar_composer.view.dialogs.effectsControlDialog.dialog import EffectChang
 
 
 class LiveAudioController:
+    """Controls real-time live audio input capture, USB audio device detection, and live effects processing."""
+
     def on_usb_device_change(self):
+        """Update available audio capture devices when USB devices change, stopping capture if device disappears."""
         self.input_devices = self.synth.list_capture_devices()
         if len(self.input_devices) == 0 and self.capture_active:
             self.synth.stop_capture()
             self.capture_active = False
 
     def update_effect_changes(self, ec: EffectChanges):
+        """Apply real-time LADSPA filter updates and parameter adjustments to the live audio channel.
+
+        Args:
+            ec: Dictionary mapping Effect instances to changed parameters.
+        """
         chan = self.synth.get_live_channel()
         
         # see EffectsDialog.delta for details on EffectChanges
@@ -46,6 +54,11 @@ class LiveAudioController:
 
 
     def live_capture(self, evt: LiveCaptureConfig):
+        """Toggle live audio stream capture on or off based on incoming configuration event.
+
+        Args:
+            evt: LiveCaptureConfig specifying device and desired active state.
+        """
         if evt.state == True and self.capture_active == False:
             err = self.synth.start_capture(evt.device)
             if err == -1:
@@ -63,6 +76,7 @@ class LiveAudioController:
             self.capture_active = False            
 
     def __init__(self):
+        """Initialize LiveAudioController, enumerate capture devices, and connect event listeners."""
         self.synth = synthservice()
         self.input_devices = self.synth.list_capture_devices()
         self.usb_monitor = UsbMonitor()

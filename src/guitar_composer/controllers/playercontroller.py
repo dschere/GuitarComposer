@@ -18,6 +18,11 @@ class PlayerController:
 
     @synchronized_method
     def _handle_editor_event(self, evt : EditorEvent):
+        """Handle editor events such as track model or editor view attachment.
+
+        Args:
+            evt: EditorEvent instance.
+        """
         if evt.ev_type == EditorEvent.ADD_MODEL:
             assert(evt.model)
             self.current_track = evt.model
@@ -29,9 +34,19 @@ class PlayerController:
 
     @synchronized_method
     def _handle_song_selected(self, song: Song):
+        """Update active song reference when a new song is selected.
+
+        Args:
+            song: Song instance.
+        """
         self.current_song = song
 
     def _handler_player_event(self, evt: PlayerEvent):
+        """Dispatch player command events (play, pause, stop, play moment) to corresponding controller actions.
+
+        Args:
+            evt: PlayerEvent instance.
+        """
         if evt.ev_type == PlayerEvent.PLAY_CURRENT_MOMENT:
             self.play_current_moment()
         elif evt.ev_type == PlayerEvent.PLAY:
@@ -42,6 +57,7 @@ class PlayerController:
             self.stop()     
             
     def __init__(self):
+        """Initialize PlayerController and connect to global application signals."""
         self.current_song = None  
         self.current_track : Track | None = None
         self.current_instr : Instrument | None = None
@@ -54,21 +70,34 @@ class PlayerController:
         Signals.player_event.connect(self._handler_player_event)
         
     def on_song_selected(self, song: Song):
+        """Set the active song reference.
+
+        Args:
+            song: Song instance.
+        """
         self.current_song = song 
 
     def on_track_selected(self, track: Track):
+        """Set the active track reference.
+
+        Args:
+            track: Track instance.
+        """
         self.current_track = track
 
     def play_tracks(self, selected_tracks):
+        """Placeholder for multi-track playback selection."""
         pass 
 
     @synchronized_method
     def pause(self):
+        """Pause active playback on the underlying Player instance."""
         if self.p is not None:
             self.p.pause()
 
     @synchronized_method
     def play(self):
+        """Start or resume playback of all tracks in the current song."""
         if self.current_song:
             if self.p is not None:
                 self.p.resume()
@@ -78,11 +107,13 @@ class PlayerController:
 
     @synchronized_method
     def stop(self):
+        """Halt playback and reset player state."""
         if self.p is not None:
             self.p.stop()
             self.p = None
             
     @synchronized_method
     def play_current_moment(self):
+        """Play the single audio event at the current track moment cursor."""
         if self.current_track and self.current_instr:
             PlayMoment(self.current_track, self.current_instr)

@@ -23,6 +23,7 @@ class GraphConnection:
     
     """
     def __init__(self):
+        """Initialize a new GraphConnection with a unique identifier and default port mappings."""
         self.uuid = str(uuid.uuid4())
         self.in_uuid = ""  # GraphNode uuid input 
         self.in_idx = 0    # GraphNode port number input
@@ -30,6 +31,7 @@ class GraphConnection:
         self.out_idx = 0   # GraphNode port number output
         
     def clear(self):
+        """Reset connection endpoint identifiers and port indices."""
         self.in_uuid = ""
         self.in_idx = -1
         self.out_uuid = ""
@@ -40,6 +42,12 @@ class GraphConnection:
         return self.in_uuid != "" and self.out_uuid != ""
 
     def pretty_print(self, graph: 'FilterGraph', indent = ""):
+        """Print a human-readable representation of this connection between graph nodes.
+
+        Args:
+            graph: The FilterGraph containing the referenced nodes.
+            indent: Prefix string for formatting nested output.
+        """
         in_node = graph.nodes.get(self.in_uuid)
         out_node = graph.nodes.get(self.out_uuid)
         if in_node is None or out_node is None or self.out_idx < 0 or self.in_idx < 0:
@@ -80,6 +88,7 @@ class GraphNode:
         """Compares this node with another to detect functional (non-visual) changes."""
 
         def non_presentation_data(obj : GraphNode):
+            """Extract structural and property state of a node excluding transient visual IDs."""
             p = {
                 'in_port_data': [],
                 'out_port_data': [],
@@ -257,6 +266,12 @@ class EffectNode(GraphNode):
         self.effect = effect
 
     def pretty_print(self, fg: 'FilterGraph', indent = ""):
+        """Print the node details including all effect parameter values.
+
+        Args:
+            fg: The parent FilterGraph.
+            indent: Prefix string for formatting nested output.
+        """
         super().pretty_print(fg, indent)
         print(f"{indent}   Properties:")
         for (key, value) in self.properties.items():
@@ -347,6 +362,7 @@ class FilterGraph:
         self.preset = ""
 
     def regenerate_uuid(self):
+        """Assign a newly generated unique identifier (UUID) to this filter graph."""
         self.uuid = str(uuid.uuid4())    
 
     def structurally_different(self, other: 'FilterGraph'):

@@ -25,6 +25,7 @@ from guitar_composer.util.keyprocessor import KeyProcessor
 class EditorController:
 
     def _ready(self):
+        """Return True if both track editor view and track model are attached and ready."""
         return self.track_editor_view and self.track_model
     
 
@@ -39,6 +40,11 @@ class EditorController:
             editor.set_track_model(tmodel)
             
     def add_model(self, evt: EditorEvent):
+        """Attach a Track model to the editor and update the view display.
+
+        Args:
+            evt: EditorEvent carrying the track model.
+        """
         self.track_model = evt.model
         self.update(self.track_model, self.track_editor_view)
         if self.track_editor_view and self.track_model:
@@ -46,14 +52,28 @@ class EditorController:
             
 
     def add_editor(self, evt: EditorEvent):
+        """Register the TrackEditorView component from an incoming EditorEvent.
+
+        Args:
+            evt: EditorEvent carrying the track editor view.
+        """
         self.track_editor_view = evt.track_editor
 
     def set_editor(self, tev: TrackEditorView):
+        """Set the active TrackEditorView instance directly.
+
+        Args:
+            tev: TrackEditorView instance.
+        """
         self.track_editor_view = tev    
 
 
     def keyboard_event(self, evt: EditorEvent):
+        """Handle keyboard navigation, editing, and note entry events within the active track.
 
+        Args:
+            evt: EditorEvent containing key press details and modifier flags.
+        """
         tedit : TrackEditorView | None = self.track_editor_view
         tmodel : Track | None = self.track_model
         key = evt.key
@@ -98,15 +118,26 @@ class EditorController:
             
         
     def tuning_change(self, evt: EditorEvent):
+        """Apply tuning changes to the current track and trigger view redraw.
+
+        Args:
+            evt: EditorEvent with updated tuning list.
+        """
         tedit : TrackEditorView | None = self.track_editor_view
         if evt.tuning and self.track_model and tedit:
             self.track_model.tuning = evt.tuning 
             tedit.update()
  
     def measure_clicked(self, evt: EditorEvent):
+        """Handle mouse click events selecting a measure in the track editor."""
         pass
 
     def string_bend_event(self, evt: EditorEvent):
+        """Apply string bend pitch curves from dialog events to the active TabEvent.
+
+        Args:
+            evt: EditorEvent containing string bend curve parameters.
+        """
         be = evt.bend_event 
         tmodel : Track | None = self.track_model
         tedit : TrackEditorView | None = self.track_editor_view
@@ -124,17 +155,32 @@ class EditorController:
 
 
     def toggle_measure_start_repeat(self, evt: EditorEvent):
+        """Toggle the start-repeat barline flag on the current measure.
+
+        Args:
+            evt: EditorEvent instance.
+        """
         tedit : TrackEditorView | None = self.track_editor_view
         if tedit:
             tedit.toggle_measure_start_repeat()
             
     def toggle_measure_end_repeat(self, evt: EditorEvent):
+        """Toggle the end-repeat barline flag on the current measure.
+
+        Args:
+            evt: EditorEvent instance.
+        """
         tedit : TrackEditorView | None = self.track_editor_view
         if tedit:
             tedit.toggle_measure_end_repeat()
 
 
     def propagate_undo_redo_model_change(self, track: Track):
+        """Apply a restored track state from undo/redo history to the editor view.
+
+        Args:
+            track: The restored Track model.
+        """
         assert(self.track_editor_view is not None)
         self.rup.disable_updates()
         self.track_model = track 
@@ -143,16 +189,31 @@ class EditorController:
         self.track_editor_view.setFocus()
 
     def undo_event(self, evt: EditorEvent): 
+        """Revert the track model to the previous state from history.
+
+        Args:
+            evt: EditorEvent instance.
+        """
         new_model = self.rup.undo(self.track_model)
         if new_model:
             self.propagate_undo_redo_model_change(new_model)    
 
     def redo_event(self, evt: EditorEvent): 
+        """Re-apply the next undone track state from history.
+
+        Args:
+            evt: EditorEvent instance.
+        """
         new_model = self.rup.redo(self.track_model)
         if new_model:
             self.propagate_undo_redo_model_change(new_model)    
 
     def paste_event(self, evt: EditorEvent):
+        """Paste TabEvents from the paste buffer into the active track.
+
+        Args:
+            evt: EditorEvent instance.
+        """
         tmodel : Track | None = self.track_model
         tedit : TrackEditorView | None = self.track_editor_view
         if tmodel is not None and tedit is not None: 
@@ -161,6 +222,11 @@ class EditorController:
             tedit.model_updated()
 
     def cut_event(self, evt: EditorEvent):
+        """Cut the selected TabEvents into the clipboard paste buffer.
+
+        Args:
+            evt: EditorEvent instance.
+        """
         tmodel : Track | None = self.track_model
         tedit : TrackEditorView | None = self.track_editor_view
         if tmodel is not None and tedit is not None: 
@@ -169,6 +235,11 @@ class EditorController:
                 tedit.model_updated()
 
     def copy_event(self, evt: EditorEvent):
+        """Copy the selected TabEvents into the clipboard paste buffer.
+
+        Args:
+            evt: EditorEvent instance.
+        """
         tmodel : Track | None = self.track_model
         tedit : TrackEditorView | None = self.track_editor_view
         if tmodel is not None and tedit is not None: 
@@ -177,6 +248,11 @@ class EditorController:
                 tedit.model_updated()
 
     def on_rest_dur_changed(self, evt : EditorEvent):
+        """Adjust adjacent rests when the rest duration changes to keep measure beat counts balanced.
+
+        Args:
+            evt: EditorEvent containing duration delta details.
+        """
         tmodel : Track | None = self.track_model
         tedit : TrackEditorView | None = self.track_editor_view
         if tmodel is not None and tedit is not None: 
@@ -188,6 +264,7 @@ class EditorController:
                 return
             
             def _adjacent_rests() -> List[Tuple[int, TabEvent]]:
+                """Find trailing consecutive rests with identical dotting properties."""
                 r = []
                 for n in range(i+1,len(m.tab_events)):
                     n_te = m.tab_events[n]
@@ -201,6 +278,7 @@ class EditorController:
                 return r
             
             def _insert_rests():
+                """Insert supplementary rests to fill the remaining duration gap."""
                 c = math.fabs(evt.dur_change / evt.new_dur)
                 if math.fmod(c, 1.0) != 0.0:
                     return
@@ -230,15 +308,30 @@ class EditorController:
             pass
 
     def on_model_sync(self, evt : EditorEvent):
+        """Notify the editor view to redraw following external model updates.
+
+        Args:
+            evt: EditorEvent instance.
+        """
         if self.track_editor_view:
             self.track_editor_view.model_updated() 
             self.track_editor_view.setFocus()
 
     def on_focus(self, evt: EditorEvent):
+        """Transfer keyboard focus back to the track editor view.
+
+        Args:
+            evt: EditorEvent instance.
+        """
         if self.track_editor_view:
             self.track_editor_view.setFocus()
 
     def on_drumcode_select(self, evt: EditorEvent):
+        """Assign selected MIDI drum key code to the active note position.
+
+        Args:
+            evt: EditorEvent containing midi_drum_code.
+        """
         tmodel : Track | None = self.track_model
         tedit : TrackEditorView | None = self.track_editor_view
         if tmodel and tedit:
@@ -269,6 +362,14 @@ class EditorController:
     }
 
     def editor_event(self, evt: EditorEvent):
+        """Route incoming EditorEvent to its registered handler in the dispatch dictionary.
+
+        Args:
+            evt: EditorEvent to dispatch.
+
+        Raises:
+            RuntimeError: If evt.ev_type has no registered handler.
+        """
         func = self.dispatch.get(evt.ev_type)  # type: ignore
         if func:
             func(self, evt)  # type: ignore
@@ -278,6 +379,7 @@ class EditorController:
             raise RuntimeError(text)
 
     def __init__(self):
+        """Initialize EditorController with undo/redo manager, key processor, and event listeners."""
         self.rup = RedoUndoProcessor()
         self.keymap = EditorKeyMap()
         self.track_model = None

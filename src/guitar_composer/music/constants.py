@@ -24,6 +24,14 @@ class _Dynamic:
     DEF = -1 # use the default for the track or MP
 
     def tooltip(self, v):
+        """Return a human-readable descriptive tooltip for a given dynamic velocity value.
+
+        Args:
+            v: MIDI velocity or Dynamic constant.
+
+        Returns:
+            String description of the musical dynamic level.
+        """
         return {
             self.FFF: "fortississimo: very very loud",
             self.FF : "fortissimo: very loud",
@@ -36,6 +44,14 @@ class _Dynamic:
         }.get(v,f"midi {v} value")
     
     def short_text(self, v):
+        """Return the standard musical notation abbreviation symbol for a given dynamic level.
+
+        Args:
+            v: MIDI velocity or Dynamic constant.
+
+        Returns:
+            Musical glyph string (e.g. 'fff', 'ff', 'f', 'mf', 'mp', 'p', 'pp', 'ppp').
+        """
         from guitar_composer.view.editor.glyphs.common import FORTE_SYMBOL, MEZZO_SYMBOL, PIANO_SYMBOL
         return {
             self.FFF: FORTE_SYMBOL * 3,

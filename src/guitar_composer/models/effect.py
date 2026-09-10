@@ -26,7 +26,14 @@ the existance of entry implies that the effect is turned on.
 
 
 class ControlMeta:
+    """Metadata describing a plugin control port."""
+
     def __init__(self, data : dict):
+        """Initialize control metadata attributes from a dictionary.
+
+        Args:
+            data: Dictionary of control attributes.
+        """
         for (k,v) in data.items():
             setattr(self, k, v)
             
@@ -36,6 +43,15 @@ class Effect:
     version = "1.0"
 
     def __init__(self, name, label, path, controls, eclass = 'other'):
+        """Initialize an Effect model instance with plugin descriptor details and control parameters.
+
+        Args:
+            name: Human-readable name of the effect.
+            label: Unique LADSPA plugin label identifier.
+            path: Filepath to the shared library plugin.
+            controls: List of control metadata dictionaries.
+            eclass: Category class of the effect (e.g. 'distortion', 'reverb', 'other').
+        """
         self._name = name 
         self.eclass = eclass
         self.label = label
@@ -57,9 +73,11 @@ class Effect:
         return d
     
     def getParamNames(self) -> List[str]:
+        """Return a list of all parameter names for this effect."""
         return list(self.params.keys())
     
     def getParameters(self) -> list[EffectParameter]:
+        """Return a list of all EffectParameter objects configured for this effect."""
         return list(self.params.values())
 
     def select(self):
@@ -67,45 +85,74 @@ class Effect:
         self.selected = True
 
     def unselect(self):
+        """Mark this effect as not selected for use."""
         self.selected = False            
 
     def enable(self):
+        """Enable audio processing for this effect."""
         self.enabled = True 
 
     def disable(self):
+        """Disable audio processing for this effect."""
         self.enabled = False        
 
     def is_enabled(self):
+        """Return whether this effect is currently enabled."""
         return self.enabled    
 
     def name(self):
+        """Return the default name representation of this effect."""
         return ""        
     
     def plugin_path(self):
+        """Return the filesystem path to the plugin shared library."""
         return self.path 
     
     def plugin_label(self):
+        """Return the unique plugin label string."""
         return self.label
 
     def get_name(self) -> str:
+        """Return the friendly name of this effect."""
         return self._name 
 
     def get_param_by_name(self, name) -> EffectParameter:
+        """Retrieve a specific EffectParameter by its name identifier.
+
+        Args:
+            name: The parameter name to look up.
+        """
         return self.params[name] 
             
     def get_eclass(self):
+        """Return the classification category of this effect."""
         return self.eclass    
     
 
 
 class Effects:
+    """Collection manager for audio effects enabled on a track or tab event."""
+
     def __init__(self, delta_r = {}):
+        """Initialize an Effects collection, optionally seeded with initial effect mappings.
+
+        Args:
+            delta_r: Optional dictionary mapping effect labels to Effect objects.
+        """
         # label -> Effect instance
         self.etable = {}
         self.etable.update(delta_r)
 
     # EffectChanges = Dict[Effect, List[Tuple[str, EffectParameter]]]
     def get_changes(self, other):
+        """Compute the difference in enabled effects and parameter values against another Effects state.
+
+        Args:
+            other: A preceding Effects instance to compare against.
+
+        Returns:
+            Dictionary mapping Effect objects to modified parameter tuples.
+        """
         curr_enabled = set(self.etable.keys())
         diff = {}
 
@@ -124,12 +171,27 @@ class Effects:
         return diff
 
     def add(self, label: str, e: Effect):
+        """Add an effect to the collection indexed by its plugin label.
+
+        Args:
+            label: Unique plugin label.
+            e: Effect instance to register.
+        """
         self.etable[label] = e
 
     def get_enabled_effects(self) -> List[Effect]:
+        """Return a list of all currently registered active effects."""
         return list(self.etable.values())   
 
     def get_effect(self, label: str) -> Effect | None:
+        """Retrieve an effect by label from this collection or clone it from the repository.
+
+        Args:
+            label: Plugin label identifier.
+
+        Returns:
+            Matching Effect instance or copy from EffectRepository.
+        """
         from guitar_composer.services.effectRepo import EffectRepository
         if label in self.etable:
             return self.etable[label]
@@ -138,6 +200,7 @@ class Effects:
             return copy.deepcopy(ef.get(label))
 
     def get_names(self) -> List[str]:
+        """Return a sorted list of all available effect names registered in the repository."""
         from guitar_composer.services.effectRepo import EffectRepository
         ef = EffectRepository()
         r = ef.getNames()
@@ -194,6 +257,7 @@ class Effects:
     
 
 def unittest():
+    """Execute ad-hoc validation of Effects model initialization and parameter retrieval."""
     import guitar_composer.gcsynth as gcsynth
     import copy 
 

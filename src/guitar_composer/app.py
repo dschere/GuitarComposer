@@ -21,6 +21,7 @@ import signal
 # SIGUSR1 dumps the current call stack, SIGUSR2
 # prints out stack traces for each thread.
 def dump_current_call_stack(*args):
+    """Signal handler for SIGUSR1 that prints the active call stack frames to stdout."""
     import inspect
 
     stack = inspect.stack()
@@ -29,6 +30,7 @@ def dump_current_call_stack(*args):
 signal.signal(signal.SIGUSR1, dump_current_call_stack)
 
 def print_all_thread_stack_traces(*args):
+    """Signal handler for SIGUSR2 that prints execution stack traces for all running threads."""
     import threading
     import traceback
 
@@ -49,6 +51,7 @@ signal.signal(signal.SIGUSR2, print_all_thread_stack_traces)
 
 
 def setup_logger():
+    """Configure stdout stream logging format and level based on GC_LOGLEVEL environment variable."""
     fmt = "%(asctime)s %(thread)d %(filename)s:%(lineno)d %(levelname)s\n`"
     fmt += "- %(message)s"
     loglevel = os.environ.get("GC_LOGLEVEL", "DEBUG")
@@ -69,6 +72,7 @@ setup_logger()
 # sequence is important
 
 def bootstrap():
+    """Verify application asset data directory presence and initialize required environment variables."""
     from guitar_composer.bootstrap.download_dataset import data_directory_valid, download_data, DEFAULT_GC_DATA_DIR
     from guitar_composer.util.setenv import setenv 
 
@@ -90,7 +94,10 @@ SynthService = synthservice()
 
 
 class GuitarComposer(QApplication):
+    """Root Qt application instance configuring controllers and lifecycle shutdown hooks."""
+
     def __init__(self, argv):
+        """Initialize the QApplication, create core controller instances, and register shutdown hooks."""
         super().__init__(argv)
         self.synth = SynthService
 
@@ -103,10 +110,12 @@ class GuitarComposer(QApplication):
         atexit.register(self.on_shutdown)
 
     def on_shutdown(self):
+        """Emit the global shutdown signal upon application exit."""
         Signals.shutdown.emit(self)
 
 
 def main():
+    """Primary application entry point: starts audio synth service, loads theme, and displays main window."""
     logging.debug("Running with debug log level")
     # start service
     SynthService.start()

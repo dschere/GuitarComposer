@@ -50,6 +50,7 @@ class SongController:
             pass
 
     def open_song(self):
+        """Open an existing song file from the project repository or via file dialog."""
         saved_song = ProjectManager().open_song_using_title(self.song.title)
         if not saved_song:
             saved_song = ProjectManager().open_song_using_dialog()
@@ -59,6 +60,7 @@ class SongController:
 
 
     def __init__(self, title):
+        """Initialize a SongController instance managing the given song title and connect signal listeners."""
         self.song = Song()
         self.song.title = title
         self.q_model = None
@@ -67,6 +69,7 @@ class SongController:
         Signals.open_song.connect(self.open_song)
 
     def __del__(self):
+        """Disconnect signal listeners upon controller destruction."""
         try:
             Signals.open_song.disconnect(self.open_song)
             Signals.track_update.disconnect(self.on_track_change)
@@ -75,22 +78,45 @@ class SongController:
             pass
 
     def setTitle(self, title):
+        """Set the managed song title.
+
+        Args:
+            title: String song title.
+        """
         self.song.title = title
 
     def getTitle(self):
+        """Return the managed song title."""
         return self.song.title
 
     def load_model(self, s: Song):
+        """Load a new Song model into this controller.
+
+        Args:
+            s: Song instance.
+        """
         self.song = s
 
     def save_model(self, allow_dialog=False):
+        """Persist the managed song model to storage.
+
+        Args:
+            allow_dialog: True to prompt with file save dialog if unassigned.
+        """
         if isinstance(self.song, Song):
             ProjectManager().save_song(self.song, allow_dialog)
 
     def title(self):
+        """Return the managed song title string."""
         return self.song.title
 
     def addQTrackModel(self, track, root):
+        """Construct and insert QStandardItem tree items for a track and its properties.
+
+        Args:
+            track: Track model instance.
+            root: Parent QStandardItem node.
+        """
         n = track.instrument_name
         track_item = TrackItem(LabelText.track + f": {n}")
         properties_item = PropertiesItem(LabelText.properties)
@@ -130,6 +156,7 @@ class SongController:
         return root
 
     def userAddTrack(self):
+        """Add a default guitar track to the song tree triggered by user UI action."""
         if not self.q_model:
             logging.error("userAddTrack called but we have not setup model!")
             return
@@ -138,6 +165,14 @@ class SongController:
         self.addQTrackModel(track, self.q_model)
 
     def addTrack(self, instr_name):
+        """Instantiate and append a new Track with the specified instrument name to the song.
+
+        Args:
+            instr_name: Instrument identifier string.
+
+        Returns:
+            The created Track instance.
+        """
         # build data structure
         track = Track()
         track.instrument_name = instr_name
@@ -147,6 +182,7 @@ class SongController:
     
     
     def addTrackFromDialog(self) -> Track | None:
+        """Display the TrackPropertiesDialog and return a configured Track upon confirmation."""
         track = Track()
         tpd = TrackPropertiesDialog(None, track)
         r = tpd.exec()
@@ -155,14 +191,21 @@ class SongController:
             return track
 
     def removeTrack(self, instr_name):
+        """Remove a track by instrument name from the song."""
         # TODO, must add checkin/checkout capability to the
         # channel manager in the synth service.
         pass
 
     def getSong(self):
+        """Return the managed Song instance."""
         return self.song
 
 def log_model_contents(model: QStandardItemModel):
+    """Log the hierarchical contents and display roles of a QStandardItemModel for debugging.
+
+    Args:
+        model: QStandardItemModel to inspect.
+    """
     # Get the number of rows and columns in the model
     row_count = model.rowCount()
     column_count = model.columnCount()
@@ -185,6 +228,11 @@ class AppController:
     settings_key = __name__+".active_song_titles"
 
     def on_song_title_changed(self, item):
+        """Handle tree item label edits to rename songs while validating against duplicate titles.
+
+        Args:
+            item: QStandardItem whose title text changed.
+        """
         if not isinstance(item.data(), Song):
             return
 
@@ -236,6 +284,7 @@ class AppController:
             self.upsert_song_to_navigator(s)  
 
     def on_midi_load_dialog(self):
+        """Display the MIDI import dialog."""
         import_dialog = ImportDialog()
         import_dialog.exec()
 
@@ -264,6 +313,11 @@ class AppController:
         Signals.song_selected.emit(selected)
 
     def delete_track(self, evt):
+        """Prompt user confirmation and remove the requested track from the song.
+
+        Args:
+            evt: Event specifying song and track to delete.
+        """
         if len(evt.song.tracks) == 1:
             return
 
@@ -282,6 +336,11 @@ class AppController:
 
 
     def add_track(self, song_title = None):
+        """Display track creation dialog and synchronize measure structure with existing tracks.
+
+        Args:
+            song_title: Optional title of target song (defaults to current song).
+        """
         sc : SongController | None = self.song_ctrl.get(song_title, self.current_song)
         if sc is not None:
             track = sc.addTrackFromDialog()
@@ -294,6 +353,11 @@ class AppController:
                 self.update_navigator()
               
     def on_ready(self, app):
+        """Initialize workspace upon startup by opening saved projects or creating a default starter song.
+
+        Args:
+            app: QApplication instance.
+        """
         # setup navigator, score editor
         titles = self.projects.titles()
 
@@ -314,15 +378,30 @@ class AppController:
         self.update_navigator()
 
     def on_load_settings(self, settings: QSettings):
+        """Load persisted active song titles from application settings.
+
+        Args:
+            settings: QSettings instance.
+        """
         if settings.contains(self.settings_key):
             val = settings.value(self.settings_key)
             self.active_song_titles = set(json.loads(val))
 
     def on_save_settings(self, settings: QSettings):
+        """Persist active song titles into application settings.
+
+        Args:
+            settings: QSettings instance.
+        """
         val = json.dumps(list(self.active_song_titles))
         settings.setValue(self.settings_key, val)
 
     def on_preview_instr_changed(self, instrument_name):
+        """Reinitialize the preview instrument with the newly selected instrument name.
+
+        Args:
+            instrument_name: Name of instrument to load for previews.
+        """
         self.preview_instr.free_resources()
         self.preview_instr = Instrument(instrument_name)
 
@@ -336,6 +415,11 @@ class AppController:
                 alert(str(e), title=type(e).__name__)
 
     def on_close_song(self, title):
+        """Prompt to save and close the song specified by title, updating navigation selection.
+
+        Args:
+            title: Title string of song to close.
+        """
         sc : SongController | None = self.song_ctrl.get(title)
         if sc is not None:
             reply = QMessageBox.question(
@@ -373,6 +457,7 @@ class AppController:
             
 
     def on_new_song(self):
+        """Create a new untitled composition with a default guitar track and display it in navigator."""
         self.noname_counter += 1
         sc = SongController(f"noname-{self.noname_counter}")
         sc.addTrack('12-str.GT')
@@ -382,6 +467,11 @@ class AppController:
         self.update_navigator()
 
     def __init__(self, synth_service):
+        """Initialize the AppController, set up project management, preview instruments, and signal bindings.
+
+        Args:
+            synth_service: SynthService instance.
+        """
         self.synth_service = synth_service
         self.editor_ctrl = None
         self.noname_counter = 0
@@ -427,20 +517,40 @@ class AppController:
         self.effects_preview_note = n
 
     def handle_pitch_change_preview_event(self, evt: StringBendEvent):
+        """Audition string bend pitch curve changes using the preview instrument.
+
+        Args:
+            evt: StringBendEvent containing curve points and pitch range.
+        """
         self.preview_instr.note_event(self.effects_preview_note)
         self.effects_preview_note.pitch_range = evt.pitch_range 
         self.effects_preview_note.pitch_changes = evt.pitch_changes 
         self.preview_instr.pitchwheel_event(self.effects_preview_note)
 
     def handle_preview_play(self, n: Note):
+        """Play a preview note on the preview instrument.
+
+        Args:
+            n: Note to play.
+        """
         self.preview_instr.note_event(n)
         # self.synth_service.noteon(FRETBOARD_CHANNEL, n.midi_code, n.velocity)
 
     def handle_effects_preview(self, evt: EffectPreview):
+        """Apply temporary effect changes and audition with a preview note.
+
+        Args:
+            evt: EffectPreview containing effect changes.
+        """
         self.preview_instr.effects_change(evt.changes)
         # send an arbitrary note to hear what applying the effect sounds like.
         self.preview_instr.note_event(self.effects_preview_note)
 
     def handle_preview_stop(self, n: Note):
+        """Stop note sounding on the preview instrument.
+
+        Args:
+            n: Note to silence.
+        """
         self.preview_instr.note_event(n)
         # self.synth_service.noteoff(FRETBOARD_CHANNEL, n.midi_code)

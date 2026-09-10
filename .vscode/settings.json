@@ -40,6 +40,12 @@
     ],
     "clang.arguments": ["--header-insertion=never"],
     "clang.serverCompletionRanking": true,
+    "files.exclude": {
+	    "**/venv": true
+    },
+    "search.exclude": {
+	    "**/venv": true
+    },
     "files.associations": {
         "gmodule.h": "c",
         "python.h": "c",
