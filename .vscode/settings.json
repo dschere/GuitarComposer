@@ -41,10 +41,23 @@
     "clang.arguments": ["--header-insertion=never"],
     "clang.serverCompletionRanking": true,
     "files.exclude": {
-	    "**/venv": true
+        "bin/":true,
+        "build/":true,
+        "dist/":true,
+	    "**/venv": true,
+        "**/*.egg-info": true,
+        "**/__pycache__": true,
+        "*.mypy_cache": true,
+        "*.pytest_cache": true
     },
     "search.exclude": {
-	    "**/venv": true
+        "build/":true,
+        "dist/":true,
+	    "**/venv": true,
+        "**/*.egg-info": true,
+        "**/__pycache__": true,
+        "*.mypy_cache": true,
+        "*.pytest_cache": true
     },
     "files.associations": {
         "gmodule.h": "c",

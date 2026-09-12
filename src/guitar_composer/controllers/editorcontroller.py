@@ -175,15 +175,22 @@ class EditorController:
             tedit.toggle_measure_end_repeat()
 
 
-    def propagate_undo_redo_model_change(self, track: Track):
+    def propagate_undo_redo_model_change(self, new_track: Track):
         """Apply a restored track state from undo/redo history to the editor view.
 
         Args:
             track: The restored Track model.
         """
-        assert(self.track_editor_view is not None)
+        if not isinstance(self.track_model, Track):
+            return
+        if not isinstance(self.track_editor_view, TrackEditorView):
+            return
+
         self.rup.disable_updates()
-        self.track_model = track 
+        for k, v in vars(new_track).items():
+            if k != "self.track_edit_id":
+                setattr(self.track_model, k, v)
+                 
         self.track_editor_view.set_track_model(self.track_model)
         self.rup.enable_updates()
         self.track_editor_view.setFocus()

@@ -91,10 +91,11 @@ class track_change_entry:
             self.current = new
             if self.index == len(self.history):
                 self.history.append(fn)
-                self.index += 1
             else:
                 self.history[self.index] = fn
-                self.history = self.history[:self.index+1] 
+                self.history = self.history[:self.index+1]
+            self.index += 1
+
             
     def undo(self) -> Track | None:
         result = None
@@ -103,7 +104,6 @@ class track_change_entry:
             fn = self.history[self.index]
             self.current = open(fn,'rb').read()
             result = pickle.loads(self.current)
-             
         return result
 
     def redo(self) -> Track | None:
