@@ -54,6 +54,7 @@
         "build/":true,
         "dist/":true,
 	    "**/venv": true,
+        "ladspa/": true,
         "**/*.egg-info": true,
         "**/__pycache__": true,
         "*.mypy_cache": true,

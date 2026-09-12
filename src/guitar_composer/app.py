@@ -1,4 +1,24 @@
 #!/usr/bin/env python
+import sys
+import atexit
+import logging
+import os
+import qdarktheme
+import signal
+import pathlib 
+
+
+# Before loading any libraries ensure that data directory exists and is seeded
+# also ensure that the GC_DATA_DIR exists, if it doesn't set to the default
+# directory ~/.guitar_composer/data
+from guitar_composer.bootstrap.createEnvironment import setup_application_data
+
+# bootstrap the data environment for the 
+# application, if GC_DATA_DIR is not defined then 
+# use the default directory and define it.
+setup_application_data()
+
+
 
 from guitar_composer.view.events import Signals
 from guitar_composer.view.mainwin import MainWindow
@@ -9,12 +29,6 @@ from controllers.liveaudiocontroller import LiveAudioController
 
 from PyQt6.QtWidgets import QApplication
 from guitar_composer.services.synth.synthservice import synthservice
-import sys
-import atexit
-import logging
-import os
-import qdarktheme
-import signal
 
 
 # setup signal handlers to aid in troublshooting
@@ -64,28 +78,9 @@ def setup_logger():
                         level=getattr(logging, loglevel)
                         )
 
-
 setup_logger()
 
 
-# !!!!! Create synth service threads before loading any Qt libraries
-# sequence is important
-
-def bootstrap():
-    """Verify application asset data directory presence and initialize required environment variables."""
-    from guitar_composer.bootstrap.download_dataset import data_directory_valid, download_data, DEFAULT_GC_DATA_DIR
-    from guitar_composer.util.setenv import setenv 
-
-    if not data_directory_valid():
-        download_data(True)
-
-    # ensure environment variable is setup for gcsynth    
-    if os.environ.get('GC_DATA_DIR') is None:
-        setenv('GC_DATA_DIR', DEFAULT_GC_DATA_DIR)
-        
-# detect if environment needs to be bootstrapped, if it does then setup data directory
-# and environment.
-bootstrap()
 
 SynthService = synthservice()
 # ^^^^ -> make this globally accessible throughout application
