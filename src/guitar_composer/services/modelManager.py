@@ -5,6 +5,7 @@ resulting in a re-index.
 """
 import os 
 import pickle
+import logging
 from typing import Dict, List
 import uuid
 
@@ -109,7 +110,11 @@ class ModelManager:
         self.manifest_file = self.model_dir+os.sep+"manifest.dat"
         if os.access(self.manifest_file, os.F_OK):
             with open(self.manifest_file, 'rb') as f:
-                self.manifest = pickle.load(f)
+                try:
+                    self.manifest = pickle.load(f)
+                except Exception as e:
+                    logging.error(f"Unable to load effects manifest {e}")
+                    self.manifest = Manifest()
 
 
     def get_presets(self) -> List[str]:
