@@ -1,3 +1,5 @@
+![Project Screenshot](doc/images/app.png)
+
 # GuitarComposer
 Music composition application  
 
