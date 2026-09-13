@@ -30,7 +30,7 @@ The goal of the tablature editor is to work more or less like MS-word. The user 
 
 |keycode     |name          |type        | description                                                      |
 |------------|--------------|------------|------------------------------------------------------------------|
-|<space bar> |Rest          | rest       | Music rest set the current diration                              |
+|space bar   |Rest          | rest       | Music rest set the current diration                              |
 |0-9         |Fret Number   | note       | Sets the a number 0-24 in tablature and staff note               |
 |w           |Whole Note    | duration   | after pressed all notes/rests are whole duration                 |
 |h           |Half Note     | duration   | after pressed all notes/rests are half duration                  | 
