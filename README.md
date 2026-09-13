@@ -26,6 +26,32 @@ There are bugs at this stage of development. As a solo project I will work the b
 
 # Editor
 
+The goal of the tablature editor is to work more or less like MS-word. The user navigates a cursor that edits the tab. The keyboard can be used to set the duration and velocity of the notes. Numbers 0-9 are used to enter the fret number for the string.   
+
+|keycode     |name          |type        | description                                                      |
+|------------|--------------|------------|------------------------------------------------------------------|
+|<space bar> |Rest          | rest       | Music rest set the current diration                              |
+|0-9         |Fret Number   | note       | Sets the a number 0-24 in tablature and staff note               |
+|w           |Whole Note    | duration   | after pressed all notes/rests are whole duration                 |
+|h           |Half Note     | duration   | after pressed all notes/rests are half duration                  | 
+|q           |Quarter Note  | duration   | after pressed all notes/rests are quarter duration               | 
+|e           |Eight Note    | duration   | after pressed all notes/rests are eight duration                 | 
+|s           |16th Note     | duration   | after pressed all notes/rests are 16th duration                  | 
+|T           |32nd Note     | duration   | after pressed all notes/rests are 32nd duration                  | 
+|S           |64th Note     | duration   | after pressed all notes/rests are 64th duration                  | 
+|.           |dotted        | duration   | dotted note/rest add 50% to current duration                     |
+|;           |double dotted | duration   | dotted note/rest add 75% to current duration                     | 
+|Control-Z   |undo          | state      | undo last action                                                 |
+|Control-Y   |redo          | state      | redo last action                                                 |
+|Control-C   |copy          | state      | copy selection, use control -> or <- to select notes/rests first |
+|Control-V   |paste         | state      | paste selection                                                  |
+|Control-V   |cur           | state      | cur selection                                                    |
+| \[         |open repeat   | repeat     | toggle starting measure open repeat                              |
+| \]         |close repeat  | repeat     | toggle end end repeat numberic control used to number repaats    |
+| p,m,f      |dynamic       | dynamic    | Typing p,m,f to spell out dynamics  fff,ff,f,mf,mp,p,pp,pp       |
+
+
+
 # filter graph 
 
 
