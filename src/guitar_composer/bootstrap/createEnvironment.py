@@ -4,18 +4,6 @@ file changes.
 
 If the GC_DATA_DIR is not defined then we default to a directory under home.
 
-
-
-    #from guitar_composer.bootstrap.download_dataset import data_directory_valid, download_data, DEFAULT_GC_DATA_DIR
-    from guitar_composer.util.setenv import setenv 
-
-    import guitar_composer
-
-    gc_mod_path = pathlib.Path(guitar_composer.__file__)
-    parts = list(gc_mod_path.parts[:-1]) + ['data']
-    gc_data_dir = str(pathlib.Path(*parts))
-    setenv('GC_DATA_DIR',gc_data_dir) 
-
 """
 import os 
 import pathlib
@@ -66,7 +54,10 @@ def get_baseline_data_dir():
     """
     import guitar_composer
 
-    gc_mod_path = pathlib.Path(guitar_composer.__file__)
+    try:
+        gc_mod_path = pathlib.Path(list(guitar_composer.__path__)[0])
+    except:
+        gc_mod_path = pathlib.Path(guitar_composer.__file__) # type: ignore
     parts = list(gc_mod_path.parts[:-2]) + ['data']
     return str(pathlib.Path(*parts))
 
