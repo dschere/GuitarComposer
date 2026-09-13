@@ -1,19 +1,18 @@
 from PyQt6.QtWidgets import QToolBar, QVBoxLayout, QTreeView, QWidget, QMenu, QPushButton, QStyle
 from PyQt6.QtGui import QStandardItemModel, QAction, QStandardItem, QIcon
+from PyQt6.QtCore import QModelIndex, Qt
 
 from guitar_composer.models.song import Song
 from guitar_composer.models.track import Track
 
 from guitar_composer.view.dialogs.TrackPropertiesDialog import TrackPropertiesDialog
 from guitar_composer.view.events import Signals, EditorEvent, DeleteTrack
-from controllers.appcontroller import SongController
+from guitar_composer.controllers.appcontroller import SongController
 from guitar_composer.view.config import LabelText
 
-from PyQt6.QtCore import QModelIndex, Qt
-
-from controllers.appcontroller import TrackItem
-from controllers.appcontroller import PropertiesItem
-from controllers.appcontroller import SongItem
+from guitar_composer.controllers.appcontroller import TrackItem
+from guitar_composer.controllers.appcontroller import PropertiesItem
+from guitar_composer.controllers.appcontroller import SongItem
 from guitar_composer.view.events import Signals, TrackItem, PropertiesItem, SongItem
 from guitar_composer.view.config import LabelText
 

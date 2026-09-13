@@ -17,7 +17,7 @@ from guitar_composer.view.config import ORAGANIZATION, APP_NAME
 from guitar_composer.view.projectNavigator.navigator import Navigator
 from guitar_composer.view.editor.trackEditorView import TrackEditorView
 import logging
-from controllers.editorcontroller import EditorController
+from guitar_composer.controllers.editorcontroller import EditorController
 from guitar_composer.view.player.playerView import PlayerView
 import signal
 from guitar_composer.view.dialogs.liveCapture import LiveCaptureDialog

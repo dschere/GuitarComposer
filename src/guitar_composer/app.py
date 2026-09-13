@@ -22,10 +22,10 @@ setup_application_data()
 
 from guitar_composer.view.events import Signals
 from guitar_composer.view.mainwin import MainWindow
-from controllers.appcontroller import AppController
-from controllers.editorcontroller import EditorController
-from controllers.playercontroller import PlayerController
-from controllers.liveaudiocontroller import LiveAudioController
+from guitar_composer.controllers.appcontroller import AppController
+from guitar_composer.controllers.editorcontroller import EditorController
+from guitar_composer.controllers.playercontroller import PlayerController
+from guitar_composer.controllers.liveaudiocontroller import LiveAudioController
 
 from PyQt6.QtWidgets import QApplication
 from guitar_composer.services.synth.synthservice import synthservice

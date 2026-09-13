@@ -122,6 +122,7 @@ def setup_application_data():
         merge_directories(baseline_data_dir, gc_data_dir)
 
     setenv(GC_DATA_DIR, gc_data_dir)
+    print(f"Setting data directory to {gc_data_dir}")
     os.environ[GC_DATA_DIR] = gc_data_dir
 
 
