@@ -3,7 +3,7 @@ from guitar_composer.models.param import EffectParameter
 
 
 # import from native C library. 
-from gcsynth import filter_query as effect_param_specifcation # type: ignore
+from guitar_composer.gcsynth import filter_query as effect_param_specifcation # type: ignore
 from collections import OrderedDict
 import os 
 import json
