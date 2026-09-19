@@ -66,7 +66,6 @@ class SongController:
         self.q_model = None
 
         Signals.track_update.connect(self.on_track_change)
-        Signals.open_song.connect(self.open_song)
 
     def __del__(self):
         """Disconnect signal listeners upon controller destruction."""
@@ -405,6 +404,10 @@ class AppController:
         self.preview_instr.free_resources()
         self.preview_instr = Instrument(instrument_name)
 
+    def on_save_as_song(self):
+        if isinstance(self.current_song, SongController):
+            self.projects.save_as_song(self.current_song.song)
+
     def on_save_song(self):
         """ saves all opened songs.
         """
@@ -497,6 +500,7 @@ class AppController:
 
         Signals.ready.connect(self.on_ready)
         Signals.save_song.connect(self.on_save_song)
+        Signals.save_as_song.connect(self.on_save_as_song)
         Signals.open_song.connect(self.on_open_song)
         Signals.close_song.connect(self.on_close_song)
         Signals.new_song.connect(self.on_new_song)

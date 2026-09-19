@@ -50,6 +50,7 @@ class ProjectManager(QObject):
         """ 
         Save the song object, return true is the user actually saved.
         """
+        print(f"song={song} song.title={song.title}")
         title_as_filename = song.title.replace(" ",'-')+".gc"
         file_name, _ = QFileDialog.getSaveFileName(
             caption=f"Save {song.title}",
@@ -74,6 +75,9 @@ class ProjectManager(QObject):
                 self.opened_projects[song.title] = song.filename
                 return True
         return False 
+
+    def save_as_song(self, song:Song):
+        self.save_using_dialog(song)    
 
     def save_song(self, song: Song, allow_dialog=True):
         if len(song.filename) > 0:
