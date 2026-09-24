@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <dlfcn.h>
 #include <errno.h>
 #include <string.h>
 #include <math.h>
@@ -330,7 +329,7 @@ static int ladspa_setup(struct gcsynth_filter* gc_filter, const char* path, char
 
     gc_filter->gmodule = g_module_open(path, G_MODULE_BIND_LOCAL);
     if (gc_filter->gmodule == NULL) {
-        sprintf(errmsg,"gcsynth: ladspa_setup dlopen failed %s", dlerror());
+        sprintf(errmsg,"gcsynth: ladspa_setup dlopen failed %s", g_module_error());
         gcsynth_raise_exception(errmsg);
         return -1;
     }
