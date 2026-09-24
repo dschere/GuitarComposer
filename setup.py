@@ -6,7 +6,7 @@ from setuptools import setup, find_packages, Extension, find_namespace_packages
 from setuptools.command.build_py import build_py
 
 
-import os
+import sys
 import subprocess
 
 current_module_path = os.sep.join(os.path.abspath(__file__).split(os.sep)[:-1])
@@ -64,7 +64,7 @@ gcsynth_module = Extension(
     extra_compile_args=['-g3'],
 #    extra_compile_args=['-O3','-g'],  # Add the -g2 flag for debug symbols
     # Ensure the linker also gets the debug symbols
-    extra_link_args=['-lasound']
+    extra_link_args={'win32':[]}.get(sys.platform, ['-lasound'])
 )
 
 # Helper to automatically grab all files in the directory
