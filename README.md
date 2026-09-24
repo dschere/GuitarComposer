@@ -55,7 +55,12 @@ The goal of the tablature editor is to work more or less like MS-word. The user 
 # filter graph 
 
 
-## Installation, build and run
+## Linux Installation, build and run
+
+Install libev 
+
+git clone https://github.com/yusiwen/libev/blob/master/ev.h
+cd libev && ./configure && make && make install
 
 - source venv/bin/activate
 - pip install -r requirements.txt
@@ -63,3 +68,4 @@ The goal of the tablature editor is to work more or less like MS-word. The user 
 - ./setup.py install
 - python -m guitar_composer.app 
 
+## Windows build is currently under construction

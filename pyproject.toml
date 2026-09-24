@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "guitar-composer"
 dynamic = ["version"]
 readme = "README.md"
-license = ""
+license = "MIT"
 requires-python = ">=3.7"
 classifiers = [
     "Programming Language :: C",
