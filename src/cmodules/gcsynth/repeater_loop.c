@@ -1,4 +1,3 @@
-#include <bits/time.h>
 #include <time.h>
 
 #include "gcsynth.h"
