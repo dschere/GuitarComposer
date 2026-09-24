@@ -1,4 +1,4 @@
-#include <dlfcn.h>
+#include <glib.h>
 #include <Python.h>
 
 #include "pyutil.h"
@@ -208,12 +208,14 @@ struct scheduled_event* event_from_pydata(PyObject* dict)
 
 PyObject* ladspa_get_labels(const char* path) {
     int i;
-    void* dl_handle = dlopen(path, RTLD_LOCAL|RTLD_NOW);
+    //void* dl_handle = dlopen(path, RTLD_LOCAL|RTLD_NOW);
+    GModule* dl_handle = g_module_open(path, G_MODULE_BIND_LOCAL | G_MODULE_BIND_LAZY);
     PyObject* labels = PyList_New(0);
 
     if ((dl_handle != NULL) && (labels != NULL)) {
-        LADSPA_Descriptor_Function descriptor_fn = 
-            dlsym(dl_handle, "ladspa_descriptor");
+        LADSPA_Descriptor_Function descriptor_fn = NULL; 
+            //dlsym(dl_handle, "ladspa_descriptor");
+            g_module_symbol(dl_handle, "ladspa_descriptor", (gpointer*)&descriptor_fn);
 
         if (descriptor_fn) {
             LADSPA_Descriptor *desc;
@@ -236,7 +238,8 @@ PyObject* ladspa_get_labels(const char* path) {
                 Py_DECREF(py_str); // List takes ownership, so release reference
             }
         }
-        dlclose(dl_handle);
+        //dlclose(dl_handle);
+        g_module_close(dl_handle);
     }
 
     return labels;
