@@ -64,7 +64,7 @@ gcsynth_module = Extension(
     extra_compile_args=['-g3'],
 #    extra_compile_args=['-O3','-g'],  # Add the -g2 flag for debug symbols
     # Ensure the linker also gets the debug symbols
-    extra_link_args={'win32':[]}.get(sys.platform, ['-lasound'])
+    extra_link_args={'win32':['-lws2_32']}.get(sys.platform, ['-lasound'])
 )
 
 # Helper to automatically grab all files in the directory
