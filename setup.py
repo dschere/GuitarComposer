@@ -93,6 +93,9 @@ setup(
         "Programming Language :: C",
     ],
     python_requires=">=3.7",
-    data_files=get_data_files(),
+    #data_files=get_data_files(),
+    package_data={
+        "guitar_composer": ["data/**"],
+    },
 )
 

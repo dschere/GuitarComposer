@@ -1,11 +1,12 @@
 import ctypes
+import sys
 import os
 
 def setenv(name, value):
     """
     Call the standard C library setenv (except for windows) 
     """
-    if os.name == 'nt':
+    if sys.platform.startswith('win'):
         # On Windows, the C library function is usually '_putenv_s'
         libc = ctypes.cdll.msvcrt
         
