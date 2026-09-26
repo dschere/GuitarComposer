@@ -3,7 +3,7 @@ import xml.etree.ElementTree as ET
 from singleton_decorator import singleton
 
 from guitar_composer.util.midi import midi_codes
-from pip._vendor.pyparsing.core import Optional
+
 
 SCALE_XML_DB = os.environ['GC_DATA_DIR']+os.sep+"music_theory"+os.sep+"scales.xml"
 
