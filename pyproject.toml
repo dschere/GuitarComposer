@@ -33,3 +33,6 @@ include = [
     "/src",
 ]
 
+[tool.setuptools.package-data]
+# Format: "package_name.data_folder_path" = ["file_patterns"]
+"guitar_composer.data" = ["**"]
