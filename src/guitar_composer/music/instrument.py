@@ -229,7 +229,7 @@ class Instrument:
         if not n.duration:
             raise ValueError("duration must be defined.") 
         else:        
-            millisecs = int((n.duration * bpm/60.0) * 1000)
+            millisecs = int((n.duration * 60.0/bpm) * 1000)
 
         chan_mix = self.string_map[n.string] # type: ignore
         channels = [chan for (chan,_) in chan_mix]
@@ -457,7 +457,6 @@ class Instrument:
                 with self.data_lock:
                     self.string_playing[n.string] = midicode # type: ignore
 
-
             # is there a pitch bend?
             if len(n.pitch_changes) > 0:
                 self.synth.pitch_range(chan, n.pitch_range)
@@ -467,9 +466,12 @@ class Instrument:
                     #t_evt = SeqEvt.pitch_change(millisecs, chan, semitones)
                     #s.add(t_evt)
                     when = (b_when * bpm/60.0)
+                    #print(f"pitch_change when={when} chan={chan} semitones={semitones}")
                     timer_id = self.timer.start(when, \
                         self.synth.pitch_change, (chan,semitones))
                     timer_ids.add(timer_id)
+            else:
+                self.synth.pitch_change(chan, 0.0) # reset pitch bend to default
 
             if n.duration is not None and n.duration > 0:
                 # schedule a noteoff event in the future

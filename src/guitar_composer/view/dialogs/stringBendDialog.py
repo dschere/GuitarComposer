@@ -47,12 +47,19 @@ def data_2_xy(tm, step, ysteps):
     return (x,y) 
 
 def xy_2_data(x, y, ysteps):
-    r = (GRAPH_HEIGHT / ysteps)
-    step = (GRAPH_HEIGHT-y)/r 
-    tm = x / GRAPH_WIDTH 
-    return (tm,step) 
- 
+    """
+    Convert the x,y position of a point on the graph to a time and pitch bend step value.
+    x = 0 -> 1.0 maps to time 0% to 100
+    if y is at the center then there is no pitch bend. If y is at the top then the pitch 
+    bend is at the maximum value of ysteps. 
+    If y is at the bottom then the pitch bend is at 0. 
+    """
+    midpt = GRAPH_HEIGHT/2
+    r = ysteps
+    y_percent = (midpt - y) / midpt
+    tm = x / GRAPH_WIDTH
 
+    return (tm, y_percent * r)
 
 
 class GraphPen(QPen):
@@ -108,14 +115,13 @@ class BendGraph(QWidget):
             y1 = self.margin + int((1 - (i/n)) * GRAPH_HEIGHT)
             x2 = GRAPH_WIDTH
             y2 = y1
-            
             painter.drawLine(x1, y1, x2, y2)
 
         painter.setPen(self.pitchChangeTimePen)
         # connect points 
         if len(self.points) > 0:
             x1 = 0
-            y1 = GRAPH_HEIGHT
+            y1 = self.margin + int(GRAPH_HEIGHT/2)
             for (x2,y2) in self.points:
                 painter.drawLine(x1,y1,x2,y2)
                 x1 = x2
@@ -136,8 +142,8 @@ class BendGraph(QWidget):
         r.points = self.points
         r.pitch_range = self.ysteps
         for (x,y) in self.points: 
-            when_r, semitones = xy_2_data(x,y-self.margin,self.ysteps)
-            r.pitch_changes.append((when_r, semitones)) 
+            when_duartion_percentage, semitones = xy_2_data(x,y-self.margin,self.ysteps)
+            r.pitch_changes.append((when_duartion_percentage, semitones)) 
         return r
     
     def updatePoints(self, points):

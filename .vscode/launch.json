@@ -131,13 +131,13 @@
         },
         {
             "name": "Python: Attach",
-            "type": "python",
+            "type": "debugpy",
             "request": "attach",
             "port": 5678,
             "host": "localhost"
         },
         {
-            "name": "Python: module",
+            "name": "Python: App",
             "type": "debugpy",
             "request": "launch",
             "module": "guitar_composer.app",
@@ -146,7 +146,7 @@
         },
         {
             "name": "Python: Current File (External Terminal)",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "program": "${file}",
             "console": "externalTerminal"
