@@ -24,6 +24,9 @@ class timer_event:
     def encode(self) -> dict:
         return vars(self)
 
+    def __str__(self):
+        return f"timer_event when={self.when} channel={self.channel} ev_type={self.ev_type} midi_code={self.midi_code} velocity={self.velocity} plugin_label={self.plugin_label} plugin_path={self.plugin_path} enable={self.enable} control_name={self.control_name} control_value={self.control_value} pitch_change={self.pitch_change}"
+
 
 class noteon(timer_event):
     def __init__(self, when, channel, key, vel):
@@ -92,6 +95,9 @@ class sequencer:
         # when (millisecs) -> [timer_event, ...]
         self.te_events = {}
         self.synth_service = synth_service
+
+    def __str__(self) -> str:
+        return f"sequencer te_events={self.te_events}"
 
     def add(self, te: timer_event):
         items = self.te_events.get(te.when, [])

@@ -178,7 +178,6 @@ class synthservice:
         return gcsynth.channel_gain( channel, change)
 
     def timer_event(self, ev_or_ev_list):
-        print(f"timer event called {ev_or_ev_list}")
         return gcsynth.timer_event( ev_or_ev_list)
     
     def pitch_range(self, channel: int, semitones: float):

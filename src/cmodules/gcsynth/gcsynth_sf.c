@@ -896,6 +896,7 @@ int gcsynth_sf_pitchwheel(int chan, float semitones)
         float r = semitones / pr;
 
         pitchWheel = 8192 + (r * 8192);
+        //printf("gcsynth_sf_pitchwheel: pitchRange=%f, chan=%d, semitones=%f, pitchWheel=%d\n", pr, chan, semitones, pitchWheel);
 
         struct audio_thread_msg* msg = (struct audio_thread_msg*)
             calloc(sizeof(struct audio_thread_msg),1);
