@@ -136,14 +136,47 @@ class BendGraph(QWidget):
 
     def create_string_bend_event(self) -> StringBendEvent:
         """ 
-        Map the points to pitch changes
+        Map the points to pitch changes. Introduce waypoints between pitch changes 
+        to smooth the changes. Treat x values below 5 as zero. 
         """
         r = StringBendEvent()
         r.points = self.points
         r.pitch_range = self.ysteps
+        last_semitones = 0 
+        last_w = 0
+
         for (x,y) in self.points: 
-            when_duartion_percentage, semitones = xy_2_data(x,y-self.margin,self.ysteps)
-            r.pitch_changes.append((when_duartion_percentage, semitones)) 
+            if x < 5:
+                x = 0
+            when_duration_percentage, semitones = xy_2_data(x,y-self.margin,self.ysteps)
+            
+            #print(f"xy_2_data: x={x}, y={y} -> when={when_duration_percentage}, semitones={semitones}")
+
+            diff = semitones - last_semitones
+            w_diff = when_duration_percentage - last_w
+
+            if math.fabs(diff) < 0.1 or w_diff < 0.1: 
+                r.pitch_changes.append((last_w + when_duration_percentage, semitones)) 
+            else:
+                # smooth changes by adding  waypoints  between the last semitones and the current semitones
+                n = 5 
+                if w_diff > 0.5:
+                    n = 10
+                for i in range(n):
+                    m = (i+1)/n
+                    v = last_semitones + (diff * m)
+                    r.pitch_changes.append((last_w + when_duration_percentage * m, v)) 
+
+            last_semitones = semitones
+            last_w = when_duration_percentage
+
+        # do we need to scale ?
+        if r.pitch_changes[-1][0] > 1.0: 
+            v = r.pitch_changes[-1][0] 
+            for i in range(len(r.pitch_changes)):
+                (w, s) = r.pitch_changes[i]
+                r.pitch_changes[i] = (w/v, s)
+        
         return r
     
     def updatePoints(self, points):
