@@ -456,7 +456,11 @@ class AppController:
 
                 self.update_navigator()
 
-
+    def show_custom_instrument_dialog(self):
+        """
+        Allow user to create a custom instrument by blending multiple instruments with weighting factors.
+        """
+        # Under contruction: This feature is currently disabled and will be implemented in a future release.
             
 
     def on_new_song(self):
@@ -509,7 +513,7 @@ class AppController:
 
         Signals.add_track.connect(self.add_track)
         Signals.delete_track.connect(self.delete_track)
-        
+        Signals.custom_instrument_dialog.connect(self.show_custom_instrument_dialog)
 
         n = Note()
         n.string = 4

@@ -4,7 +4,8 @@ import os
 
 
 class SvgLabel(QtWidgets.QLabel):
-    FILTER_SVG = os.environ['GC_DATA_DIR']+os.sep+'assets'+os.sep+'filter_alt_24dp_E3E3E3_FILL0_wght400_GRAD0_opsz24.svg'
+    FILTER_SVG = os.path.expanduser('~/.guitar_composer/assets/filter_alt_24dp_E3E3E3_FILL0_wght400_GRAD0_opsz24.svg')
+    #FILTER_SVG = os.environ.get('GC_DATA_DIR', os.path.expanduser('~/.guitar_composer/data'))+os.sep+'assets'+os.sep+'filter_alt_24dp_E3E3E3_FILL0_wght400_GRAD0_opsz24.svg'
 
     default_width  = 26
     default_height = 26 

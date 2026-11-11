@@ -69,6 +69,9 @@ class MainWindow(QMainWindow):
         evt = EditorEvent(EditorEvent.REDO_EVENT)
         Signals.editor_event.emit(evt)
 
+        
+    def show_custom_instrument_dialog(self):
+        Signals.custom_instrument_dialog.emit()        
 
     def create_menubar(self):
         # Create the menu bar
@@ -144,12 +147,15 @@ class MainWindow(QMainWindow):
         # Tools menu
         tools_menu : QMenu | None = menu_bar.addMenu("Tools")
         assert(tools_menu)
+        custom_instrument_action = QAction("Custom Instrument", self)
         settings_action = QAction("Settings", self)
         options_action = QAction("Options", self)
 
+        custom_instrument_action.triggered.connect(self.show_custom_instrument_dialog)
         # settings_action.triggered.connect(self.show_message)
         # options_action.triggered.connect(self.show_message)
 
+        tools_menu.addAction(custom_instrument_action)
         tools_menu.addAction(settings_action)
         tools_menu.addAction(options_action)
 

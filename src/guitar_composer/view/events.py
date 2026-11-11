@@ -273,6 +273,8 @@ class _Signals(QObject):
     # provide feedback for slow running processes.
     progress_event = pyqtSignal(ProgressEvent)
 
+    custom_instrument_dialog = pyqtSignal()
+
 
 
 Signals = _Signals()

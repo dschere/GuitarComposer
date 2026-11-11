@@ -43,10 +43,11 @@ class instrumentPicker(QWidget):
                     if groupName == "drums":
                         self.drum_kits.add(ins_name)
 
-        sub = self.menu.addMenu("Custom")
-        for cname in customIns:
-            if filter_text is None or filter_text.lower() in ins_name.lower():
-                sub.addAction(cname) # type: ignore 
+        if self.has_custom_instruments:    
+            sub = self.menu.addMenu("Custom")
+            for cname in customIns:
+                if filter_text is None or filter_text.lower() in ins_name.lower():
+                    sub.addAction(cname) # type: ignore 
 
     def _filter_instruments(self):
         ftext = self.filter_instrument_name.text().lower()
@@ -56,6 +57,7 @@ class instrumentPicker(QWidget):
         super().__init__()
         self.drum_kits = set()
         self.currentSelection = currentSelection
+        self.has_custom_instruments = opts.get('has_custom_instruments', True)
                 
         #self.setMaximumWidth(300)
         
