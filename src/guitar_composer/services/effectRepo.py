@@ -7,7 +7,7 @@ import json
 from singleton_decorator import singleton
 import copy
 
-EFFECT_CFG_FILE = os.environ['GC_DATA_DIR']+"/effect_config/config.json"
+EFFECT_CFG_FILE = os.environ.get('GC_DATA_DIR', os.path.expanduser('~/.guitar_composer/data'))+"/effect_config/config.json"
 LADSPA_FILE_SPEC = os.environ.get('LADSPA_PATH','/usr/lib/ladspa')+"/*.so"
 
 
@@ -134,7 +134,7 @@ class EffectRepository:
                         'class': eclass
                     }
                     self.effects[label] = e
-                    print(f"{label} {name} {filepath}")
+                    #print(f"{label} {name} {filepath}")
                 else:
                     # previously loaded
                     d = cfg[label]
@@ -144,7 +144,7 @@ class EffectRepository:
 
         data = json.dumps(cfg, indent=4, sort_keys=True)
         open(EFFECT_CFG_FILE,"w").write(data)
-               
+        
         # there is a chance that the user may delete a ladspa audio effect
         # from teh system, then we would have a stale entry in our database.
         deleted_effects = set()       

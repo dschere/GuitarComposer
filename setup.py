@@ -83,6 +83,10 @@ setup(
     package_dir={"": "src"},
     # Automatically finds all Python packages inside the src directory
     packages=find_namespace_packages(where="src"),
+    package_data={
+        "guitar_composer": ["data/*", "data/**/*"],
+    },
+    include_package_data=True,
     # Defines and builds your C extension module
     ext_modules=[
         gcsynth_module
@@ -93,9 +97,5 @@ setup(
         "Programming Language :: C",
     ],
     python_requires=">=3.7",
-    #data_files=get_data_files(),
-    package_data={
-        "guitar_composer": ["data/**"],
-    },
 )
 

@@ -34,6 +34,38 @@ class CustomInstruments:
             "/instruments/customInstruments.json"
         self.db = json.loads(open(filename).read())
 
+
+    def getData(self):
+        """Return the entire custom instruments database."""
+        return self.db
+
+    def setData(self, data):
+        """Replace the entire custom instruments database with new data and persist to disk.
+
+        Args:
+            data: Dictionary mapping instrument names to their specifications.
+        """
+        self.db = data
+        filename = os.environ['GC_DATA_DIR'] + "/instruments/customInstruments.json"
+        with open(filename, 'w') as f:
+            json.dump(self.db, f, indent=4)    
+
+    def update(self, name, spec):
+        """Update or add a custom instrument specification in the database.
+
+        Args:
+            name: Instrument identifier string.
+            spec: Dictionary defining the instrument's string-to-channel mapping and gain weights.
+        """
+        self.db[name] = spec
+        filename = os.environ['GC_DATA_DIR'] + "/instruments/customInstruments.json"
+        with open(filename, 'w') as f:
+            json.dump(self.db, f, indent=4)
+
+    def getNames(self):
+        """Return a list of all custom instrument names."""
+        return list(self.db.keys())        
+
     def getSpec(self, name):
         """Retrieve the string-to-channel mapping specification for a given instrument name.
 

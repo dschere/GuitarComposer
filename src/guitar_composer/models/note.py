@@ -34,6 +34,7 @@ class Note:
         # when -> decimal fraction (0-1.0) of duration
         # pitch_change -> float decimal fraction of pitch range.
         self.pitch_changes : List[Tuple[float,float]] = []
+        self.midi_code = -1
 
     def set_duration(self, te: TabEvent, dur: float):
         """Set note duration based on articulation settings (legato or staccato) from a TabEvent.

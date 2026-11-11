@@ -222,7 +222,7 @@ void gcsynth_filter_enable(struct gcsynth_filter* gc_filter)
 {
     if (gc_filter->enabled == 0) {
         gc_filter->enabled = 1;
-        gcsynth_filter_report(gc_filter);
+        //gcsynth_filter_report(gc_filter);
     }
  
     if (gc_filter->desc->activate) {
@@ -234,7 +234,7 @@ void gcsynth_filter_disable(struct gcsynth_filter* gc_filter)
 {
     if (gc_filter->enabled == 1) {
         gc_filter->enabled = 0;
-        printf("gcsynth: %s deactivated\n", gc_filter->desc->Label);
+        //printf("gcsynth: %s deactivated\n", gc_filter->desc->Label);
     }
 
     if (gc_filter->desc->deactivate)
@@ -287,6 +287,7 @@ static void setup_ctl_value(struct gcsynth_filter* gc_filter,
     control->is_logarithmic = LADSPA_IS_HINT_LOGARITHMIC(h->HintDescriptor);
     control->is_integer = LADSPA_IS_HINT_INTEGER(h->HintDescriptor);
 
+    /*
     printf("%s lower=%f upper=%f is_bounded_above=%d is_bounded_below=%d is_toggled=%d is_logarithmic=%d is_integer=%d\n",
         control->name,
         control->lower,
@@ -297,6 +298,7 @@ static void setup_ctl_value(struct gcsynth_filter* gc_filter,
         control->is_logarithmic,
         control->is_integer
     );
+    */
 
     control->default_value = (control->is_logarithmic) ? 0.5 :
        get_default_value(gc_filter, (unsigned long int) ctl,
@@ -310,11 +312,11 @@ static void setup_ctl_value(struct gcsynth_filter* gc_filter,
 
     if (control->has_default || control->is_logarithmic) {
         control->value = control->default_value;
-        printf("Updated %s, set control %s to default value %f\n",
-            gc_filter->desc->Label, control->name, control->value);
+        //printf("Updated %s, set control %s to default value %f\n",
+        //    gc_filter->desc->Label, control->name, control->value);
     } else {
-        printf("Updated %s, set control %s to %f\n",
-            gc_filter->desc->Label, control->name, control->value);
+        //printf("Updated %s, set control %s to %f\n",
+        //    gc_filter->desc->Label, control->name, control->value);
     }
 }
 
@@ -459,7 +461,7 @@ static int ladspa_setup(struct gcsynth_filter* gc_filter, const char* path, char
             gc_filter->port_map[gc_filter->right_out_idx]
         );
 
-        printf("Inplace buffer configuartion");
+        //printf("Inplace buffer configuartion");
     }
 
 

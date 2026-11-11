@@ -674,7 +674,7 @@ int gcsynth_sf_init(char* sf_file[], int num_font_files, AudioChannelFilter filt
         int sample_rate = (int) 
             AudioThreads[a_thread].g_TinySoundFont->outSampleRate;
 
-        printf("%s sample_rate = %d\n", sf_file[f_index], sample_rate);    
+        //printf("%s sample_rate = %d\n", sf_file[f_index], sample_rate);    
 
         AudioThreads[a_thread].spec.freq = sample_rate;
         AudioThreads[a_thread].spec.format =  AUDIO_F32SYS;  // AUDIO_F32;
