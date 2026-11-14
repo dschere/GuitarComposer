@@ -4,6 +4,9 @@ import re
 import json
 import sys
 
+from guitar_composer.util.resources import (get_instruments_filename, 
+    get_soundfont_filespec, get_instrument_groupings_filename)
+
 
 class instrument_spec:
     def __init__(self):
@@ -56,7 +59,7 @@ class instrument_info:
         
 
     def setup(self):
-        sf_info_file = os.environ['GC_DATA_DIR']+"/sf_info/instruments.json"
+        sf_info_file = get_instruments_filename()
         if not os.access(sf_info_file,os.F_OK):
             raise RuntimeError("instrument info file missing is gcsyth running?")
         
@@ -96,9 +99,7 @@ class instrument_info:
         return self.groups
             
     def __init__(self):
-        sf_dir = os.environ['GC_DATA_DIR']+"/sf"
-        self.sfpaths = glob.glob(sf_dir+"/*")
-
+        self.sfpaths = glob.glob(get_soundfont_filespec())
         self.instruments = []
 
         # give preference to this sound font
@@ -107,5 +108,5 @@ class instrument_info:
         self.default_data = {}
         self.groups = {}
 
-        ins_group_file = os.environ['GC_DATA_DIR']+"/instruments/groupings.json"
+        ins_group_file = get_instrument_groupings_filename()
         self.group_spec = json.loads(open(ins_group_file).read())

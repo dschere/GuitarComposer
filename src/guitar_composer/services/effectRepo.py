@@ -7,8 +7,10 @@ import json
 from singleton_decorator import singleton
 import copy
 
-EFFECT_CFG_FILE = os.environ.get('GC_DATA_DIR', os.path.expanduser('~/.guitar_composer/data'))+"/effect_config/config.json"
-LADSPA_FILE_SPEC = os.environ.get('LADSPA_PATH','/usr/lib/ladspa')+"/*.so"
+from guitar_composer.util.resources import get_effects_config_filename, get_ladspa_filespec
+
+EFFECT_CFG_FILE = get_effects_config_filename()
+LADSPA_FILE_SPEC = get_ladspa_filespec()
 
 
 classification_data = [

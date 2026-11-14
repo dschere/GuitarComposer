@@ -13,7 +13,7 @@ from PyQt6.QtCore import Qt
 from guitar_composer.view.widgets.svgLabel import SvgLabel
 from PyQt6.QtWidgets import QSizePolicy
 
-from guitar_composer.music.instrument import getInstrumentGroups
+from guitar_composer.music.instrument import getInstrumentGroups, CustomInstruments
 
 from PyQt6.QtCore import pyqtSignal
 
@@ -21,6 +21,13 @@ class instrumentPicker(QWidget):
     instrument_selected = pyqtSignal(str)
     percussion_selected = pyqtSignal(bool)
 
+    def custom_instrument_change(self):
+        sub = self.custom_menu 
+        if sub:
+            insGroups, customIns = getInstrumentGroups()
+            sub.clear()
+            for cname in customIns:
+                sub.addAction(cname) # type: ignore 
 
     def on_selected(self, action):
         ins_name = action.text()
@@ -44,10 +51,14 @@ class instrumentPicker(QWidget):
                         self.drum_kits.add(ins_name)
 
         if self.has_custom_instruments:    
+            ci = CustomInstruments()
+            ci.data_changed.connect(self.custom_instrument_change)
             sub = self.menu.addMenu("Custom")
             for cname in customIns:
                 if filter_text is None or filter_text.lower() in ins_name.lower():
                     sub.addAction(cname) # type: ignore 
+            self.custom_submenu = sub
+
 
     def _filter_instruments(self):
         ftext = self.filter_instrument_name.text().lower()
@@ -58,7 +69,7 @@ class instrumentPicker(QWidget):
         self.drum_kits = set()
         self.currentSelection = currentSelection
         self.has_custom_instruments = opts.get('has_custom_instruments', True)
-                
+        self.custom_menu = None 
         #self.setMaximumWidth(300)
         
         if gridLayout is None:
@@ -83,7 +94,8 @@ class instrumentPicker(QWidget):
 
         button = QToolButton()
 
-        button.setMaximumWidth(150)
+        
+        button.setMinimumWidth(150)
         button.setText(currentSelection)
         button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
         button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)

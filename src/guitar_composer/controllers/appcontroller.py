@@ -362,7 +362,7 @@ class AppController:
 
         if len(titles) == 0:
             sc = SongController("noname")
-            sc.addTrack('12-str.GT')
+            sc.addTrack(Instrument.DEFAULT_PREVIEW_INSTRUMENT)
             self.song_ctrl[sc.title()] = sc
             self.current_song = sc
 
@@ -401,7 +401,6 @@ class AppController:
         Args:
             instrument_name: Name of instrument to load for previews.
         """
-        self.preview_instr.free_resources()
         self.preview_instr = Instrument(instrument_name)
 
     def on_save_as_song(self):
@@ -460,18 +459,22 @@ class AppController:
         """
         Allow user to create a custom instrument by blending multiple instruments with weighting factors.
         """
-        # Under contruction: This feature is currently disabled and will be implemented in a future release.
-            
+        from guitar_composer.view.dialogs.customInstrument.customInstrumentDialog import CustomInstrumentDialog
+        CustomInstrumentDialog().exec()
+
 
     def on_new_song(self):
         """Create a new untitled composition with a default guitar track and display it in navigator."""
         self.noname_counter += 1
         sc = SongController(f"noname-{self.noname_counter}")
-        sc.addTrack('12-str.GT')
+        sc.addTrack(Instrument.DEFAULT_PREVIEW_INSTRUMENT)
         self.song_ctrl[sc.title()] = sc
         self.current_song = sc
         self.current_track = sc.song.tracks[0]
         self.update_navigator()
+
+    def on_change_preview_instrument(self, instrument_name):
+        self.preview_instr = Instrument(instrument_name)    
 
     def __init__(self, synth_service):
         """Initialize the AppController, set up project management, preview instruments, and signal bindings.
@@ -487,7 +490,7 @@ class AppController:
         self.projects = ProjectManager()
         self.active_song_titles = set()
         self.song_ctrl = {}
-        self.preview_instr = Instrument("12-str.GT")
+        self.preview_instr = Instrument(Instrument.DEFAULT_PREVIEW_INSTRUMENT)
         Signals.fretboard_inst_select.connect(self.on_preview_instr_changed)
 
         # current track being edited.
@@ -514,6 +517,7 @@ class AppController:
         Signals.add_track.connect(self.add_track)
         Signals.delete_track.connect(self.delete_track)
         Signals.custom_instrument_dialog.connect(self.show_custom_instrument_dialog)
+        Signals.change_preview_instrument.connect(self.on_change_preview_instrument)
 
         n = Note()
         n.string = 4
