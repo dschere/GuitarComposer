@@ -27,15 +27,17 @@ RANGE_COL   = 1
 TEXT_COL    = 2
 DEF_COL     = 3
 REV_COL     = 4
-
         
 class ParameterRow(QObject):
+    # Note: this object is reused by the custom instrument dialog keep that in mind 
+    # if modfying this for a floating value range going forward.
+
     value_changed = pyqtSignal(float)
 
     def _set_default_btn_css(self, ep: EffectParameter):
         css = ""
         if ep.current_value != ep.default_value:
-            css = "QPushButton { background-color: red; }"
+            css = "QPushButton { background-color: gold; }"
         self.default_button.setStyleSheet(css)
         self.default_button.update()
 
@@ -165,12 +167,19 @@ class ParameterRow(QObject):
             self.value_changed.emit(ep.current_value)
             self._set_default_btn_css(ep)
 
+        def set_slider_control(v):
+            i = nearest_idx(v)
+            slider_value_ctrl.setValue(i)
+
         if not ep.has_default:  
             self.default_button.setDisabled(True)
+            self.default_button.setVisible(False)
         else:    
-            self.default_button.clicked.connect(lambda: lit_value_changed(str(ep.default_value)))
+            #self.default_button.clicked.connect(lambda: lit_value_changed(str(ep.default_value)))
+            self.default_button.clicked.connect(lambda: set_slider_control(ep.default_value))
 
-        self.revert_button.clicked.connect(lambda: lit_value_changed(str(self.original_value)))
+        # self.revert_button.clicked.connect(lambda: lit_value_changed(str(self.original_value)))
+        self.revert_button.clicked.connect(lambda: set_slider_control(self.original_value))
 
         slider_value_ctrl.valueChanged.connect(slider_value_changed)
         literal_value.textChanged.connect(lit_value_changed)

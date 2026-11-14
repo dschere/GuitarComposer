@@ -2,12 +2,12 @@ from typing import List, Tuple
 from singleton_decorator import singleton
 import json
 import os 
-
+from .resources import get_drum_groups_filename
 
 @singleton
 class DrumDatabase:
     def __init__(self):
-        dbfile = os.environ['GC_DATA_DIR']+os.sep+"midi_drum_groups.json"
+        dbfile = get_drum_groups_filename()
         self.data = json.loads(open(dbfile).read())
 
     def getDrumInfoFromMidicode(self, midi_code) -> None | Tuple[str, str, int]:

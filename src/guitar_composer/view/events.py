@@ -274,6 +274,7 @@ class _Signals(QObject):
     progress_event = pyqtSignal(ProgressEvent)
 
     custom_instrument_dialog = pyqtSignal()
+    change_preview_instrument = pyqtSignal(str)
 
 
 

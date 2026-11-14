@@ -6,6 +6,9 @@ import logging
 import threading
 
 from singleton_decorator import singleton
+
+from PyQt6.QtCore import pyqtSignal, QObject
+
 from guitar_composer.music.constants import Dynamic
 from guitar_composer.services.synth.synthservice import synthservice
 from guitar_composer.services.synth import sequencer as SeqEvt
@@ -14,6 +17,7 @@ from guitar_composer.models.note import Note
 from guitar_composer.models.track import Track
 from guitar_composer.models.effect import Effects
 from guitar_composer.util.midi import midi_codes
+from guitar_composer.util.resources import get_custom_instruments_filename
 
 from guitar_composer.view.dialogs.effectsControlDialog.dialog import EffectChanges
 from guitar_composer.models.measure import TabEvent
@@ -22,17 +26,36 @@ from guitar_composer.util.gctimer import GcTimer
 
 from guitar_composer.services.synth.fgraph_agent import FilterGraphAgent, agent_from_model, EffectNodeAgent, GainBalanceNodeAgent, LowPassNodeAgent, HighPassNodeAgent, BandPassNodeAgent
     
-
+CUSTOM_INSTRUMENT_DRAFT_NAME = "custom-instrument-draft"
 
 @singleton
-class CustomInstruments:
+class CustomInstruments(QObject):
     """Registry and provider for user-defined multi-timbral custom instrument configurations."""
+    data_changed = pyqtSignal()
 
     def __init__(self):
         """Initialize the custom instruments database from disk configuration."""
-        filename = os.environ['GC_DATA_DIR'] + \
-            "/instruments/customInstruments.json"
-        self.db = json.loads(open(filename).read())
+        super().__init__()
+        self.db = json.loads(open(get_custom_instruments_filename()).read())
+
+        # a custom instrument under construction by the customInstrumentDialog
+        self.draft = {}
+        self.draft_name = ""
+
+    def clear_draft_data(self):
+        self.draft = {}
+        self.draft_name = ""
+
+    def create_draft(self, draft_name, string_data: List[List[Tuple[str, float]]]):
+        self.draft_name = draft_name
+        self.draft = {
+            "string_map": []
+        }
+        for item in string_data:
+            data = {}
+            for instrument_name, weight in item:
+                data[instrument_name] = weight
+            self.draft["string_map"].append(data)    
 
 
     def getData(self):
@@ -46,9 +69,12 @@ class CustomInstruments:
             data: Dictionary mapping instrument names to their specifications.
         """
         self.db = data
-        filename = os.environ['GC_DATA_DIR'] + "/instruments/customInstruments.json"
+        filename = get_custom_instruments_filename()
         with open(filename, 'w') as f:
-            json.dump(self.db, f, indent=4)    
+            json.dump(self.db, f, indent=4)
+            
+        # notify system that the custom intruments has changed.    
+        self.data_changed.emit()
 
     def update(self, name, spec):
         """Update or add a custom instrument specification in the database.
@@ -66,7 +92,7 @@ class CustomInstruments:
         """Return a list of all custom instrument names."""
         return list(self.db.keys())        
 
-    def getSpec(self, name):
+    def getSpec(self, name) -> dict:
         """Retrieve the string-to-channel mapping specification for a given instrument name.
 
         Args:
@@ -75,6 +101,9 @@ class CustomInstruments:
         Returns:
             Dictionary defining the per-string instrument assignment and gain weights.
         """
+        if name == self.draft_name:
+            return self.draft
+
         return self.db.get(name, {
             "string_map": [
                 {name: 1.0},
@@ -124,11 +153,15 @@ class Instrument:
 
        Upon deletion this object frees the channels it used.  
     """
+    DEFAULT_PREVIEW_INSTRUMENT = "12-str.GT"
+
 
     # get references to singletons
     custom_instruments = CustomInstruments()
     synth = synthservice()
     data_lock = threading.Lock()
+
+    ChannelAllocCount = 0
 
     def get_channels_used(self):
         """Return the list of synthesizer channel indices currently allocated to this instrument."""
@@ -172,6 +205,7 @@ class Instrument:
         for name in instrument_names:
             # reserve a channel for this instrument
             instr_2_chan[name] = self.synth.alloc(name)
+            Instrument.ChannelAllocCount += 1
         self.channels_used = set(instr_2_chan.values())
 
         # create a table that maps each guitar string to a set
@@ -198,6 +232,12 @@ class Instrument:
             if name.find(n) != -1 and n not in exclude:
                 self.one_note_per_string = True
                 break
+
+    def __del__(self):
+        """Deallocate and release all synth channels allocated to this instrument."""
+        for chan in self.channels_used:
+            Instrument.ChannelAllocCount -= 1
+            self.synth.dealloc(chan)
         
     def update_effect_changes(self, synth, chan, ec: EffectChanges ):
         """Apply audio effect plugin and parameter updates to a specific synth channel.
@@ -231,11 +271,7 @@ class Instrument:
                 synth.filter_remove(chan, label)
 
     
-    def free_resources(self):
-        """Deallocate and release all synth channels allocated to this instrument."""
-        for chan in self.channels_used:
-            self.synth.dealloc(chan)
-
+        
     def effects_change(self, ec: EffectChanges):
         """Broadcast effect and parameter changes across all channels allocated to this instrument.
 
