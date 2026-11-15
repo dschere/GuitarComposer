@@ -503,7 +503,6 @@ class Instrument:
             #midicode = self.tuning[n.string] + n.fret # type: ignore
             midicode = n.midi_code
             if velocity_mul is None or n.velocity is None:
-                print("place breakboint here")
                 velocity = 64
             else:
                 velocity = int(n.velocity * velocity_mul)
