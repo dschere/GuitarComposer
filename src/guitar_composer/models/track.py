@@ -417,6 +417,19 @@ class Track:
         m = self.measures[self.current_measure] 
         return (m.tab_events[m.current_tab_event], m)
 
+    def current_dynamic(self) -> int:
+        r = Dynamic.MP
+        for (midx,m) in enumerate(self.measures[:self.current_measure+1]):
+            if midx == self.current_measure:
+                for (tidx,te) in enumerate(m.tab_events):
+                    if te.dynamic is not None:
+                        r = te.dynamic
+            else:
+                for te in m.tab_events:
+                    if te.dynamic is not None:
+                        r = te.dynamic
+        return r
+
     def get_measure(self, from_current=0):
         """Return the Measure offset relative to the current measure, or None if out of range.
 
