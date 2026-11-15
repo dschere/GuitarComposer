@@ -395,11 +395,9 @@ class Instrument:
                         n.midi_code = self.tuning[string] + fret_val 
                     n.pitch_changes = te.pitch_changes
                     if override_velocity == -1:
-                        n.velocity = te.dynamic
+                        n.velocity = te.dynamic 
                     else:
                         n.velocity = override_velocity
-                    if te.dynamic is None:
-                        print("break")
                     
                     n.set_duration(te, ev_dur)  
 
@@ -504,7 +502,11 @@ class Instrument:
         for (chan, velocity_mul) in chan_mix:
             #midicode = self.tuning[n.string] + n.fret # type: ignore
             midicode = n.midi_code
-            velocity = int(n.velocity * velocity_mul)
+            if velocity_mul is None or n.velocity is None:
+                print("place breakboint here")
+                velocity = 64
+            else:
+                velocity = int(n.velocity * velocity_mul)
 
             # set of timers associated with this channel and guitar string
             timer_ids = set()
