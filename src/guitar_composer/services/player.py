@@ -30,9 +30,13 @@ def PlayMoment(track: Track, instrument: Instrument):
     """
     timer = GcTimer()
 
-    (tab_event, measure) = track.current_moment()
+    (_tab_event, measure) = track.current_moment()
     (ts, bpm, _, _) = track.getMeasureParams(measure)
+    dynamic = track.current_dynamic()
+    tab_event = copy.deepcopy(_tab_event)
+    tab_event.dynamic = dynamic  # pyright: ignore[reportAttributeAccessIssue]
 
+    
     # emit signal to update visuals
     on_evt = PlayerVisualEvent(PlayerVisualEvent.TABEVENT_HIGHLIGHT_ON, tab_event) 
     Signals.player_visual_event.emit(on_evt)

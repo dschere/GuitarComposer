@@ -395,9 +395,13 @@ class Instrument:
                         n.midi_code = self.tuning[string] + fret_val 
                     n.pitch_changes = te.pitch_changes
                     if override_velocity == -1:
-                        n.velocity = te.dynamic 
+                        if te.dynamic is None:
+                            n.velocity = Dynamic.MP
+                        else:
+                            n.velocity = te.dynamic 
                     else:
                         n.velocity = override_velocity
+                    
                     
                     n.set_duration(te, ev_dur)  
 
