@@ -246,7 +246,7 @@ class TabEvent:
         self.double_dotted = False
     
         self.render_dynamic = False 
-        self.dynamic = None
+        self.dynamic = Dynamic.MF
         self.dynamic_variance : DynamicVariance | None  = None
 
         # Index into TupletTypes, 0 indicates disabled. 
